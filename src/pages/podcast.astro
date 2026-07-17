@@ -1,0 +1,86 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
+import { episodes } from "../data/episodes.js";
+
+function formatDate(d) {
+  return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+---
+<BaseLayout title="The Dudela Podcast" description="John & Mike, unfiltered. Every episode of The Dudela Podcast.">
+  <Nav />
+
+  <section class="page-hero section-dark">
+    <div class="container">
+      <p class="eyebrow">The Dudela Podcast</p>
+      <h1>John &amp; Mike, unfiltered.</h1>
+      <p class="hero-sub">{episodes.length} episodes and counting. New ones drop regularly.</p>
+    </div>
+  </section>
+
+  <section class="episode-list section-light">
+    <div class="container">
+      <div class="episodes">
+        {episodes.map((ep) => (
+          <a class="episode-row" href="#">
+            <PhotoPlaceholder label="Episode thumbnail" ratio="16/9" class="episode-thumb" />
+            <div class="episode-info">
+              <h3>{ep.title}</h3>
+              <p>{formatDate(ep.date)}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero {
+    padding: 9rem 0 3.5rem;
+  }
+  .page-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    margin: 0.5rem 0 0.75rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+  }
+  .episode-list {
+    padding: var(--space-6) 0;
+  }
+  .episodes {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .episode-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border-light);
+    text-decoration: none;
+    color: var(--text-on-light);
+  }
+  .episode-thumb {
+    width: 140px;
+  }
+  .episode-info h3 {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 0 0 0.3rem;
+  }
+  .episode-info p {
+    font-size: 0.85rem;
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+</style>

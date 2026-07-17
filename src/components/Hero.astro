@@ -1,0 +1,86 @@
+<section class="hero">
+  <img class="hero-photo" src="/images/hero-dad-twins-bw.jpg" alt="John carrying his twin daughters through a golden field" />
+  <div class="hero-scrim"></div>
+  <div class="container hero-content">
+    <h1>Fatherhood doesn't come with instructions.<br />But it shouldn't come with confusion either.</h1>
+    <div class="hero-actions">
+      <a href="/prepare" class="btn btn-primary">Prepare for Fatherhood</a>
+      <a href="/podcast" class="btn btn-ghost">Watch the Podcast</a>
+    </div>
+  </div>
+  <div class="scroll-cue">
+    <span></span>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: flex-end;
+    background: var(--forest-900);
+    overflow: hidden;
+  }
+  .hero-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 20%;
+  }
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(18, 24, 15, 0.95) 0%, rgba(18, 24, 15, 0.35) 45%, rgba(18, 24, 15, 0.15) 100%);
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding-bottom: 6rem;
+    padding-top: 10rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.1rem, 5.4vw, 4.2rem);
+    line-height: 1.12;
+    color: var(--cream-100);
+    max-width: 18ch;
+    margin: 0 0 2.25rem;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .hero-actions .btn-ghost {
+    color: var(--cream-100);
+  }
+  .scroll-cue {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    width: 1px;
+    height: 3rem;
+    background: rgba(245, 239, 227, 0.2);
+    overflow: hidden;
+  }
+  .scroll-cue span {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--amber-500);
+    animation: scrollDown 1.8s var(--ease-out) infinite;
+  }
+  @keyframes scrollDown {
+    to {
+      top: 100%;
+    }
+  }
+</style>

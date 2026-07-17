@@ -1,0 +1,90 @@
+---
+import PhotoPlaceholder from "./PhotoPlaceholder.astro";
+---
+<section class="huddle section-dark">
+  <div class="container huddle-inner">
+    <div class="huddle-copy">
+      <p class="eyebrow">Join the Huddle</p>
+      <h2>Fatherhood was never supposed to be a solo sport.</h2>
+      <ul class="huddle-list">
+        <li>Weekly Huddles</li>
+        <li>Group Coaching</li>
+        <li>Live Q&amp;A, twice a month</li>
+        <li>Private Community</li>
+        <li>Sleep Support</li>
+        <li>Early access to merch &amp; guides</li>
+      </ul>
+      <div class="huddle-price">
+        <span class="price">$5/mo</span>
+        <span class="price-label">The Spit-Up Society</span>
+      </div>
+      <a href="/join/spit-up-society" class="btn btn-primary">Join the Huddle</a>
+    </div>
+    <PhotoPlaceholder label="Mike & John, two dads around a fire" ratio="4/5" class="huddle-photo" />
+  </div>
+</section>
+
+<style>
+  .huddle {
+    padding: var(--space-6) 0;
+  }
+  .huddle-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .huddle h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    max-width: 14ch;
+    margin: 0.5rem 0 1.75rem;
+  }
+  .huddle-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    display: grid;
+    gap: 0.6rem;
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+  }
+  .huddle-list li {
+    padding-left: 1.1rem;
+    position: relative;
+    color: var(--text-on-dark-muted);
+  }
+  .huddle-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 6px;
+    height: 6px;
+    background: var(--amber-500);
+    border-radius: 50%;
+  }
+  .huddle-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .price {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    color: var(--amber-500);
+  }
+  .price-label {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--text-on-dark-muted);
+  }
+  @media (min-width: 900px) {
+    .huddle-inner {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

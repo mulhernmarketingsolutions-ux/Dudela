@@ -1,0 +1,86 @@
+<footer class="footer section-dark">
+  <div class="container footer-inner">
+    <div class="footer-newsletter">
+      <p class="eyebrow">Ask another dad</p>
+      <h3>Get one email a week. No fluff.</h3>
+      <form class="newsletter-form" action="#" method="post">
+        <input type="email" name="email" placeholder="you@email.com" required />
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </form>
+    </div>
+    <div class="footer-links">
+      <div>
+        <p class="footer-heading">Dudela</p>
+        <a href="/about">About</a>
+        <a href="/podcast">Podcast</a>
+        <a href="/resources">Resources</a>
+        <a href="/join">Join</a>
+      </div>
+      <div>
+        <p class="footer-heading">Connect</p>
+        <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">Instagram</a>
+        <a href="/contact">Contact</a>
+      </div>
+    </div>
+    <p class="footer-legal">&copy; {new Date().getFullYear()} The Dudela Co. Turning Dudes Into Dads.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: var(--space-6) 0 var(--space-4);
+  }
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .footer-newsletter h3 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    margin: 0.4rem 0 1.5rem;
+  }
+  .newsletter-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    max-width: 460px;
+  }
+  .newsletter-form input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .footer-links {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+  .footer-heading {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--text-on-dark-muted);
+    margin: 0 0 0.9rem;
+  }
+  .footer-links a {
+    display: block;
+    text-decoration: none;
+    color: var(--cream-100);
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    margin-bottom: 0.6rem;
+  }
+  .footer-legal {
+    font-size: 0.8rem;
+    color: var(--text-on-dark-muted);
+    border-top: 1px solid var(--forest-600);
+    padding-top: 1.5rem;
+  }
+</style>

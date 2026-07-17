@@ -1,0 +1,68 @@
+---
+const resources = [
+  { name: "Free Dad Prep Guide", type: "Free", href: "/guide" },
+  { name: "Dudela Prep Kit", type: "$37", href: "/kit" },
+  { name: "Hospital Checklist", type: "Free", href: "/resources/hospital-checklist" },
+  { name: "Birth Plan Template", type: "Free", href: "/resources/birth-plan" },
+  { name: "Sleep Survival Guide", type: "Free", href: "/resources/sleep" },
+  { name: "Dad Challenges", type: "Free", href: "/resources/challenges" },
+];
+---
+<section class="resources section-light">
+  <div class="container">
+    <p class="eyebrow">Resources</p>
+    <h2>Everything free, organized by what you need next.</h2>
+    <div class="resource-grid">
+      {resources.map((r) => (
+        <a class="resource-card" href={r.href}>
+          <span class="resource-type">{r.type}</span>
+          <span class="resource-name">{r.name}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .resources {
+    padding: var(--space-6) 0;
+  }
+  .resources h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+    margin: 0.4rem 0 2rem;
+    max-width: 20ch;
+  }
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .resource-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-light-raised);
+    text-decoration: none;
+    color: var(--text-on-light);
+    border: 1px solid var(--border-light);
+    transition: border-color 0.2s ease;
+  }
+  .resource-card:hover {
+    border-color: var(--amber-500);
+  }
+  .resource-type {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--rust-600);
+  }
+  .resource-name {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+</style>

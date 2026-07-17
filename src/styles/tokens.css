@@ -1,0 +1,149 @@
+/* ==========================================================================
+   DUDELA DESIGN TOKENS
+   Dark, warm, masculine, documentary. Patagonia x Yeti x Huckberry x Apple.
+   ========================================================================== */
+
+:root {
+  /* --- Color: neutrals & brand --- */
+  --forest-900: #12180f;   /* near-black forest, deepest backgrounds */
+  --forest-800: #1c2319;   /* primary dark section background */
+  --forest-700: #2a3322;   /* raised cards / panels on dark */
+  --forest-600: #3c4930;   /* borders, dividers on dark */
+  --forest-500: #57684a;   /* muted green, secondary text on dark */
+
+  --cream-100: #f5efe3;    /* primary light background */
+  --cream-200: #ece3d1;    /* secondary light background / card fill */
+  --cream-300: #ddd0b4;    /* borders/dividers on light */
+
+  --clay-500: #b97a56;     /* warm neutral accent */
+  --rust-600: #a3492b;     /* deep rust, emphasis / hover */
+
+  --amber-500: #e27d25;    /* ACTION ONLY. Buttons, links, active states. */
+  --amber-600: #c66815;
+
+  --black: #14150f;
+  --white: #ffffff;
+
+  /* --- Semantic tokens --- */
+  --bg-dark: var(--forest-800);
+  --bg-dark-raised: var(--forest-700);
+  --bg-light: var(--cream-100);
+  --bg-light-raised: var(--cream-200);
+
+  --text-on-dark: var(--cream-100);
+  --text-on-dark-muted: #c9c2ae;
+  --text-on-light: var(--forest-900);
+  --text-on-light-muted: #5c5a4f;
+
+  --action: var(--amber-500);
+  --action-hover: var(--amber-600);
+
+  --border-dark: var(--forest-600);
+  --border-light: var(--cream-300);
+
+  /* --- Type --- */
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-sans: "General Sans", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-label: "Satoshi", "Inter", -apple-system, sans-serif;
+
+  /* --- Scale --- */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+  --space-7: 9rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  --container-max: 1280px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-light);
+  color: var(--text-on-light);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.eyebrow {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-label);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  padding: 0.95rem 1.75rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+}
+
+.btn-primary {
+  background: var(--action);
+  color: var(--black);
+}
+.btn-primary:hover {
+  background: var(--action-hover);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: currentColor;
+  opacity: 0.85;
+}
+.btn-ghost:hover {
+  opacity: 1;
+}
+
+.section-dark {
+  background: var(--bg-dark);
+  color: var(--text-on-dark);
+}
+.section-light {
+  background: var(--bg-light);
+  color: var(--text-on-light);
+}

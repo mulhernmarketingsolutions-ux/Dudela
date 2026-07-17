@@ -1,0 +1,42 @@
+---
+export interface Props {
+  label: string;
+  ratio?: string; // e.g. "16/9", "4/5", "1/1"
+  class?: string;
+}
+const { label, ratio = "4/5", class: klass = "" } = Astro.props;
+---
+<div class={`photo-placeholder ${klass}`} style={`aspect-ratio: ${ratio};`}>
+  <span>{label}</span>
+</div>
+
+<style>
+  .photo-placeholder {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04) 0px,
+        rgba(255, 255, 255, 0.04) 2px,
+        transparent 2px,
+        transparent 14px
+      ),
+      linear-gradient(155deg, #2a3322 0%, #1c2319 55%, #12180f 100%);
+    overflow: hidden;
+  }
+  .photo-placeholder span {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(245, 239, 227, 0.55);
+    border: 1px dashed rgba(245, 239, 227, 0.25);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+  }
+</style>

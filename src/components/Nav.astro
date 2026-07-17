@@ -1,0 +1,81 @@
+<header class="nav" id="site-nav">
+  <div class="container nav-inner">
+    <a href="/" class="wordmark">DUDELA</a>
+    <nav class="links">
+      <a href="/prepare">Prepare</a>
+      <a href="/community">Community</a>
+      <a href="/podcast">Podcast</a>
+      <a href="/resources">Resources</a>
+      <a href="/about">About</a>
+    </nav>
+    <a href="/join" class="btn btn-primary join-btn">Join</a>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding: 1.1rem 0;
+    background: transparent;
+    transition: background 0.3s var(--ease-out), padding 0.3s var(--ease-out), backdrop-filter 0.3s ease;
+  }
+  .nav.scrolled {
+    background: rgba(18, 24, 15, 0.88);
+    backdrop-filter: blur(10px);
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(245, 239, 227, 0.08);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .wordmark {
+    font-family: var(--font-label);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--cream-100);
+    text-decoration: none;
+    font-size: 1.05rem;
+  }
+  .links {
+    display: none;
+    gap: 2rem;
+    font-family: var(--font-label);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .links a {
+    color: rgba(245, 239, 227, 0.85);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+  .links a:hover {
+    opacity: 0.7;
+  }
+  .join-btn {
+    padding: 0.6rem 1.3rem;
+    font-size: 0.85rem;
+  }
+  @media (min-width: 860px) {
+    .links {
+      display: flex;
+    }
+  }
+</style>
+
+<script>
+  const nav = document.getElementById("site-nav");
+  const onScroll = () => {
+    if (!nav) return;
+    if (window.scrollY > 60) nav.classList.add("scrolled");
+    else nav.classList.remove("scrolled");
+  };
+  document.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+</script>

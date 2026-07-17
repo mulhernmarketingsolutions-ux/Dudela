@@ -1,0 +1,117 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
+---
+<BaseLayout title="Free Dad Prep Guide — Dudela" description="15 things every dad should do before the baby arrives. Free.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">Free Guide</p>
+        <h1>15 Things Every Dad Should Do Before the Baby Arrives</h1>
+        <p class="hero-sub">
+          Emotional, financial, partnership, advocacy, and identity — the five things
+          nobody hands you a checklist for. We did.
+        </p>
+        <form class="email-form">
+          <input type="email" name="email" placeholder="you@email.com" required />
+          <button type="submit" class="btn btn-primary">Send Me the Guide</button>
+        </form>
+      </div>
+      <PhotoPlaceholder label="Guide cover mockup" ratio="4/5" />
+    </div>
+  </section>
+
+  <section class="whats-inside section-light">
+    <div class="container">
+      <p class="eyebrow">What's inside</p>
+      <div class="inside-grid">
+        <div><h3>Emotional</h3><p>What you're actually feeling, and why it's normal.</p></div>
+        <div><h3>Financial</h3><p>Easy wins, even on a budget.</p></div>
+        <div><h3>Partnership</h3><p>How to actually show up for her.</p></div>
+        <div><h3>Advocacy</h3><p>Know what's coming so you can speak up when it matters.</p></div>
+        <div><h3>Identity</h3><p>Deciding what kind of dad you want to be, on purpose.</p></div>
+      </div>
+      <p class="body-note">
+        Conversation starters and resource recommendations in every section. This is the
+        free starting point — the <a href="/kit">Dudela Prep Kit</a> goes five times deeper
+        when you're ready.
+      </p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    max-width: 16ch;
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+    margin-bottom: 1.75rem;
+  }
+  .email-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    max-width: 460px;
+  }
+  .email-form input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .whats-inside {
+    padding: var(--space-6) 0;
+  }
+  .inside-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .inside-grid h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+  }
+  .inside-grid p {
+    color: var(--text-on-light-muted);
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  .body-note {
+    max-width: 60ch;
+    color: var(--text-on-light-muted);
+  }
+  .body-note a {
+    color: var(--rust-600);
+  }
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

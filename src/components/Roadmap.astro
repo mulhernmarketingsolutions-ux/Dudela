@@ -1,0 +1,274 @@
+---
+const stages = [
+  {
+    id: "ttc",
+    label: "Trying to Conceive",
+    mission: "Get your head right before the two lines show up.",
+    free: [{ title: "Why We Started Dudela (And What's Next for New Dads)", type: "Episode" }],
+    paid: null,
+  },
+  {
+    id: "8wk",
+    label: "8 Weeks",
+    mission: "The news is real. Now what?",
+    free: [
+      { title: "Free Dad Prep Guide", type: "Guide" },
+      { title: "The Emotional Side of Fatherhood Nobody Talks About", type: "Episode" },
+    ],
+    paid: null,
+  },
+  {
+    id: "12wk",
+    label: "12 Weeks",
+    mission: "Start telling people. Start telling yourself.",
+    free: [{ title: "So... What Does A Doula Do?", type: "Episode" }],
+    paid: null,
+  },
+  {
+    id: "shower",
+    label: "Baby Shower",
+    mission: "Show up for her, not just the gifts.",
+    free: [
+      { title: "Baby Shower Checklist", type: "Checklist" },
+      { title: "Easy Financial Wins For Dads, Even on a Budget", type: "Episode" },
+    ],
+    paid: null,
+  },
+  {
+    id: "third-tri",
+    label: "Third Trimester",
+    mission: "Pack the bag. Freeze the meals. Ask her how she's really feeling.",
+    free: [
+      { title: "Hospital Bag Checklist", type: "Checklist" },
+      { title: "What Should I Focus On Right Now? Prepping for Fatherhood Before Baby Arrives", type: "Episode" },
+    ],
+    paid: [{ title: "Dudela Prep Kit", price: "$37" }],
+  },
+  {
+    id: "hospital",
+    label: "Hospital",
+    mission: "Know exactly what your job is in that room.",
+    free: [
+      { title: "Birth Plan Template", type: "Template" },
+      { title: "What Moms Actually Need From Dads", type: "Episode" },
+    ],
+    paid: [{ title: "Steady Dad: Before Birth Workshop", price: "$100" }],
+  },
+  {
+    id: "first-night",
+    label: "First Night Home",
+    mission: "You made it home. Now survive the first 24 hours.",
+    free: [{ title: "Becoming the Dad You Never Had", type: "Episode" }],
+    paid: [{ title: "Join the Spit-Up Society", price: "$5/mo" }],
+  },
+  {
+    id: "sleep-regression",
+    label: "Sleep Regression",
+    mission: "Be steady even when you're exhausted.",
+    free: [
+      { title: "Sleep Survival Guide", type: "Guide" },
+      { title: "How to Balance Work and a Newborn Without Losing Your Mind", type: "Episode" },
+    ],
+    paid: [{ title: "Sleep Coaching Cohort", price: "Coming Soon" }],
+  },
+  {
+    id: "3mo",
+    label: "3 Months",
+    mission: "Find your rhythm as a family of three (or four).",
+    free: [{ title: "Finding Your Rhythm as a New Dad", type: "Episode" }],
+    paid: null,
+  },
+  {
+    id: "return-work",
+    label: "Returning to Work",
+    mission: "Show up for your job without checking out at home.",
+    free: [
+      { title: "Return-to-Work Guide", type: "Guide" },
+      { title: "Traveling Dad: Work Trips, Dad Guilt, and Growth", type: "Episode" },
+    ],
+    paid: null,
+  },
+  {
+    id: "6mo",
+    label: "6 Months",
+    mission: "You're not new at this anymore. Keep going.",
+    free: [{ title: "When to Prioritize Yourself as a Dad", type: "Episode" }],
+    paid: [{ title: "1:1 Coaching", price: "$1,000+/mo" }],
+  },
+  {
+    id: "first-birthday",
+    label: "First Birthday",
+    mission: "Look back at who you were. Look forward at who you're becoming.",
+    free: [{ title: "What I Wish I Knew in Year One as a New Dad", type: "Episode" }],
+    paid: null,
+  },
+];
+---
+<section class="roadmap section-light" id="roadmap">
+  <div class="container">
+    <p class="eyebrow">The signature feature</p>
+    <h2>The Dad Roadmap</h2>
+    <p class="roadmap-sub">Every milestone from finding out to the first birthday. Click a stage to see what's next.</p>
+
+    <div class="track" id="roadmap-track">
+      {stages.map((s, i) => (
+        <button class="stage" data-stage={s.id} class:list={{ active: i === 4 }}>
+          <span class="stage-index">{String(i + 1).padStart(2, "0")}</span>
+          <span class="stage-label">{s.label}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="panels">
+      {stages.map((s, i) => (
+        <div class="panel" data-panel={s.id} style={i === 4 ? "display:block" : "display:none"}>
+          <p class="panel-mission-label">Dad Mission</p>
+          <p class="panel-mission">{s.mission}</p>
+          <div class="panel-resources">
+            {s.free?.map((f) => (
+              <div class="resource resource-free">
+                <span class="resource-tag">Free</span>
+                <span>{f.title}</span>
+              </div>
+            ))}
+            {s.paid?.map((p) => (
+              <div class="resource resource-paid">
+                <span class="resource-tag">Next Step</span>
+                <span>{p.title} — {p.price}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .roadmap {
+    padding: var(--space-6) 0;
+  }
+  .roadmap h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: 0.4rem 0 0.5rem;
+  }
+  .roadmap-sub {
+    color: var(--text-on-light-muted);
+    max-width: 50ch;
+    margin-bottom: 2.5rem;
+  }
+  .track {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    scrollbar-width: thin;
+  }
+  .stage {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--bg-light-raised);
+    cursor: pointer;
+    font-family: var(--font-label);
+    text-align: left;
+    min-width: 148px;
+    transition: all 0.25s var(--ease-out);
+  }
+  .stage:hover {
+    border-color: var(--amber-500);
+  }
+  .stage.active {
+    background: var(--forest-800);
+    border-color: var(--forest-800);
+  }
+  .stage.active .stage-index,
+  .stage.active .stage-label {
+    color: var(--cream-100);
+  }
+  .stage-index {
+    font-size: 0.75rem;
+    opacity: 0.5;
+  }
+  .stage-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .panel {
+    background: var(--forest-800);
+    color: var(--cream-100);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+  }
+  .panel-mission-label {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+    color: var(--amber-500);
+    margin: 0 0 0.75rem;
+  }
+  .panel-mission {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    max-width: 40ch;
+    margin: 0 0 1.75rem;
+  }
+  .panel-resources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .resource {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    border: 1px solid var(--forest-600);
+  }
+  .resource-tag {
+    font-family: var(--font-label);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+  }
+  .resource-free .resource-tag {
+    background: var(--forest-600);
+    color: var(--cream-100);
+  }
+  .resource-paid {
+    border-color: var(--amber-500);
+  }
+  .resource-paid .resource-tag {
+    background: var(--amber-500);
+    color: var(--black);
+  }
+</style>
+
+<script>
+  const track = document.getElementById("roadmap-track");
+  if (track) {
+    track.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest("[data-stage]") as HTMLElement | null;
+      if (!btn) return;
+      const id = btn.dataset.stage;
+
+      track.querySelectorAll("[data-stage]").forEach((el) => el.classList.remove("active"));
+      btn.classList.add("active");
+
+      document.querySelectorAll("[data-panel]").forEach((el) => {
+        (el as HTMLElement).style.display = el.getAttribute("data-panel") === id ? "block" : "none";
+      });
+    });
+  }
+</script>

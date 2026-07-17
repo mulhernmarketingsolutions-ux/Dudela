@@ -1,0 +1,56 @@
+---
+const stages = [
+  "Trying to Conceive",
+  "First Trimester",
+  "Third Trimester",
+  "Hospital",
+  "New Dad",
+  "Sleep",
+];
+---
+<section class="stage-picker section-light">
+  <div class="container stage-picker-inner">
+    <h2>Where are you today?</h2>
+    <div class="stage-options">
+      {stages.map((s) => (
+        <a href={`/prepare?stage=${encodeURIComponent(s.toLowerCase().replace(/\s+/g, "-"))}`} class="stage-option">
+          {s}
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .stage-picker {
+    padding: var(--space-6) 0 var(--space-7);
+    text-align: center;
+  }
+  .stage-picker h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    margin: 0 0 2.5rem;
+  }
+  .stage-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.9rem;
+  }
+  .stage-option {
+    padding: 0.9rem 1.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    text-decoration: none;
+    color: var(--text-on-light);
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .stage-option:hover {
+    background: var(--forest-800);
+    color: var(--cream-100);
+    border-color: var(--forest-800);
+  }
+</style>

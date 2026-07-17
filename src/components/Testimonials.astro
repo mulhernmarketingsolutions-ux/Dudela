@@ -1,0 +1,53 @@
+---
+// Placeholder quotes — swap for real testimonials/reviews. Never fabricate; leave slots labeled until real ones exist.
+const quotes = [
+  { quote: "Real testimonial slot — add a quote here.", name: "Early Reader" },
+  { quote: "Real testimonial slot — add a quote here.", name: "Early Reader" },
+  { quote: "Real testimonial slot — add a quote here.", name: "Early Reader" },
+];
+---
+<section class="testimonials section-dark">
+  <div class="container">
+    <p class="eyebrow">Dads who've been where you are</p>
+    <div class="quote-grid">
+      {quotes.map((q) => (
+        <blockquote>
+          <p>&ldquo;{q.quote}&rdquo;</p>
+          <cite>{q.name}</cite>
+        </blockquote>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .testimonials {
+    padding: var(--space-6) 0;
+  }
+  .quote-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  blockquote {
+    margin: 0;
+    padding: 1.75rem;
+    border-radius: var(--radius-md);
+    background: var(--forest-700);
+    border: 1px solid var(--forest-600);
+  }
+  blockquote p {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 1rem;
+  }
+  cite {
+    font-family: var(--font-label);
+    font-style: normal;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-on-dark-muted);
+  }
+</style>

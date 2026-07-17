@@ -1,0 +1,166 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const ladder = [
+  {
+    step: "Free",
+    name: "Dad Prep Guide",
+    price: "Free",
+    desc: "The entry point. 15 things every dad should do before the baby arrives, across emotional, financial, partnership, advocacy, and identity.",
+    href: "/guide",
+    cta: "Get the Guide",
+  },
+  {
+    step: "Core",
+    name: "Dudela Prep Kit",
+    price: "$37",
+    desc: "The flagship guide. Six pillars, nine printable tools, Abigail's Corner, and real founder stories throughout.",
+    href: "/kit",
+    cta: "Get the Prep Kit",
+  },
+  {
+    step: "Live",
+    name: "Steady Dad: Before Birth Workshop",
+    price: "$100",
+    desc: "A live 90-minute session. John and Mike walk you through the framework in real time, with Q&A.",
+    href: "#",
+    cta: "Reserve Your Spot",
+  },
+  {
+    step: "Community",
+    name: "The Spit-Up Society",
+    price: "$5/mo",
+    desc: "Twice-monthly live Q&As, private community, early access to merch and guides, and first access to cohort and workshop spots.",
+    href: "/join/spit-up-society",
+    cta: "Join the Huddle",
+  },
+  {
+    step: "Group",
+    name: "Steady Dad Cohort",
+    price: "Coming Soon",
+    desc: "A four-session group program. Dads go through the framework together, live, on Thursday nights.",
+    href: "#",
+    cta: "Join the Waitlist",
+  },
+  {
+    step: "1:1",
+    name: "Personal Coaching",
+    price: "$1,000+/mo",
+    desc: "Weekly calls, direct messaging access to John or Mike, and full support across every pillar through pregnancy and year one.",
+    href: "#",
+    cta: "Apply for Coaching",
+  },
+];
+---
+<BaseLayout title="Join — Dudela" description="From the free guide to 1:1 coaching. Find the next right step.">
+  <Nav />
+
+  <section class="page-hero section-dark">
+    <div class="container">
+      <p class="eyebrow">Join Dudela</p>
+      <h1>You don't need everything. You need the next step.</h1>
+      <p class="hero-sub">Free content earns your trust first. Everything below is here when you're ready to go deeper.</p>
+    </div>
+  </section>
+
+  <section class="ladder section-light">
+    <div class="container">
+      {ladder.map((item, i) => (
+        <div class="ladder-row">
+          <div class="ladder-step">
+            <span class="ladder-index">{String(i + 1).padStart(2, "0")}</span>
+            <span class="ladder-badge">{item.step}</span>
+          </div>
+          <div class="ladder-body">
+            <h3>{item.name}</h3>
+            <p>{item.desc}</p>
+          </div>
+          <div class="ladder-action">
+            <span class="ladder-price">{item.price}</span>
+            <a href={item.href} class="btn btn-primary">{item.cta}</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero {
+    padding: 9rem 0 3.5rem;
+  }
+  .page-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    max-width: 18ch;
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 48ch;
+  }
+  .ladder {
+    padding: var(--space-6) 0;
+  }
+  .ladder-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .ladder-row:first-child {
+    padding-top: 0;
+  }
+  .ladder-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .ladder-index {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--rust-600);
+  }
+  .ladder-badge {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+  }
+  .ladder-body h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem;
+  }
+  .ladder-body p {
+    color: var(--text-on-light-muted);
+    max-width: 60ch;
+    margin: 0;
+  }
+  .ladder-action {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .ladder-price {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--rust-600);
+  }
+  @media (min-width: 900px) {
+    .ladder-row {
+      grid-template-columns: 220px 1fr 260px;
+      align-items: center;
+    }
+  }
+</style>

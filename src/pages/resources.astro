@@ -1,0 +1,99 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const resources = [
+  { name: "Free Dad Prep Guide", type: "Free", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide" },
+  { name: "Dudela Prep Kit", type: "$37", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit" },
+  { name: "Hospital Bag Checklist", type: "Free", desc: "Everything to pack, nothing you don't need.", href: "#" },
+  { name: "Birth Plan Template", type: "Free", desc: "Know your job in the room before you're in it.", href: "#" },
+  { name: "Baby Shower Checklist", type: "Free", desc: "Show up for her, not just the gifts.", href: "#" },
+  { name: "Sleep Survival Guide", type: "Free", desc: "Be steady even when you're exhausted.", href: "#" },
+  { name: "Return-to-Work Guide", type: "Free", desc: "Show up for your job without checking out at home.", href: "#" },
+  { name: "Dad Challenges", type: "Free", desc: "Small, specific things to do this week.", href: "#" },
+];
+---
+<BaseLayout title="Resources — Dudela" description="Free guides and checklists, organized by what you need next.">
+  <Nav />
+
+  <section class="page-hero section-dark">
+    <div class="container">
+      <p class="eyebrow">Resources</p>
+      <h1>Everything free, organized by what you need next.</h1>
+      <p class="hero-sub">Not sure where to start? The Dad Roadmap sorts these by stage automatically.</p>
+      <a href="/prepare" class="btn btn-primary">Go to the Dad Roadmap</a>
+    </div>
+  </section>
+
+  <section class="resource-list section-light">
+    <div class="container resource-grid">
+      {resources.map((r) => (
+        <a class="resource-card" href={r.href}>
+          <span class="resource-type">{r.type}</span>
+          <h3>{r.name}</h3>
+          <p>{r.desc}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero {
+    padding: 9rem 0 3.5rem;
+  }
+  .page-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    max-width: 18ch;
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.75rem;
+    max-width: 46ch;
+  }
+  .resource-list {
+    padding: var(--space-6) 0;
+  }
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  .resource-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.75rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    text-decoration: none;
+    color: var(--text-on-light);
+    transition: border-color 0.2s ease;
+  }
+  .resource-card:hover {
+    border-color: var(--amber-500);
+  }
+  .resource-type {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--rust-600);
+  }
+  .resource-card h3 {
+    font-family: var(--font-label);
+    font-size: 1.1rem;
+    margin: 0;
+  }
+  .resource-card p {
+    font-size: 0.9rem;
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+</style>

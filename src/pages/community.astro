@@ -1,0 +1,57 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Testimonials from "../components/Testimonials.astro";
+import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
+---
+<BaseLayout title="Community — Dudela" description="You're not doing this alone. The Spit-Up Society and the dads already in it.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">Community</p>
+        <h1>You're not doing this alone.</h1>
+        <p class="hero-sub">
+          Every page on this site ends the same way: ask another dad. Here's where that
+          actually happens.
+        </p>
+        <a href="/join/spit-up-society" class="btn btn-primary">Join the Spit-Up Society</a>
+      </div>
+      <PhotoPlaceholder label="Mike & John, two dads around a fire" ratio="4/5" />
+    </div>
+  </section>
+
+  <Testimonials />
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    max-width: 14ch;
+    margin: 0.5rem 0 1.25rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+    margin-bottom: 1.75rem;
+  }
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

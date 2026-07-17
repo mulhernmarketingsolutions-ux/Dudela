@@ -1,0 +1,31 @@
+// The Dudela Podcast — full episode list, pulled from Podbean (as of Jul 2026).
+// Newest first. Update this file as new episodes publish; homepage and podcast
+// page both read from here so there's one source of truth.
+export const episodes = [
+  { title: "Why Every Parent Needs Time Away Together", date: "2026-07-14", downloads: 121 },
+  { title: "How Much Is This Baby Really Going to Cost Me?", date: "2026-07-01", downloads: 330 },
+  { title: "The Emotional Side of Fatherhood Nobody Talks About", date: "2026-06-16", downloads: 399 },
+  { title: "Why We Started Dudela (And What's Next for New Dads)", date: "2026-06-02", downloads: 322 },
+  { title: "Family Matters: Designing Your Family on Purpose Part 1", date: "2026-05-19", downloads: 713 },
+  { title: "BONUS: We Built Something for You", date: "2026-05-13", downloads: 195 },
+  { title: "Family Matters Part II: Rhythms, Mission, & Building Your Family with John Mulhern", date: "2026-05-13", downloads: 243 },
+  { title: "Becoming the Dad You Never Had", date: "2026-05-13", downloads: 567 },
+  { title: "Family Matters: Parents, In-Laws, and Protecting Your New Family", date: "2026-04-28", downloads: 474 },
+  { title: "When to Prioritize Yourself as a Dad", date: "2026-03-24", downloads: 493 },
+  { title: "Traveling Dad: Work Trips, Dad Guilt, and Growth", date: "2026-02-24", downloads: 422 },
+  { title: "How to Balance Work and a Newborn Without Losing Your Mind", date: "2026-02-03", downloads: 650 },
+  { title: "What I Wish I Knew in Year One as a New Dad", date: "2025-12-30", downloads: 797 },
+  { title: "Surviving Twins: What the First Year Actually Looks Like", date: "2025-12-15", downloads: 465 },
+  { title: "Easy Financial Wins For Dads, Even on a Budget", date: "2025-11-20", downloads: 810 },
+  { title: "What Should I Focus On Right Now? Prepping for Fatherhood Before Baby Arrives", date: "2025-10-29", downloads: 1498 },
+  { title: "How Mentorship & Community Make You A Better Dad", date: "2025-10-08", downloads: 369 },
+  { title: "Finding Your Rhythm as a New Dad", date: "2025-09-14", downloads: 596 },
+  { title: "Coffee, Chaos & Kids: Stay-At-Home Dad Life", date: "2025-09-03", downloads: 255 },
+  { title: "Showing Up Present, Solidly & New Dad Life with Corey Davis", date: "2025-08-19", downloads: 400 },
+  { title: "Deadlifts to Diapers: Your Dad Fitness Plan", date: "2025-08-05", downloads: 413 },
+  { title: "How To Be A Husband, A Dad, and A Dude", date: "2025-07-22", downloads: 377 },
+  { title: "Diapers, Delays & TSA: Travel Tips for Dads", date: "2025-07-07", downloads: 280 },
+  { title: "What Moms Actually Need From Dads", date: "2025-06-20", downloads: 613 },
+  { title: "So... What Does A Doula Do?", date: "2025-05-02", downloads: 587 },
+  { title: "Turning Dudes into Dads: Welcome to Dudela", date: "2025-04-11", downloads: 480 },
+];

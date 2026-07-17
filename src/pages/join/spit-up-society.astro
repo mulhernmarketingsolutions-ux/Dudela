@@ -1,0 +1,126 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
+---
+<BaseLayout title="The Spit-Up Society — Dudela" description="$5/month. Weekly huddles, live Q&As, and a community of dads who get it.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">Join the Huddle</p>
+        <h1>Fatherhood was never supposed to be a solo sport.</h1>
+        <p class="hero-sub">
+          The Spit-Up Society is the $5/month home for dads who want more than content —
+          they want people. One membership, no separate platforms to juggle.
+        </p>
+        <div class="price-row">
+          <span class="price">$5</span>
+          <span class="price-label">per month</span>
+        </div>
+        <a href="#join-form" class="btn btn-primary">Join for $5/mo</a>
+      </div>
+      <PhotoPlaceholder label="Mike & John, two dads around a fire" ratio="4/5" />
+    </div>
+  </section>
+
+  <section class="perks section-light">
+    <div class="container">
+      <p class="eyebrow">What's included</p>
+      <div class="perks-grid">
+        <div class="perk"><h3>Weekly Huddles</h3><p>A standing check-in with dads who are exactly where you are.</p></div>
+        <div class="perk"><h3>Live Q&amp;A, Twice a Month</h3><p>Direct access to John and Mike. Bring your real questions.</p></div>
+        <div class="perk"><h3>Private Community</h3><p>Not a comment section. A place to actually ask another dad.</p></div>
+        <div class="perk"><h3>Womb Watch</h3><p>Behind-the-scenes audio and video following Mike and Abigail through pregnancy, in real time.</p></div>
+        <div class="perk"><h3>Early Access</h3><p>First access to cohort spots, workshop dates, and new guides before anyone else.</p></div>
+        <div class="perk"><h3>Merch Perks</h3><p>Exclusive access, including a free hat when you join.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="join-cta section-dark" id="join-form">
+    <div class="container join-cta-inner">
+      <h2>Five bucks. No pressure. Just people who get it.</h2>
+      <a href="#" class="btn btn-primary">Join the Spit-Up Society</a>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    max-width: 14ch;
+    margin: 0.5rem 0 1.25rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+    margin-bottom: 1.5rem;
+  }
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+  .price {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--amber-500);
+  }
+  .price-label {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--text-on-dark-muted);
+  }
+  .perks {
+    padding: var(--space-6) 0;
+  }
+  .perks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .perk h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+  }
+  .perk p {
+    color: var(--text-on-light-muted);
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  .join-cta {
+    padding: var(--space-6) 0;
+    text-align: center;
+  }
+  .join-cta-inner h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    max-width: 20ch;
+    margin: 0 auto 2rem;
+  }
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

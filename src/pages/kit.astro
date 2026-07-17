@@ -1,0 +1,195 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
+
+const pillars = [
+  "Emotional Regulation",
+  "Financial Stewardship",
+  "Active Partnership",
+  "Knowledge & Advocacy",
+  "Family Identity",
+];
+---
+<BaseLayout title="The Dudela Prep Kit — $37" description="Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, real founder stories.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">Dudela Presents</p>
+        <h1>The Steady Dad Prep Kit</h1>
+        <p class="hero-sub">Your no-nonsense guide to showing up strong.</p>
+        <div class="price-row">
+          <span class="price">$37</span>
+          <span class="price-label">Instant download</span>
+        </div>
+        <a href="#buy" class="btn btn-primary">Get the Prep Kit</a>
+      </div>
+      <PhotoPlaceholder label="Prep Kit cover mockup" ratio="4/5" />
+    </div>
+  </section>
+
+  <section class="welcome section-light">
+    <div class="container welcome-inner">
+      <p class="eyebrow">Meet John and Mike</p>
+      <p class="lead">
+        Hey. We're genuinely glad you're here. Not in a cheesy, corporate-guide kind of way.
+        We mean it.
+      </p>
+      <p class="body-text">
+        Most dads-to-be find themselves somewhere between low-key terrified and completely
+        overwhelmed right around now — and the internet isn't helping. Between the 47-item
+        hospital bag checklists and the unsolicited advice from everyone at work, it's hard
+        to know what actually matters. That's exactly why we built this.
+      </p>
+      <p class="body-text">
+        Straight. No fluff. No clinical detachment. We're two dads who've been in those
+        delivery rooms, had those 2am conversations with our partners, and made a lot of
+        mistakes we can help you skip. This is the thing we wish someone had handed us when
+        we were where you are right now.
+      </p>
+    </div>
+  </section>
+
+  <section class="pillars-list section-dark">
+    <div class="container">
+      <p class="eyebrow">What's inside</p>
+      <h2>Five pillars. Nine printable tools. Real stories throughout.</h2>
+      <div class="pillars-grid">
+        {pillars.map((p, i) => (
+          <div class="pillar-item">
+            <span>{String(i + 1).padStart(2, "0")}</span>
+            {p}
+          </div>
+        ))}
+      </div>
+      <p class="pillars-note">
+        Plus Abigail's Corner — expert commentary on emotional regulation from a special
+        education teacher who specializes in it — and a pregnancy roadmap organized by
+        trimester.
+      </p>
+    </div>
+  </section>
+
+  <section class="buy section-light" id="buy">
+    <div class="container buy-inner">
+      <h2>$37. Instant download. Yours to keep.</h2>
+      <a href="#" class="btn btn-primary">Get the Prep Kit</a>
+      <p class="buy-note">Prefer to start free? <a href="/guide">Get the free Dad Prep Guide</a> first.</p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    margin: 0.5rem 0 0.5rem;
+  }
+  .hero-sub {
+    font-family: var(--font-label);
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.5rem;
+  }
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+  .price {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--amber-500);
+  }
+  .price-label {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--text-on-dark-muted);
+  }
+  .welcome {
+    padding: var(--space-6) 0;
+  }
+  .welcome-inner {
+    max-width: 700px;
+  }
+  .lead {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    line-height: 1.4;
+    margin: 0.75rem 0 1.5rem;
+  }
+  .body-text {
+    color: var(--text-on-light-muted);
+    margin: 0 0 1rem;
+  }
+  .pillars-list {
+    padding: var(--space-6) 0;
+  }
+  .pillars-list h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+    max-width: 22ch;
+    margin: 0.5rem 0 2rem;
+  }
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--forest-600);
+    margin-bottom: 1.5rem;
+  }
+  .pillar-item {
+    background: var(--forest-800);
+    padding: 1.25rem 1.5rem;
+    font-family: var(--font-label);
+    font-weight: 600;
+    display: flex;
+    gap: 1rem;
+  }
+  .pillar-item span {
+    color: var(--amber-500);
+    font-family: var(--font-display);
+  }
+  .pillars-note {
+    color: var(--text-on-dark-muted);
+    max-width: 60ch;
+  }
+  .buy {
+    padding: var(--space-6) 0;
+    text-align: center;
+  }
+  .buy h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+    margin: 0 0 1.5rem;
+  }
+  .buy-note {
+    margin-top: 1.25rem;
+    color: var(--text-on-light-muted);
+    font-size: 0.9rem;
+  }
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .pillars-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

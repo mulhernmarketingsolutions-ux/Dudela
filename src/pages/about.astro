@@ -1,0 +1,213 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Testimonials from "../components/Testimonials.astro";
+import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
+---
+<BaseLayout title="About Dudela — Turning Dudes Into Dads" description="Why John and Mike built Dudela, and the Steady Dad Framework behind everything we make.">
+  <Nav />
+
+  <section class="page-hero section-dark">
+    <div class="container">
+      <p class="eyebrow">About Dudela</p>
+      <h1>We built the thing we wish someone had handed us.</h1>
+    </div>
+  </section>
+
+  <section class="story section-light">
+    <div class="container story-grid">
+      <div>
+        <p class="eyebrow">Why Dudela exists</p>
+        <p class="lead">
+          Dudela is a fatherhood preparation brand built by two real dads — John and Mike —
+          who went through pregnancy and early fatherhood the hard way and decided to build
+          the thing they wish someone had handed them.
+        </p>
+        <p class="body-text">
+          John's wife Viv had a high-risk Mo-Di twin pregnancy — cerclage at 20 weeks,
+          growth-restricted babies, more hospital visits than either of them could count.
+          Lolli and Genevieve were born at 34 weeks, straight to the NICU for a month.
+        </p>
+        <p class="body-text">
+          Mike's wife Abigail had every detail of their birth plan mapped out. Then the OB
+          called an emergency C-section and everything changed in ninety seconds.
+        </p>
+        <p class="body-text">
+          Neither of them felt ready. That's exactly the point. This is not a corporate
+          parenting brand. It's two guys, their families, and a growing community of dads
+          choosing to show up with intention.
+        </p>
+      </div>
+      <img src="/images/dad-twins-closeup.jpg" alt="John with his daughters" class="story-photo" />
+    </div>
+  </section>
+
+  <section class="founders section-light">
+    <div class="container founders-grid">
+      <div class="founder-card">
+        <PhotoPlaceholder label="John — headshot or family photo" ratio="1/1" />
+        <h3>John Mulhern</h3>
+        <p>
+          Denver native, skier, and co-founder. John's credibility story centers on Viv's
+          high-risk twin pregnancy and the month their daughters, Lolli and Genevieve, spent
+          in the NICU after being born at 34 weeks.
+        </p>
+      </div>
+      <div class="founder-card">
+        <PhotoPlaceholder label="Mike — headshot or family photo" ratio="1/1" />
+        <h3>Mike Colander</h3>
+        <p>
+          Denver native, creative director, and co-host. Mike's daughter Riley arrived by
+          emergency C-section after a fully mapped-out birth plan changed in ninety seconds.
+          His wife Abigail, a special education teacher, contributes expert commentary
+          throughout Dudela's products.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="framework section-dark">
+    <div class="container">
+      <p class="eyebrow">The Steady Dad Framework</p>
+      <h2>Every product, every episode, every conversation maps back to one of five pillars.</h2>
+      <div class="framework-grid">
+        <div class="framework-item"><span>01</span>Emotional Regulation</div>
+        <div class="framework-item"><span>02</span>Financial Stewardship</div>
+        <div class="framework-item"><span>03</span>Active Partnership</div>
+        <div class="framework-item"><span>04</span>Knowledge &amp; Advocacy</div>
+        <div class="framework-item"><span>05</span>Family Identity</div>
+      </div>
+      <p class="framework-note">
+        The Dad Roadmap is where this framework comes to life stage by stage — free to explore,
+        with the Prep Kit, workshops, and coaching there when you want to go deeper.
+      </p>
+      <a href="/prepare" class="btn btn-primary">Explore the Dad Roadmap</a>
+    </div>
+  </section>
+
+  <section class="podcast-blurb section-light">
+    <div class="container podcast-blurb-inner">
+      <div>
+        <p class="eyebrow">The Dudela Podcast</p>
+        <h2>Running for over a year. 26 episodes and counting.</h2>
+        <p class="body-text">
+          John and Mike, unfiltered — the emotional side of fatherhood, the financial wins
+          nobody talks about, and everything in between. New episodes drop regularly and
+          every one ties back to a stage on the Dad Roadmap.
+        </p>
+        <a href="/podcast" class="btn btn-ghost">Listen to the Podcast</a>
+      </div>
+    </div>
+  </section>
+
+  <Testimonials />
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero {
+    padding: 9rem 0 3.5rem;
+  }
+  .page-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    max-width: 16ch;
+    margin: 0.5rem 0 0;
+  }
+  .story {
+    padding: var(--space-6) 0;
+  }
+  .story-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .lead {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    line-height: 1.4;
+    margin: 0.75rem 0 1.5rem;
+  }
+  .body-text {
+    color: var(--text-on-light-muted);
+    max-width: 58ch;
+    margin: 0 0 1rem;
+  }
+  .story-photo {
+    width: 100%;
+    border-radius: var(--radius-md);
+    aspect-ratio: 4/5;
+    object-fit: cover;
+  }
+  .founders {
+    padding: 0 0 var(--space-6);
+  }
+  .founders-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .founder-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin: 1.25rem 0 0.5rem;
+  }
+  .founder-card p {
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+  .framework {
+    padding: var(--space-6) 0;
+  }
+  .framework h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+    max-width: 24ch;
+    margin: 0.5rem 0 2rem;
+  }
+  .framework-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--forest-600);
+    margin-bottom: 2rem;
+  }
+  .framework-item {
+    background: var(--forest-800);
+    padding: 1.75rem 1.25rem;
+    font-family: var(--font-label);
+    font-weight: 600;
+  }
+  .framework-item span {
+    display: block;
+    font-family: var(--font-display);
+    color: var(--amber-500);
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+  .framework-note {
+    max-width: 55ch;
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.75rem;
+  }
+  .podcast-blurb {
+    padding: var(--space-6) 0;
+  }
+  .podcast-blurb h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+    margin: 0.5rem 0 1rem;
+    max-width: 20ch;
+  }
+  @media (min-width: 860px) {
+    .story-grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+    .founders-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

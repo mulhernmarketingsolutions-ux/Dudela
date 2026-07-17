@@ -1,0 +1,68 @@
+---
+import PhotoPlaceholder from "./PhotoPlaceholder.astro";
+
+const pillars = [
+  { name: "Sleep", line: "Be steady even when you're exhausted.", photo: "Mike, coffee, 5am, half-awake", img: null },
+  { name: "Relationships", line: "Your marriage changes too.", photo: "John & Viv, quiet moment", img: "/images/mom-twins-field.jpg" },
+  { name: "Birth", line: "Know exactly what's coming.", photo: "Hospital bracelet, car seat install", img: null },
+  { name: "Confidence", line: "Become the dad your family needs.", photo: "High five, messy kitchen", img: "/images/dad-twins-closeup.jpg" },
+  { name: "Community", line: "You're not doing this alone.", photo: "Mike & John, laughing, fire pit", img: "/images/dad-twins-playful.jpg" },
+];
+---
+<section class="pillars section-dark">
+  <div class="container">
+    <p class="eyebrow">The framework</p>
+    <div class="pillars-grid">
+      {pillars.map((p) => (
+        <a class="pillar-card" href={`/prepare#${p.name.toLowerCase()}`}>
+          {p.img ? (
+            <img class="pillar-photo pillar-photo-real" src={p.img} alt={p.name} />
+          ) : (
+            <PhotoPlaceholder label={p.photo} ratio="3/4" class="pillar-photo" />
+          )}
+          <h3>{p.name}</h3>
+          <p>{p.line}</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .pillars {
+    padding: var(--space-6) 0;
+  }
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .pillar-card {
+    text-decoration: none;
+    color: var(--cream-100);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    transition: transform 0.35s var(--ease-out);
+  }
+  .pillar-card:hover {
+    transform: translateY(-4px);
+  }
+  .pillar-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin: 0;
+  }
+  .pillar-card p {
+    font-size: 0.92rem;
+    color: var(--text-on-dark-muted);
+    margin: 0;
+  }
+  .pillar-photo-real {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+</style>
