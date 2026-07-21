@@ -3,10 +3,13 @@
     <div class="footer-newsletter">
       <p class="eyebrow">Ask another dad</p>
       <h3>Get one email a week. No fluff.</h3>
-      <form class="newsletter-form" action="#" method="post">
+      <form class="newsletter-form" id="newsletter-form">
+        <input type="hidden" name="magnet" value="newsletter" />
+        <input type="hidden" name="source" value="footer" />
         <input type="email" name="email" placeholder="you@email.com" required />
         <button type="submit" class="btn btn-primary">Sign Up</button>
       </form>
+      <p id="newsletter-status" class="form-status"></p>
     </div>
     <div class="footer-links">
       <div>
@@ -19,12 +22,37 @@
       <div>
         <p class="footer-heading">Connect</p>
         <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">Instagram</a>
-        <a href="/contact">Contact</a>
+        <a href="/voicemail">Ask Another Dad</a>
       </div>
     </div>
     <p class="footer-legal">&copy; {new Date().getFullYear()} The Dudela Co. Turning Dudes Into Dads.</p>
   </div>
 </footer>
+
+<script>
+  const form = document.getElementById("newsletter-form") as HTMLFormElement | null;
+  const status = document.getElementById("newsletter-status") as HTMLParagraphElement | null;
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+    btn.disabled = true;
+    if (status) status.textContent = "Signing up…";
+    try {
+      const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
+      const data = await res.json();
+      if (data.ok) {
+        if (status) status.textContent = "You're in. Welcome to the list.";
+        form.reset();
+      } else {
+        if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    } catch {
+      if (status) status.textContent = "Something went wrong. Please try again.";
+      btn.disabled = false;
+    }
+  });
+</script>
 
 <style>
   .footer {
@@ -82,5 +110,11 @@
     color: var(--text-on-dark-muted);
     border-top: 1px solid var(--forest-600);
     padding-top: 1.5rem;
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+    min-height: 1.2em;
   }
 </style>

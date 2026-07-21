@@ -16,14 +16,42 @@ import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
           Emotional, financial, partnership, advocacy, and identity — the five things
           nobody hands you a checklist for. We did.
         </p>
-        <form class="email-form">
+        <form class="email-form" id="guide-form">
+          <input type="hidden" name="magnet" value="free-guide" />
+          <input type="hidden" name="source" value="/guide" />
           <input type="email" name="email" placeholder="you@email.com" required />
           <button type="submit" class="btn btn-primary">Send Me the Guide</button>
         </form>
+        <p id="guide-form-status" class="form-status"></p>
       </div>
       <PhotoPlaceholder label="Guide cover mockup" ratio="4/5" />
     </div>
   </section>
+
+  <script>
+    const form = document.getElementById("guide-form") as HTMLFormElement | null;
+    const status = document.getElementById("guide-form-status") as HTMLParagraphElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Sending…";
+      try {
+        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "Check your email — the guide is on its way.";
+          form.reset();
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  </script>
 
   <section class="whats-inside section-light">
     <div class="container">
@@ -72,6 +100,12 @@ import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
     gap: 0.75rem;
     flex-wrap: wrap;
     max-width: 460px;
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+    min-height: 1.2em;
   }
   .email-form input {
     flex: 1;

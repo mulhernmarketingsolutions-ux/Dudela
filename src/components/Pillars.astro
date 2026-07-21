@@ -2,11 +2,11 @@
 import PhotoPlaceholder from "./PhotoPlaceholder.astro";
 
 const pillars = [
-  { name: "Sleep", line: "Be steady even when you're exhausted.", photo: "Mike, coffee, 5am, half-awake", img: null },
-  { name: "Relationships", line: "Your marriage changes too.", photo: "John & Viv, quiet moment", img: "/images/mom-twins-field.jpg" },
-  { name: "Birth", line: "Know exactly what's coming.", photo: "Hospital bracelet, car seat install", img: null },
-  { name: "Confidence", line: "Become the dad your family needs.", photo: "High five, messy kitchen", img: "/images/dad-twins-closeup.jpg" },
-  { name: "Community", line: "You're not doing this alone.", photo: "Mike & John, laughing, fire pit", img: "/images/dad-twins-playful.jpg" },
+  { name: "Sleep", line: "Be steady even when you're exhausted.", photo: "Mike, coffee, 5am, half-awake", img: null, href: "/prepare?stage=sleep-regression" },
+  { name: "Relationships", line: "Your marriage changes too.", photo: "John & Viv, quiet moment", img: "/images/mom-twins-field.jpg", href: "/prepare?stage=third-tri" },
+  { name: "Birth", line: "Know exactly what's coming.", photo: "Hospital bracelet, car seat install", img: null, href: "/prepare?stage=hospital" },
+  { name: "Confidence", line: "Become the dad your family needs.", photo: "High five, messy kitchen", img: "/images/dad-twins-closeup.jpg", href: "/prepare?stage=6mo" },
+  { name: "Community", line: "You're not doing this alone.", photo: "Mike & John, laughing, fire pit", img: "/images/dad-twins-playful.jpg", href: "/join/spit-up-society" },
 ];
 ---
 <section class="pillars section-dark">
@@ -14,7 +14,7 @@ const pillars = [
     <p class="eyebrow">The framework</p>
     <div class="pillars-grid">
       {pillars.map((p) => (
-        <a class="pillar-card" href={`/prepare#${p.name.toLowerCase()}`}>
+        <a class="pillar-card" href={p.href}>
           {p.img ? (
             <img class="pillar-photo pillar-photo-real" src={p.img} alt={p.name} />
           ) : (

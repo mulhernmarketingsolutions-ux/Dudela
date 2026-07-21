@@ -1,0 +1,234 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+---
+<BaseLayout title="Leave a Voicemail — Dudela" description="Tell us what's on your mind. We're listening.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Ask Another Dad</p>
+      <h1>Leave us a voicemail.</h1>
+      <p class="hero-sub">
+        Whatever you're carrying right now — say it out loud. John and Mike listen to every
+        one of these. You'll get a note back confirming we heard you.
+      </p>
+
+      <div class="recorder" id="recorder">
+        <button type="button" id="record-btn" class="record-btn">
+          <span id="record-icon">●</span>
+          <span id="record-label">Start Recording</span>
+        </button>
+        <p id="timer" class="timer">00:00</p>
+        <audio id="playback" controls style="display:none;"></audio>
+      </div>
+
+      <form id="voicemail-form" class="voicemail-form" style="display:none;">
+        <input type="text" name="name" placeholder="Your first name (optional)" />
+        <input type="email" name="email" placeholder="you@email.com" required />
+        <button type="submit" class="btn btn-primary">Send My Voicemail</button>
+      </form>
+
+      <p id="status-msg" class="status-msg"></p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script>
+  declare const lamejs: any;
+
+  const recordBtn = document.getElementById("record-btn") as HTMLButtonElement;
+  const recordLabel = document.getElementById("record-label") as HTMLSpanElement;
+  const timerEl = document.getElementById("timer") as HTMLParagraphElement;
+  const playback = document.getElementById("playback") as HTMLAudioElement;
+  const form = document.getElementById("voicemail-form") as HTMLFormElement;
+  const statusMsg = document.getElementById("status-msg") as HTMLParagraphElement;
+
+  let mediaRecorder: MediaRecorder | null = null;
+  let chunks: BlobPart[] = [];
+  let mp3Blob: Blob | null = null;
+  let timerInterval: number | undefined;
+  let seconds = 0;
+  let isRecording = false;
+
+  function formatTime(s: number) {
+    const m = Math.floor(s / 60).toString().padStart(2, "0");
+    const sec = (s % 60).toString().padStart(2, "0");
+    return `${m}:${sec}`;
+  }
+
+  async function encodeToMp3(webmBlob: Blob): Promise<Blob> {
+    const arrayBuffer = await webmBlob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    const channels = 1;
+    const sampleRate = audioBuffer.sampleRate;
+    const encoder = new lamejs.Mp3Encoder(channels, sampleRate, 96);
+
+    const samples = audioBuffer.getChannelData(0);
+    const int16Samples = new Int16Array(samples.length);
+    for (let i = 0; i < samples.length; i++) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      int16Samples[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+
+    const blockSize = 1152;
+    const mp3Data: Uint8Array[] = [];
+    for (let i = 0; i < int16Samples.length; i += blockSize) {
+      const chunk = int16Samples.subarray(i, i + blockSize);
+      const encoded = encoder.encodeBuffer(chunk);
+      if (encoded.length > 0) mp3Data.push(new Uint8Array(encoded));
+    }
+    const final = encoder.flush();
+    if (final.length > 0) mp3Data.push(new Uint8Array(final));
+
+    return new Blob(mp3Data, { type: "audio/mp3" });
+  }
+
+  recordBtn?.addEventListener("click", async () => {
+    if (!isRecording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          statusMsg.textContent = "Processing your recording…";
+          const rawBlob = new Blob(chunks, { type: "audio/webm" });
+          mp3Blob = await encodeToMp3(rawBlob);
+          playback.src = URL.createObjectURL(mp3Blob);
+          playback.style.display = "block";
+          form.style.display = "flex";
+          statusMsg.textContent = "";
+          stream.getTracks().forEach((t) => t.stop());
+        };
+        mediaRecorder.start();
+        isRecording = true;
+        recordLabel.textContent = "Stop Recording";
+        recordBtn.classList.add("recording");
+        seconds = 0;
+        timerEl.textContent = formatTime(seconds);
+        timerInterval = window.setInterval(() => {
+          seconds++;
+          timerEl.textContent = formatTime(seconds);
+        }, 1000);
+      } catch (err) {
+        statusMsg.textContent = "We couldn't access your microphone. Check your browser permissions.";
+      }
+    } else {
+      mediaRecorder?.stop();
+      isRecording = false;
+      recordLabel.textContent = "Start Recording";
+      recordBtn.classList.remove("recording");
+      window.clearInterval(timerInterval);
+    }
+  });
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!mp3Blob) return;
+
+    const formData = new FormData(form);
+    formData.set("audio", mp3Blob, "voicemail.mp3");
+
+    const submitBtn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+    submitBtn.disabled = true;
+    statusMsg.textContent = "Sending…";
+
+    try {
+      const res = await fetch("/api/voicemail", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.ok) {
+        statusMsg.textContent = "Got it. Check your email for a note from us.";
+        form.style.display = "none";
+        playback.style.display = "none";
+      } else {
+        statusMsg.textContent = data.error || "Something went wrong. Please try again.";
+        submitBtn.disabled = false;
+      }
+    } catch {
+      statusMsg.textContent = "Something went wrong. Please try again.";
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .hero {
+    padding: 9rem 0 5rem;
+    text-align: center;
+  }
+  .hero-inner {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 2.5rem;
+  }
+  .recorder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .record-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-label);
+    font-weight: 600;
+    padding: 1rem 2rem;
+    border-radius: 999px;
+    border: 1px solid var(--amber-500);
+    background: transparent;
+    color: var(--cream-100);
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .record-btn #record-icon {
+    color: var(--amber-500);
+  }
+  .record-btn.recording {
+    background: var(--amber-500);
+    color: var(--black);
+  }
+  .record-btn.recording #record-icon {
+    color: var(--black);
+  }
+  .timer {
+    font-family: var(--font-label);
+    color: var(--text-on-dark-muted);
+    margin: 0;
+  }
+  .voicemail-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .voicemail-form input {
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .status-msg {
+    color: var(--text-on-dark-muted);
+    margin-top: 1.5rem;
+    min-height: 1.2em;
+  }
+</style>

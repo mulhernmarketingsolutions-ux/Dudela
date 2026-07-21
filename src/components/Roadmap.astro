@@ -103,6 +103,17 @@ const stages = [
     paid: null,
   },
 ];
+
+function freeHref(type) {
+  if (type === "Guide") return "/guide";
+  if (type === "Episode") return "/podcast";
+  return "/resources";
+}
+function paidHref(title) {
+  if (title.includes("Prep Kit")) return "/kit";
+  if (title.includes("Spit-Up Society")) return "/join/spit-up-society";
+  return "/join";
+}
 ---
 <section class="roadmap section-light" id="roadmap">
   <div class="container">
@@ -126,16 +137,16 @@ const stages = [
           <p class="panel-mission">{s.mission}</p>
           <div class="panel-resources">
             {s.free?.map((f) => (
-              <div class="resource resource-free">
+              <a class="resource resource-free" href={freeHref(f.type)}>
                 <span class="resource-tag">Free</span>
                 <span>{f.title}</span>
-              </div>
+              </a>
             ))}
             {s.paid?.map((p) => (
-              <div class="resource resource-paid">
+              <a class="resource resource-paid" href={paidHref(p.title)}>
                 <span class="resource-tag">Next Step</span>
                 <span>{p.title} — {p.price}</span>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -233,6 +244,13 @@ const stages = [
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
     border: 1px solid var(--forest-600);
+    text-decoration: none;
+    color: var(--cream-100);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .resource:hover {
+    border-color: var(--amber-500);
+    transform: translateY(-2px);
   }
   .resource-tag {
     font-family: var(--font-label);
@@ -257,18 +275,35 @@ const stages = [
 
 <script>
   const track = document.getElementById("roadmap-track");
+
+  function selectStage(id: string, scroll = false) {
+    const btn = track?.querySelector(`[data-stage="${id}"]`) as HTMLElement | null;
+    if (!btn) return false;
+
+    track?.querySelectorAll("[data-stage]").forEach((el) => el.classList.remove("active"));
+    btn.classList.add("active");
+
+    document.querySelectorAll("[data-panel]").forEach((el) => {
+      (el as HTMLElement).style.display = el.getAttribute("data-panel") === id ? "block" : "none";
+    });
+
+    if (scroll) {
+      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+    return true;
+  }
+
   if (track) {
     track.addEventListener("click", (e) => {
       const btn = (e.target as HTMLElement).closest("[data-stage]") as HTMLElement | null;
-      if (!btn) return;
-      const id = btn.dataset.stage;
-
-      track.querySelectorAll("[data-stage]").forEach((el) => el.classList.remove("active"));
-      btn.classList.add("active");
-
-      document.querySelectorAll("[data-panel]").forEach((el) => {
-        (el as HTMLElement).style.display = el.getAttribute("data-panel") === id ? "block" : "none";
-      });
+      if (!btn || !btn.dataset.stage) return;
+      selectStage(btn.dataset.stage, false);
     });
+
+    const params = new URLSearchParams(window.location.search);
+    const stageParam = params.get("stage");
+    if (stageParam) {
+      selectStage(stageParam, true);
+    }
   }
 </script>

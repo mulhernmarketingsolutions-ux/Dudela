@@ -43,7 +43,10 @@ import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
   <section class="join-cta section-dark" id="join-form">
     <div class="container join-cta-inner">
       <h2>Five bucks. No pressure. Just people who get it.</h2>
-      <a href="#" class="btn btn-primary">Join the Spit-Up Society</a>
+      <div class="join-cta-actions">
+        <a href="https://www.patreon.com/c/Dudela" target="_blank" rel="noopener" class="btn btn-primary">Join via Patreon</a>
+        <a href="https://ko-fi.com/dudela" target="_blank" rel="noopener" class="btn btn-ghost">Join via Ko-fi</a>
+      </div>
     </div>
   </section>
 
@@ -117,6 +120,15 @@ import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
     font-size: clamp(1.8rem, 4vw, 2.6rem);
     max-width: 20ch;
     margin: 0 auto 2rem;
+  }
+  .join-cta-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .join-cta-actions .btn-ghost {
+    color: var(--cream-100);
   }
   @media (min-width: 900px) {
     .hero-grid {
