@@ -4,8 +4,9 @@ import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Testimonials from "../components/Testimonials.astro";
 import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
+import { pillars } from "../data/pillars.js";
 ---
-<BaseLayout title="About Dudela — Turning Dudes Into Dads" description="Why John and Mike built Dudela, and the Steady Dad Framework behind everything we make.">
+<BaseLayout title="About Dudela — Turning Dudes Into Dads" description="Why John and Mike built Dudela, and the six pillars behind everything we make.">
   <Nav />
 
   <section class="page-hero section-dark">
@@ -69,14 +70,12 @@ import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
 
   <section class="framework section-dark">
     <div class="container">
-      <p class="eyebrow">The Steady Dad Framework</p>
-      <h2>Every product, every episode, every conversation maps back to one of five pillars.</h2>
+      <p class="eyebrow">The six pillars</p>
+      <h2>Every product, every episode, every conversation maps back to one of six pillars.</h2>
       <div class="framework-grid">
-        <div class="framework-item"><span>01</span>Emotional Regulation</div>
-        <div class="framework-item"><span>02</span>Financial Stewardship</div>
-        <div class="framework-item"><span>03</span>Active Partnership</div>
-        <div class="framework-item"><span>04</span>Knowledge &amp; Advocacy</div>
-        <div class="framework-item"><span>05</span>Family Identity</div>
+        {pillars.map((p, i) => (
+          <a href={`/kit#${p.slug}`} class="framework-item"><span>{String(i + 1).padStart(2, "0")}</span>{p.name}</a>
+        ))}
       </div>
       <p class="framework-note">
         The Dad Roadmap is where this framework comes to life stage by stage — free to explore,
@@ -180,6 +179,13 @@ import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
     padding: 1.75rem 1.25rem;
     font-family: var(--font-label);
     font-weight: 600;
+    display: block;
+    text-decoration: none;
+    color: var(--cream-100);
+    transition: background 0.2s ease;
+  }
+  .framework-item:hover {
+    background: var(--forest-700);
   }
   .framework-item span {
     display: block;

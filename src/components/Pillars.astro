@@ -1,24 +1,17 @@
 ---
 import PhotoPlaceholder from "./PhotoPlaceholder.astro";
-
-const pillars = [
-  { name: "Sleep", line: "Be steady even when you're exhausted.", photo: "Mike, coffee, 5am, half-awake", img: null, href: "/prepare?stage=sleep-regression" },
-  { name: "Relationships", line: "Your marriage changes too.", photo: "John & Viv, quiet moment", img: "/images/mom-twins-field.jpg", href: "/prepare?stage=third-tri" },
-  { name: "Birth", line: "Know exactly what's coming.", photo: "Hospital bracelet, car seat install", img: null, href: "/prepare?stage=hospital" },
-  { name: "Confidence", line: "Become the dad your family needs.", photo: "High five, messy kitchen", img: "/images/dad-twins-closeup.jpg", href: "/prepare?stage=6mo" },
-  { name: "Community", line: "You're not doing this alone.", photo: "Mike & John, laughing, fire pit", img: "/images/dad-twins-playful.jpg", href: "/join/spit-up-society" },
-];
+import { pillars } from "../data/pillars.js";
 ---
 <section class="pillars section-dark">
   <div class="container">
-    <p class="eyebrow">The framework</p>
+    <p class="eyebrow">The six pillars</p>
     <div class="pillars-grid">
       {pillars.map((p) => (
-        <a class="pillar-card" href={p.href}>
+        <a class="pillar-card" href={`/kit#${p.slug}`}>
           {p.img ? (
             <img class="pillar-photo pillar-photo-real" src={p.img} alt={p.name} />
           ) : (
-            <PhotoPlaceholder label={p.photo} ratio="3/4" class="pillar-photo" />
+            <PhotoPlaceholder label={p.name} ratio="3/4" class="pillar-photo" />
           )}
           <h3>{p.name}</h3>
           <p>{p.line}</p>

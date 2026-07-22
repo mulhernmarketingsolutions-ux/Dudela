@@ -13,7 +13,7 @@ const links = [
 <BaseLayout title="Start Here — Dudela" description="Everything Dudela, in one place.">
   <main class="start-here">
     <div class="start-here-inner">
-      <a href="/" class="wordmark">DUDELA</a>
+      <a href="/" class="wordmark"><img src="/logo/dudela-wordmark-green.png" alt="Dudela" /></a>
       <p class="tagline">Turning Dudes Into Dads</p>
 
       <div class="link-list">
@@ -50,13 +50,10 @@ const links = [
     align-items: center;
     text-align: center;
   }
-  .wordmark {
-    font-family: var(--font-label);
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--cream-100);
-    text-decoration: none;
-    font-size: 1.4rem;
+  .wordmark img {
+    height: 56px;
+    width: auto;
+    display: block;
   }
   .tagline {
     font-family: var(--font-display);

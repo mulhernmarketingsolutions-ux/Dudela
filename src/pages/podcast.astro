@@ -24,7 +24,7 @@ function formatDate(d) {
     <div class="container">
       <div class="episodes">
         {episodes.map((ep) => (
-          <a class="episode-row" href="#">
+          <a class="episode-row" href={ep.link} target="_blank" rel="noopener">
             <PhotoPlaceholder label="Episode thumbnail" ratio="16/9" class="episode-thumb" />
             <div class="episode-info">
               <h3>{ep.title}</h3>

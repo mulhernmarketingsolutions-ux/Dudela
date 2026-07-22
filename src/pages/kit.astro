@@ -3,14 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
-
-const pillars = [
-  "Emotional Regulation",
-  "Financial Stewardship",
-  "Active Partnership",
-  "Knowledge & Advocacy",
-  "Family Identity",
-];
+import { pillars } from "../data/pillars.js";
 ---
 <BaseLayout title="The Dudela Prep Kit — $37" description="Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, real founder stories.">
   <Nav />
@@ -56,12 +49,15 @@ const pillars = [
   <section class="pillars-list section-dark">
     <div class="container">
       <p class="eyebrow">What's inside</p>
-      <h2>Five pillars. Nine printable tools. Real stories throughout.</h2>
+      <h2>Six pillars. Nine printable tools. Real stories throughout.</h2>
       <div class="pillars-grid">
         {pillars.map((p, i) => (
-          <div class="pillar-item">
+          <div class="pillar-item" id={p.slug}>
             <span>{String(i + 1).padStart(2, "0")}</span>
-            {p}
+            <div>
+              <strong>{p.name}</strong>
+              <p class="pillar-item-line">{p.line}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -161,10 +157,22 @@ const pillars = [
     font-weight: 600;
     display: flex;
     gap: 1rem;
+    scroll-margin-top: 6rem;
   }
   .pillar-item span {
     color: var(--amber-500);
     font-family: var(--font-display);
+    flex-shrink: 0;
+  }
+  .pillar-item strong {
+    display: block;
+    font-size: 1rem;
+  }
+  .pillar-item-line {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--text-on-dark-muted);
+    margin: 0.35rem 0 0;
   }
   .pillars-note {
     color: var(--text-on-dark-muted);

@@ -1,6 +1,8 @@
 <header class="nav" id="site-nav">
   <div class="container nav-inner">
-    <a href="/" class="wordmark">DUDELA</a>
+    <a href="/" class="wordmark">
+      <img src="/logo/dudela-wordmark-green.png" alt="Dudela" />
+    </a>
 
     <nav class="links">
       <a href="/prepare">Prepare</a>
@@ -57,12 +59,14 @@
     z-index: 2;
   }
   .wordmark {
-    font-family: var(--font-label);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--cream-100);
+    display: flex;
+    align-items: center;
     text-decoration: none;
-    font-size: 1.05rem;
+  }
+  .wordmark img {
+    height: 34px;
+    width: auto;
+    display: block;
   }
   .links {
     display: none;
