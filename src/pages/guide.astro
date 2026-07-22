@@ -2,7 +2,6 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import GuideCover from "../components/GuideCover.astro";
 ---
 <BaseLayout title="Free Dad Prep Guide — Dudela" description="15 things every dad should do before the baby arrives. Free.">
   <Nav />
@@ -24,7 +23,7 @@ import GuideCover from "../components/GuideCover.astro";
         </form>
         <p id="guide-form-status" class="form-status"></p>
       </div>
-      <GuideCover title="15 Things Every Dad Should Do Before the Baby Arrives" kicker="Free Guide" />
+      <img src="/images/lead-magnet-cover.webp" alt="15 Things Every Dad Should Do Before the Baby Arrives — free guide cover" class="guide-cover-img" />
     </div>
   </section>
 
@@ -116,6 +115,11 @@ import GuideCover from "../components/GuideCover.astro";
     background: var(--forest-700);
     color: var(--cream-100);
     font-family: var(--font-sans);
+  }
+  .guide-cover-img {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 20px 50px rgba(18, 24, 15, 0.35);
   }
   .whats-inside {
     padding: var(--space-6) 0;

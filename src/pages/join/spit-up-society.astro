@@ -2,7 +2,6 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
-import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
 ---
 <BaseLayout title="The Spit-Up Society — Dudela" description="$5/month. Weekly huddles, live Q&As, and a community of dads who get it.">
   <Nav />
@@ -16,13 +15,17 @@ import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
           The Spit-Up Society is the $5/month home for dads who want more than content —
           they want people. One membership, no separate platforms to juggle.
         </p>
+        <p class="hero-callout">
+          Our first live Q&amp;A is <strong>August 4th at 7pm</strong>. Join the Society and
+          you're in — we'll email you the link.
+        </p>
         <div class="price-row">
           <span class="price">$5</span>
           <span class="price-label">per month</span>
         </div>
         <a href="#join-form" class="btn btn-primary">Join for $5/mo</a>
       </div>
-      <PhotoPlaceholder label="Mike & John, two dads around a fire" ratio="4/5" />
+      <img src="/images/IMG_0839_VSCO.JPG" alt="Mike and John with the kids" class="hero-photo" />
     </div>
   </section>
 
@@ -73,6 +76,25 @@ import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
     color: var(--text-on-dark-muted);
     max-width: 46ch;
     margin-bottom: 1.5rem;
+  }
+  .hero-callout {
+    background: var(--forest-700);
+    border: 1px solid var(--amber-500);
+    border-radius: var(--radius-sm);
+    padding: 0.9rem 1.1rem;
+    max-width: 46ch;
+    font-size: 0.92rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero-callout strong {
+    color: var(--amber-500);
+  }
+  .hero-photo {
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    object-position: 50% 20%;
+    border-radius: var(--radius-md);
   }
   .price-row {
     display: flex;

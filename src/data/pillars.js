@@ -13,7 +13,7 @@ export const pillars = [
     slug: "money-ready",
     name: "Get Your Money Ready",
     line: "Real numbers, real wins, even on a budget.",
-    img: null,
+    img: "/images/IMG_3904_(1).webp",
   },
   {
     slug: "partner",
@@ -25,7 +25,7 @@ export const pillars = [
     slug: "walking-into",
     name: "Know What You're Walking Into",
     line: "Know exactly what's coming.",
-    img: "/images/dad-twins-walking-color.jpg",
+    img: "/images/IMG_0839_VSCO.JPG",
   },
   {
     slug: "kind-of-dad",
