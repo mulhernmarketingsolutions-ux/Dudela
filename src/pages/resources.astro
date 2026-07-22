@@ -4,14 +4,14 @@ import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 
 const resources = [
-  { name: "Free Dad Prep Guide", type: "Free", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide" },
-  { name: "Dudela Prep Kit", type: "$37", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit" },
-  { name: "Hospital Bag Checklist", type: "Free", desc: "Everything to pack, nothing you don't need.", href: "#" },
-  { name: "Birth Plan Template", type: "Free", desc: "Know your job in the room before you're in it.", href: "#" },
-  { name: "Baby Shower Checklist", type: "Free", desc: "Show up for her, not just the gifts.", href: "#" },
-  { name: "Sleep Survival Guide", type: "Free", desc: "Be steady even when you're exhausted.", href: "#" },
-  { name: "Return-to-Work Guide", type: "Free", desc: "Show up for your job without checking out at home.", href: "#" },
-  { name: "Dad Challenges", type: "Free", desc: "Small, specific things to do this week.", href: "#" },
+  { name: "Free Dad Prep Guide", type: "Free", for: "For dads who haven't started yet", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide", featured: true },
+  { name: "Dudela Prep Kit", type: "$37", for: "For dads who want the full playbook", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit", featured: true },
+  { name: "Hospital Bag Checklist", type: "Free", for: "For dads a few weeks out from delivery", desc: "Everything to pack, nothing you don't need.", href: "#", img: "/images/IMG_0215_VSCO.JPG" },
+  { name: "Birth Plan Template", type: "Free", for: "For dads walking into the delivery room", desc: "Know your job in the room before you're in it.", href: "#", img: "/images/IMG_1582_VSCO.JPG" },
+  { name: "Baby Shower Checklist", type: "Free", for: "For dads hosting or helping plan", desc: "Show up for her, not just the gifts.", href: "#", img: "/images/IMG_7213.JPG" },
+  { name: "Sleep Survival Guide", type: "Free", for: "For dads in the newborn fog", desc: "Be steady even when you're exhausted.", href: "#", img: "/images/IMG_9055_VSCO.jpeg" },
+  { name: "Return-to-Work Guide", type: "Free", for: "For dads heading back to the office", desc: "Show up for your job without checking out at home.", href: "#", img: "/images/IMG_6495.JPG" },
+  { name: "Dad Challenges", type: "Free", for: "For dads who want small wins this week", desc: "Small, specific things to do this week.", href: "#", img: "/images/IMG_2506.JPG" },
 ];
 ---
 <BaseLayout title="Resources — Dudela" description="Free guides and checklists, organized by what you need next.">
@@ -29,10 +29,19 @@ const resources = [
   <section class="resource-list section-light">
     <div class="container resource-grid">
       {resources.map((r) => (
-        <a class="resource-card" href={r.href}>
-          <span class="resource-type">{r.type}</span>
-          <h3>{r.name}</h3>
-          <p>{r.desc}</p>
+        <a class={`resource-card ${r.featured ? "featured" : ""}`} href={r.href}>
+          {r.img && (
+            <div class="resource-cover">
+              <img src={r.img} alt="" loading="lazy" />
+              <span class="resource-type">{r.type}</span>
+            </div>
+          )}
+          {!r.img && <span class="resource-type resource-type-standalone">{r.type}</span>}
+          <div class="resource-body">
+            <h3>{r.name}</h3>
+            <p class="resource-for">{r.for}</p>
+            <p>{r.desc}</p>
+          </div>
         </a>
       ))}
     </div>
@@ -67,29 +76,78 @@ const resources = [
   .resource-card {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    padding: 1.75rem;
     border-radius: var(--radius-md);
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
     text-decoration: none;
     color: var(--text-on-light);
-    transition: border-color 0.2s ease;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   .resource-card:hover {
     border-color: var(--amber-500);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(18, 24, 15, 0.1);
+  }
+  .resource-cover {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+  .resource-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .resource-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(18, 24, 15, 0) 45%, rgba(18, 24, 15, 0.65) 100%);
   }
   .resource-type {
     font-family: var(--font-label);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    color: var(--cream-100);
+    font-weight: 700;
+    position: absolute;
+    left: 1rem;
+    bottom: 0.85rem;
+    z-index: 1;
+    background: rgba(18, 24, 15, 0.55);
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+  }
+  .resource-type-standalone {
+    position: static;
     color: var(--rust-600);
+    background: none;
+    padding: 1.75rem 1.75rem 0;
+  }
+  .resource-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem 1.75rem 1.75rem;
+  }
+  .resource-card.featured .resource-body {
+    padding-top: 1.75rem;
   }
   .resource-card h3 {
     font-family: var(--font-label);
     font-size: 1.1rem;
     margin: 0;
+  }
+  .resource-for {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--amber-500) !important;
+    margin: 0 !important;
   }
   .resource-card p {
     font-size: 0.9rem;

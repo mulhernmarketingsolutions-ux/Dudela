@@ -1,13 +1,16 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
+// Mirrors the real link-in-bio page (used in Instagram/TikTok bios), plus
+// the two affiliate/product links that live there: the Gumroad Prep Kit
+// checkout and the Taking Cara Babies sleep affiliate link.
 const links = [
-  { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free" },
-  { label: "Get the Prep Kit", href: "/kit", tag: "$37" },
-  { label: "Listen to the Podcast", href: "/podcast", tag: null },
+  { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free", primary: true },
+  { label: "The Dudela Prep Kit", href: "https://dudelaco.gumroad.com/l/dudela-prep-kit", tag: "$37", external: true },
+  { label: "Taking Cara Babies", sub: "The sleep resource we recommend to every dad", href: "https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC", tag: null, external: true },
+  { label: "The Dudela Podcast", href: "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ", tag: null, external: true },
   { label: "Join the Spit-Up Society", href: "/join/spit-up-society", tag: "$5/mo" },
   { label: "Leave Us a Voicemail", href: "/voicemail", tag: null },
-  { label: "The Dad Roadmap", href: "/prepare", tag: null },
 ];
 ---
 <BaseLayout title="Start Here — Dudela" description="Everything Dudela, in one place.">
@@ -18,8 +21,16 @@ const links = [
 
       <div class="link-list">
         {links.map((l) => (
-          <a class="link-btn" href={l.href}>
-            <span>{l.label}</span>
+          <a
+            class={`link-btn ${l.primary ? "primary" : ""}`}
+            href={l.href}
+            target={l.external ? "_blank" : undefined}
+            rel={l.external ? "noopener" : undefined}
+          >
+            <span class="link-btn-text">
+              <span class="link-btn-label">{l.label}</span>
+              {l.sub && <span class="link-btn-sub">{l.sub}</span>}
+            </span>
             {l.tag && <span class="tag">{l.tag}</span>}
           </a>
         ))}
@@ -27,7 +38,8 @@ const links = [
 
       <div class="socials">
         <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">Instagram</a>
-        <a href="#" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.tiktok.com/@the_dudela_official" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.youtube.com/@TheDudela-Official/videos" target="_blank" rel="noopener">YouTube</a>
       </div>
     </div>
   </main>
@@ -86,12 +98,35 @@ const links = [
     border-color: var(--amber-500);
     transform: translateY(-2px);
   }
+  .link-btn.primary {
+    background: var(--amber-500);
+    border-color: var(--amber-500);
+    color: var(--forest-900);
+  }
+  .link-btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    text-align: left;
+  }
+  .link-btn-sub {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 0.78rem;
+    opacity: 0.7;
+    text-transform: none;
+    letter-spacing: normal;
+  }
   .tag {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--amber-500);
     font-weight: 700;
+    flex-shrink: 0;
+  }
+  .link-btn.primary .tag {
+    color: var(--forest-900);
   }
   .socials {
     display: flex;

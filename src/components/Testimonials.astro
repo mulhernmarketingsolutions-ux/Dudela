@@ -1,17 +1,29 @@
 ---
 // Real testimonials, pulled from emails and public reviews (Jul 2026).
+// One is "featured" (runs full-width, larger) so the section doesn't read as
+// a flat grid of identical boxes.
 const quotes = [
+  { quote: "John and Michael create a space where dads can be honest about what they're carrying.", name: "Corey Davis", role: "Husband, Father & Entrepreneur", featured: true },
   { quote: "It's helping me prepare to become a dad and support my wife as best as possible.", name: "Nathan", role: "Dad to Be" },
   { quote: "I love your podcast. I'm just trying to figure out how to be a better dad.", name: "Jake", role: "New Dad" },
   { quote: "I wish something like Dudela had existed before I became a dad.", name: "Ryan George", role: "Dad & Creator" },
-  { quote: "John and Michael create a space where dads can be honest about what they're carrying.", name: "Corey Davis", role: "Husband, Father & Entrepreneur" },
 ];
+const featured = quotes.find((q) => q.featured);
+const rest = quotes.filter((q) => !q.featured);
 ---
 <section class="testimonials section-dark">
   <div class="container">
     <p class="eyebrow">Dads who've been where you are</p>
+
+    {featured && (
+      <blockquote class="quote-featured">
+        <p>&ldquo;{featured.quote}&rdquo;</p>
+        <cite>{featured.name} <span>&middot; {featured.role}</span></cite>
+      </blockquote>
+    )}
+
     <div class="quote-grid">
-      {quotes.map((q) => (
+      {rest.map((q) => (
         <blockquote>
           <p>&ldquo;{q.quote}&rdquo;</p>
           <cite>{q.name} <span>&middot; {q.role}</span></cite>
@@ -24,12 +36,27 @@ const quotes = [
 <style>
   .testimonials {
     padding: var(--space-6) 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .testimonials::before {
+    content: "\201C";
+    position: absolute;
+    top: -0.5rem;
+    left: 1.5rem;
+    font-family: var(--font-display);
+    font-size: 14rem;
+    line-height: 1;
+    color: rgba(245, 239, 227, 0.05);
+    pointer-events: none;
   }
   .quote-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+    position: relative;
+    z-index: 1;
   }
   blockquote {
     margin: 0;
@@ -37,11 +64,31 @@ const quotes = [
     border-radius: var(--radius-md);
     background: var(--forest-700);
     border: 1px solid var(--forest-600);
+    position: relative;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  blockquote:hover {
+    border-color: var(--amber-500);
+    transform: translateY(-2px);
   }
   blockquote p {
     font-family: var(--font-display);
     font-size: 1.2rem;
+    line-height: 1.4;
     margin: 0 0 1rem;
+  }
+  .quote-featured {
+    margin: 2rem 0 0;
+    padding: 2.5rem 2.75rem;
+    background: var(--forest-800);
+    border: 1px solid var(--amber-500);
+    position: relative;
+    z-index: 1;
+  }
+  .quote-featured p {
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    line-height: 1.42;
+    max-width: 32ch;
   }
   cite {
     font-family: var(--font-label);
@@ -49,11 +96,14 @@ const quotes = [
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--text-on-dark-muted);
+    color: var(--amber-500);
+    font-weight: 600;
   }
   cite span {
     text-transform: none;
     letter-spacing: normal;
     opacity: 0.75;
+    color: var(--text-on-dark-muted);
+    font-weight: 400;
   }
 </style>

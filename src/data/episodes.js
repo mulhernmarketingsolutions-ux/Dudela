@@ -20,7 +20,7 @@
 const SHOW_URL = "https://thedudelapodcast.podbean.com";
 const SHOW_COVER = "/images/podcast/show-cover.png";
 export const SPOTIFY_URL = "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ";
-export const YOUTUBE_URL = "https://www.youtube.com/@TheDudela-Official";
+export const YOUTUBE_URL = "https://www.youtube.com/@TheDudela-Official/videos";
 export const APPLE_URL = "https://podcasts.apple.com/us/podcast/the-dudela-podcast-first-time-dad-help-and/id1807603921";
 
 export const episodes = [
