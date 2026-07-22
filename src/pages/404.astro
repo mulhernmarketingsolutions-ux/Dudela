@@ -1,0 +1,85 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const links = [
+  { label: "Free Dad Prep Guide", href: "/guide" },
+  { label: "Dudela Prep Kit", href: "/kit" },
+  { label: "The Podcast", href: "/podcast" },
+  { label: "Resources", href: "/resources" },
+  { label: "The Dad Roadmap", href: "/prepare" },
+  { label: "About", href: "/about" },
+];
+---
+<BaseLayout title="Page Not Found — Dudela" description="That page doesn't exist. Here's where to go instead.">
+  <Nav />
+
+  <section class="not-found section-dark">
+    <div class="container not-found-inner">
+      <p class="eyebrow">404</p>
+      <h1>Wrong turn. Even the best dads take one.</h1>
+      <p class="sub">Whatever you were looking for isn't here anymore — or never was.</p>
+
+      <div class="link-grid">
+        {links.map((l) => (
+          <a href={l.href} class="link-card">{l.label}</a>
+        ))}
+      </div>
+
+      <a href="/" class="btn btn-primary home-btn">Back to Home</a>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .not-found {
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    padding: 9rem 0 4rem;
+  }
+  .not-found-inner {
+    max-width: 640px;
+    text-align: center;
+    margin: 0 auto;
+  }
+  .not-found h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.1;
+    margin: 0.5rem 0 1rem;
+  }
+  .sub {
+    color: var(--text-on-dark-muted);
+    max-width: 42ch;
+    margin: 0 auto 2.5rem;
+  }
+  .link-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 2.5rem;
+  }
+  .link-card {
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    text-decoration: none;
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.92rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .link-card:hover {
+    border-color: var(--amber-500);
+    transform: translateY(-2px);
+  }
+  .home-btn {
+    display: inline-flex;
+  }
+</style>

@@ -3,7 +3,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Testimonials from "../components/Testimonials.astro";
-import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
 ---
 <BaseLayout title="Community — Dudela" description="You're not doing this alone. The Spit-Up Society and the dads already in it.">
   <Nav />
@@ -19,7 +18,7 @@ import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
         </p>
         <a href="/join/spit-up-society" class="btn btn-primary">Join the Spit-Up Society</a>
       </div>
-      <PhotoPlaceholder label="Mike & John, two dads around a fire" ratio="4/5" />
+      <img src="/images/IMG_3499_VSCO.JPG" alt="John, Mike, and their families hanging out together" class="community-photo" />
     </div>
   </section>
 
@@ -48,6 +47,13 @@ import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
     color: var(--text-on-dark-muted);
     max-width: 46ch;
     margin-bottom: 1.75rem;
+  }
+  .community-photo {
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    object-position: 50% 22%;
+    border-radius: var(--radius-md);
   }
   @media (min-width: 900px) {
     .hero-grid {
