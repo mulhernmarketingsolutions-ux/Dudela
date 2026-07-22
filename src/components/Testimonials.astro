@@ -1,9 +1,10 @@
 ---
-// Placeholder quotes — swap for real testimonials/reviews. Never fabricate; leave slots labeled until real ones exist.
+// Real testimonials, pulled from emails and public reviews (Jul 2026).
 const quotes = [
-  { quote: "Real testimonial slot — add a quote here.", name: "Early Reader" },
-  { quote: "Real testimonial slot — add a quote here.", name: "Early Reader" },
-  { quote: "Real testimonial slot — add a quote here.", name: "Early Reader" },
+  { quote: "It's helping me prepare to become a dad and support my wife as best as possible.", name: "Nathan", role: "Dad to Be" },
+  { quote: "I love your podcast. I'm just trying to figure out how to be a better dad.", name: "Jake", role: "New Dad" },
+  { quote: "I wish something like Dudela had existed before I became a dad.", name: "Ryan George", role: "Dad & Creator" },
+  { quote: "John and Michael create a space where dads can be honest about what they're carrying.", name: "Corey Davis", role: "Husband, Father & Entrepreneur" },
 ];
 ---
 <section class="testimonials section-dark">
@@ -13,7 +14,7 @@ const quotes = [
       {quotes.map((q) => (
         <blockquote>
           <p>&ldquo;{q.quote}&rdquo;</p>
-          <cite>{q.name}</cite>
+          <cite>{q.name} <span>&middot; {q.role}</span></cite>
         </blockquote>
       ))}
     </div>
@@ -49,5 +50,10 @@ const quotes = [
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-on-dark-muted);
+  }
+  cite span {
+    text-transform: none;
+    letter-spacing: normal;
+    opacity: 0.75;
   }
 </style>

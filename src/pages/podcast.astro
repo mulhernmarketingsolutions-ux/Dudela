@@ -2,14 +2,20 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
-import { episodes } from "../data/episodes.js";
+import { episodes, SPOTIFY_URL, YOUTUBE_URL, APPLE_URL } from "../data/episodes.js";
 
 function formatDate(d) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+
+const platforms = [
+  { key: "podbean", label: "Podbean" },
+  { key: "apple", label: "Apple Podcasts" },
+  { key: "spotify", label: "Spotify" },
+  { key: "youtube", label: "YouTube" },
+];
 ---
-<BaseLayout title="The Dudela Podcast" description="John & Mike, unfiltered. Every episode of The Dudela Podcast.">
+<BaseLayout title="The Dudela Podcast" description="John & Mike, unfiltered. Every episode of The Dudela Podcast — listen on Podbean, Apple Podcasts, Spotify, or YouTube.">
   <Nav />
 
   <section class="page-hero section-dark">
@@ -17,6 +23,12 @@ function formatDate(d) {
       <p class="eyebrow">The Dudela Podcast</p>
       <h1>John &amp; Mike, unfiltered.</h1>
       <p class="hero-sub">{episodes.length} episodes and counting. New ones drop regularly.</p>
+      <div class="follow-row">
+        <span class="follow-label">Follow the show:</span>
+        <a href={APPLE_URL} target="_blank" rel="noopener" class="follow-link">Apple Podcasts</a>
+        <a href={SPOTIFY_URL} target="_blank" rel="noopener" class="follow-link">Spotify</a>
+        <a href={YOUTUBE_URL} target="_blank" rel="noopener" class="follow-link">YouTube</a>
+      </div>
     </div>
   </section>
 
@@ -24,15 +36,25 @@ function formatDate(d) {
     <div class="container">
       <div class="episodes">
         {episodes.map((ep) => (
-          <a class="episode-row" href={ep.link} target="_blank" rel="noopener">
-            <PhotoPlaceholder label="Episode thumbnail" ratio="16/9" class="episode-thumb" />
+          <div class="episode-row">
+            <img src={ep.img} alt={ep.title} class="episode-thumb" loading="lazy" />
             <div class="episode-info">
               <h3>{ep.title}</h3>
-              <p>{formatDate(ep.date)}</p>
+              <p class="episode-date">{formatDate(ep.date)}</p>
+              <div class="episode-links">
+                <a href={ep.link} target="_blank" rel="noopener" class="listen-link">Podbean</a>
+                <a href={ep.apple} target="_blank" rel="noopener" class="listen-link">Apple</a>
+                <a href={SPOTIFY_URL} target="_blank" rel="noopener" class="listen-link">Spotify</a>
+                <a href={YOUTUBE_URL} target="_blank" rel="noopener" class="listen-link">YouTube</a>
+              </div>
             </div>
-          </a>
+          </div>
         ))}
       </div>
+      <p class="episode-note">
+        Apple and Podbean links go straight to that episode. Spotify and YouTube link to the show —
+        we're still working on exact episode links for those two.
+      </p>
     </div>
   </section>
 
@@ -50,6 +72,33 @@ function formatDate(d) {
   }
   .hero-sub {
     color: var(--text-on-dark-muted);
+    margin: 0 0 1.25rem;
+  }
+  .follow-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .follow-label {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-on-dark-muted);
+  }
+  .follow-link {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--cream-100);
+    text-decoration: none;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--forest-600);
+    border-radius: 999px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .follow-link:hover {
+    border-color: var(--amber-500);
+    background: var(--forest-700);
   }
   .episode-list {
     padding: var(--space-6) 0;
@@ -66,11 +115,13 @@ function formatDate(d) {
     align-items: center;
     padding: 1.25rem 0;
     border-bottom: 1px solid var(--border-light);
-    text-decoration: none;
     color: var(--text-on-light);
   }
   .episode-thumb {
     width: 140px;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
   }
   .episode-info h3 {
     font-family: var(--font-label);
@@ -78,9 +129,35 @@ function formatDate(d) {
     font-size: 1.05rem;
     margin: 0 0 0.3rem;
   }
-  .episode-info p {
+  .episode-date {
     font-size: 0.85rem;
     color: var(--text-on-light-muted);
-    margin: 0;
+    margin: 0 0 0.6rem;
+  }
+  .episode-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .listen-link {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    color: var(--forest-800);
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .listen-link:hover {
+    border-color: var(--forest-800);
+  }
+  .episode-note {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-on-light-muted);
   }
 </style>
