@@ -1,0 +1,152 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+---
+<BaseLayout title="Steady Dad Live Workshop — Fall Cohort Waitlist — Dudela" description="A 90-minute live workshop for expecting dads. Small group, practical, real. Join the waitlist for the Fall cohort.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Steady Dad Live Workshop</p>
+      <h1>90 minutes, live, with dads who get it.</h1>
+      <p class="hero-sub">
+        A small-group live session with John and Mike — real questions, real answers, no
+        script. The Fall cohort isn't open yet. Get on the waitlist and we'll email you the
+        second doors open, plus first pick of the time slot.
+      </p>
+
+      <form class="email-form" id="workshop-form">
+        <input type="hidden" name="magnet" value="fall-cohort-waitlist" />
+        <input type="hidden" name="source" value="/workshop" />
+        <input type="text" name="name" placeholder="First name" />
+        <input type="email" name="email" placeholder="you@email.com" required />
+        <button type="submit" class="btn btn-primary">Join the Waitlist</button>
+      </form>
+      <p id="workshop-form-status" class="form-status"></p>
+
+      <div id="workshop-resources" class="workshop-resources" style="display:none;">
+        <p class="resources-kicker">You're on the list. In the meantime:</p>
+        <div class="resources-row">
+          <a href="/guide" class="btn btn-ghost">Get the Free Dad Prep Guide</a>
+          <a href="/podcast" class="btn btn-ghost">Listen to the Podcast</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("workshop-form") as HTMLFormElement | null;
+    const status = document.getElementById("workshop-form-status") as HTMLParagraphElement | null;
+    const resources = document.getElementById("workshop-resources") as HTMLDivElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Adding you to the list…";
+      try {
+        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "";
+          form.style.display = "none";
+          if (resources) resources.style.display = "block";
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+  <section class="details section-light">
+    <div class="container details-grid">
+      <div><h3>Small group</h3><p>Not a webinar. A real conversation, capped so everyone gets heard.</p></div>
+      <div><h3>90 minutes</h3><p>Focused, live, no fluff — built around the same framework as everything else we make.</p></div>
+      <div><h3>$100</h3><p>One session. No subscription. Pricing and exact dates confirmed when the cohort opens.</p></div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+    text-align: center;
+  }
+  .hero-inner {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    margin: 0.5rem 0 1.25rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.75rem;
+  }
+  .email-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .email-form input {
+    flex: 1;
+    min-width: 160px;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.9rem;
+    margin-top: 0.9rem;
+    min-height: 1.2em;
+  }
+  .workshop-resources {
+    margin-top: 1.5rem;
+  }
+  .resources-kicker {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--amber-500);
+    margin-bottom: 0.9rem;
+  }
+  .resources-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .resources-row .btn-ghost {
+    color: var(--cream-100);
+  }
+  .details {
+    padding: var(--space-6) 0;
+  }
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+  .details-grid h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+  }
+  .details-grid p {
+    color: var(--text-on-light-muted);
+    margin: 0;
+    font-size: 0.92rem;
+  }
+</style>

@@ -51,5 +51,14 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toStri
   </head>
   <body>
     <slot />
+
+    <!-- SpeakPipe — same voicemail widget used on the live site. Renders its
+         own floating tab; no container div needed. -->
+    <script
+      is:inline
+      type="text/javascript"
+      src="https://www.speakpipe.com/loader/h06rk7j4thx5m863wodhtbetbdi6pl2n.js"
+      async
+    ></script>
   </body>
 </html>
