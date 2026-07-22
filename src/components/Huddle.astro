@@ -1,5 +1,4 @@
 ---
-import PhotoPlaceholder from "./PhotoPlaceholder.astro";
 ---
 <section class="huddle section-dark">
   <div class="container huddle-inner">
@@ -20,7 +19,7 @@ import PhotoPlaceholder from "./PhotoPlaceholder.astro";
       </div>
       <a href="/join/spit-up-society" class="btn btn-primary">Join the Huddle</a>
     </div>
-    <PhotoPlaceholder label="Mike & John, two dads around a fire" ratio="4/5" class="huddle-photo" />
+    <img src="/images/IMG_9055_VSCO.jpeg" alt="Mike and John recording the Dudela Podcast" class="huddle-photo" />
   </div>
 </section>
 
@@ -81,6 +80,13 @@ import PhotoPlaceholder from "./PhotoPlaceholder.astro";
     letter-spacing: 0.08em;
     font-size: 0.75rem;
     color: var(--text-on-dark-muted);
+  }
+  .huddle-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    object-position: 50% 30%;
+    border-radius: var(--radius-md);
   }
   @media (min-width: 900px) {
     .huddle-inner {

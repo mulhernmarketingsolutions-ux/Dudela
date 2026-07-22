@@ -3,7 +3,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Testimonials from "../components/Testimonials.astro";
-import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
 import { pillars } from "../data/pillars.js";
 ---
 <BaseLayout title="About Dudela — Turning Dudes Into Dads" description="Why John and Mike built Dudela, and the six pillars behind everything we make.">
@@ -40,14 +39,14 @@ import { pillars } from "../data/pillars.js";
           choosing to show up with intention.
         </p>
       </div>
-      <img src="/images/dad-twins-closeup.jpg" alt="John with his daughters" class="story-photo" />
+      <img src="/images/IMG_2506.JPG" alt="John and Mike with their kids, wearing Dudela caps" class="story-photo" />
     </div>
   </section>
 
   <section class="founders section-light">
     <div class="container founders-grid">
       <div class="founder-card">
-        <PhotoPlaceholder label="John — headshot or family photo" ratio="1/1" />
+        <img src="/images/founder-john.jpg" alt="John Mulhern" class="founder-photo" />
         <h3>John Mulhern</h3>
         <p>
           Denver native, skier, and co-founder. John's credibility story centers on Viv's
@@ -56,7 +55,7 @@ import { pillars } from "../data/pillars.js";
         </p>
       </div>
       <div class="founder-card">
-        <PhotoPlaceholder label="Mike — headshot or family photo" ratio="1/1" />
+        <img src="/images/founder-mike.jpg" alt="Mike Colander" class="founder-photo" />
         <h3>Mike Colander</h3>
         <p>
           Denver native, creative director, and co-host. Mike's daughter Riley arrived by
@@ -148,6 +147,12 @@ import { pillars } from "../data/pillars.js";
     display: grid;
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+  .founder-photo {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
   }
   .founder-card h3 {
     font-family: var(--font-display);
