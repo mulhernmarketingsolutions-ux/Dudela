@@ -1,0 +1,110 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const links = [
+  { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free" },
+  { label: "Get the Prep Kit", href: "/kit", tag: "$37" },
+  { label: "Listen to the Podcast", href: "/podcast", tag: null },
+  { label: "Join the Spit-Up Society", href: "/join/spit-up-society", tag: "$5/mo" },
+  { label: "Leave Us a Voicemail", href: "/voicemail", tag: null },
+  { label: "The Dad Roadmap", href: "/prepare", tag: null },
+];
+---
+<BaseLayout title="Start Here — Dudela" description="Everything Dudela, in one place.">
+  <main class="start-here">
+    <div class="start-here-inner">
+      <a href="/" class="wordmark">DUDELA</a>
+      <p class="tagline">Turning Dudes Into Dads</p>
+
+      <div class="link-list">
+        {links.map((l) => (
+          <a class="link-btn" href={l.href}>
+            <span>{l.label}</span>
+            {l.tag && <span class="tag">{l.tag}</span>}
+          </a>
+        ))}
+      </div>
+
+      <div class="socials">
+        <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">Instagram</a>
+        <a href="#" target="_blank" rel="noopener">TikTok</a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .start-here {
+    min-height: 100svh;
+    background: var(--forest-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+  .start-here-inner {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .wordmark {
+    font-family: var(--font-label);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--cream-100);
+    text-decoration: none;
+    font-size: 1.4rem;
+  }
+  .tagline {
+    font-family: var(--font-display);
+    color: var(--text-on-dark-muted);
+    font-size: 1.1rem;
+    margin: 0.5rem 0 2.5rem;
+  }
+  .link-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    width: 100%;
+  }
+  .link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.4rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    text-decoration: none;
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .link-btn:hover {
+    border-color: var(--amber-500);
+    transform: translateY(-2px);
+  }
+  .tag {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--amber-500);
+    font-weight: 700;
+  }
+  .socials {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+  }
+  .socials a {
+    color: var(--text-on-dark-muted);
+    text-decoration: none;
+    font-family: var(--font-label);
+    font-size: 0.9rem;
+  }
+</style>
