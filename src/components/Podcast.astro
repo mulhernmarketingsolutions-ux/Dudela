@@ -1,8 +1,8 @@
 ---
-import { episodes as allEpisodes } from "../data/episodes.js";
+import { episodes as allEpisodes, slugify } from "../data/episodes.js";
 
 // Most recent 8 episodes for the homepage row. Full archive lives on /podcast.
-const episodes = allEpisodes.slice(0, 8).map((e) => e.title);
+const episodes = allEpisodes.slice(0, 8);
 ---
 <section class="podcast section-light">
   <div class="container">
@@ -15,13 +15,13 @@ const episodes = allEpisodes.slice(0, 8).map((e) => e.title);
     </div>
     <div class="episode-row">
       {episodes.map((ep, i) => (
-        <a href="/podcast" class="episode-card">
+        <a href={`/podcast#${slugify(ep.title)}`} class="episode-card">
+          <span class="episode-ghost" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
           <span class="episode-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </span>
-          <span class="episode-number">{String(i + 1).padStart(2, "0")}</span>
-          <p>{ep}</p>
-          <span class="episode-arrow" aria-hidden="true">&rarr;</span>
+          <p>{ep.title}</p>
+          <span class="episode-cta">Listen Now <span class="episode-arrow" aria-hidden="true">&rarr;</span></span>
         </a>
       ))}
     </div>
@@ -51,65 +51,87 @@ const episodes = allEpisodes.slice(0, 8).map((e) => e.title);
   }
   .episode-row {
     display: flex;
-    gap: 1rem;
+    gap: 1.1rem;
     overflow-x: auto;
-    padding-bottom: 0.5rem;
+    padding: 0.25rem 0.25rem 1rem;
   }
   .episode-card {
+    position: relative;
     flex: 0 0 auto;
-    width: 260px;
+    width: 250px;
+    min-height: 210px;
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 1rem;
     text-decoration: none;
-    color: var(--text-on-light);
-    background: var(--bg-light-raised);
-    border: 1px solid var(--border-light);
+    color: var(--cream-100);
+    background: linear-gradient(160deg, var(--forest-800) 0%, var(--forest-900) 100%);
+    border: 1px solid var(--forest-600);
     border-radius: var(--radius-md);
     padding: 1.5rem;
-    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    transition: border-color 0.25s ease, transform 0.25s var(--ease-out), box-shadow 0.25s ease;
   }
   .episode-card:hover {
     border-color: var(--amber-500);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(18, 24, 15, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 34px rgba(18, 24, 15, 0.28);
   }
   .episode-card:hover .episode-arrow {
-    transform: translateX(3px);
+    transform: translateX(4px);
+  }
+  .episode-card:hover .episode-cta {
     opacity: 1;
   }
+  .episode-ghost {
+    position: absolute;
+    top: -0.5rem;
+    right: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 4.5rem;
+    line-height: 1;
+    color: rgba(245, 239, 227, 0.06);
+    pointer-events: none;
+  }
   .episode-icon {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: var(--forest-800);
-    color: var(--cream-100);
+    background: var(--amber-500);
+    color: var(--black);
   }
   .episode-icon svg {
-    width: 18px;
-    height: 18px;
-  }
-  .episode-number {
-    font-family: var(--font-display);
-    font-size: 0.85rem;
-    color: var(--rust-600);
-    margin-top: -0.6rem;
+    width: 19px;
+    height: 19px;
   }
   .episode-card p {
+    position: relative;
     font-family: var(--font-label);
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 1.05rem;
     line-height: 1.35;
     margin: 0;
     flex: 1;
   }
-  .episode-arrow {
-    font-size: 0.95rem;
+  .episode-cta {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
     color: var(--amber-500);
-    opacity: 0.6;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.55;
+    transition: opacity 0.2s ease;
+  }
+  .episode-arrow {
+    transition: transform 0.2s ease;
   }
 </style>

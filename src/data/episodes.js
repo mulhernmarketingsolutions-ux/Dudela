@@ -23,6 +23,16 @@ export const SPOTIFY_URL = "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ
 export const YOUTUBE_URL = "https://www.youtube.com/@TheDudela-Official/videos";
 export const APPLE_URL = "https://podcasts.apple.com/us/podcast/the-dudela-podcast-first-time-dad-help-and/id1807603921";
 
+// Shared slug helper — used both to give each episode row on /podcast a
+// stable anchor id, and by the Roadmap to deep-link straight to the right
+// episode (e.g. /podcast#why-we-started-dudela...).
+export function slugify(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 export const episodes = [
   { title: "Why Every Parent Needs Time Away Together", date: "2026-07-14", downloads: 198, link: "https://thedudelapodcast.podbean.com/e/why-every-parent-needs-time-away-together/", apple: "https://podcasts.apple.com/us/podcast/why-every-parent-needs-time-away-together/id1807603921?i=1000776812301", img: "/images/podcast/ep-why-every-parent.jpg" },
   { title: "How Much is This Baby Really Going to Cost Me?", date: "2026-07-01", downloads: 371, link: "https://thedudelapodcast.podbean.com/e/how-much-is-this-baby-really-going-to-cost-me/", apple: "https://podcasts.apple.com/us/podcast/how-much-is-this-baby-really-going-to-cost-me/id1807603921?i=1000775004576" },

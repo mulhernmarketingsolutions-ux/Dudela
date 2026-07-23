@@ -10,6 +10,15 @@ const quotes = [
 ];
 const featured = quotes.find((q) => q.featured);
 const rest = quotes.filter((q) => !q.featured);
+
+function initials(name) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 ---
 <section class="testimonials section-dark">
   <div class="container">
@@ -17,16 +26,25 @@ const rest = quotes.filter((q) => !q.featured);
 
     {featured && (
       <blockquote class="quote-featured">
+        <span class="quote-mark" aria-hidden="true">&ldquo;</span>
+        <div class="stars" aria-hidden="true">★★★★★</div>
         <p>&ldquo;{featured.quote}&rdquo;</p>
-        <cite>{featured.name} <span>&middot; {featured.role}</span></cite>
+        <div class="quote-byline">
+          <span class="avatar">{initials(featured.name)}</span>
+          <cite>{featured.name} <span>&middot; {featured.role}</span></cite>
+        </div>
       </blockquote>
     )}
 
     <div class="quote-grid">
       {rest.map((q) => (
         <blockquote>
+          <div class="stars" aria-hidden="true">★★★★★</div>
           <p>&ldquo;{q.quote}&rdquo;</p>
-          <cite>{q.name} <span>&middot; {q.role}</span></cite>
+          <div class="quote-byline">
+            <span class="avatar">{initials(q.name)}</span>
+            <cite>{q.name} <span>&middot; {q.role}</span></cite>
+          </div>
         </blockquote>
       ))}
     </div>
@@ -38,17 +56,6 @@ const rest = quotes.filter((q) => !q.featured);
     padding: var(--space-6) 0;
     position: relative;
     overflow: hidden;
-  }
-  .testimonials::before {
-    content: "\201C";
-    position: absolute;
-    top: -0.5rem;
-    left: 1.5rem;
-    font-family: var(--font-display);
-    font-size: 14rem;
-    line-height: 1;
-    color: rgba(245, 239, 227, 0.05);
-    pointer-events: none;
   }
   .quote-grid {
     display: grid;
@@ -62,48 +69,81 @@ const rest = quotes.filter((q) => !q.featured);
     margin: 0;
     padding: 1.75rem;
     border-radius: var(--radius-md);
-    background: var(--forest-700);
-    border: 1px solid var(--forest-600);
+    background: var(--cream-100);
+    color: var(--text-on-light);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
     position: relative;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    transition: transform 0.25s var(--ease-out), box-shadow 0.25s ease;
   }
   blockquote:hover {
-    border-color: var(--amber-500);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.34);
+  }
+  .stars {
+    color: var(--amber-500);
+    letter-spacing: 0.15em;
+    font-size: 0.85rem;
+    margin-bottom: 0.9rem;
   }
   blockquote p {
     font-family: var(--font-display);
     font-size: 1.2rem;
     line-height: 1.4;
-    margin: 0 0 1rem;
+    margin: 0 0 1.25rem;
+    color: var(--forest-900);
+  }
+  .quote-byline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--forest-800);
+    color: var(--cream-100);
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.8rem;
   }
   .quote-featured {
     margin: 2rem 0 0;
-    padding: 2.5rem 2.75rem;
-    background: var(--forest-800);
-    border: 1px solid var(--amber-500);
+    padding: 3rem 3rem 2.75rem;
     position: relative;
     z-index: 1;
+    border: 1px solid var(--amber-500);
+  }
+  .quote-mark {
+    position: absolute;
+    top: -1.5rem;
+    left: 1.75rem;
+    font-family: var(--font-display);
+    font-size: 8rem;
+    line-height: 1;
+    color: var(--amber-500);
+    opacity: 0.18;
+    pointer-events: none;
   }
   .quote-featured p {
-    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
     line-height: 1.42;
-    max-width: 32ch;
+    max-width: 34ch;
   }
   cite {
     font-family: var(--font-label);
     font-style: normal;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--amber-500);
-    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--forest-900);
+    font-weight: 700;
   }
   cite span {
-    text-transform: none;
-    letter-spacing: normal;
-    opacity: 0.75;
-    color: var(--text-on-dark-muted);
     font-weight: 400;
+    opacity: 0.65;
+    color: var(--text-on-light-muted);
   }
 </style>

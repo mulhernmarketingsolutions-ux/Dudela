@@ -1,4 +1,6 @@
 ---
+import { slugify } from "../data/episodes.js";
+
 const stages = [
   {
     id: "ttc",
@@ -104,9 +106,9 @@ const stages = [
   },
 ];
 
-function freeHref(type) {
-  if (type === "Guide") return "/guide";
-  if (type === "Episode") return "/podcast";
+function freeHref(f) {
+  if (f.type === "Guide") return "/guide";
+  if (f.type === "Episode") return `/podcast#${slugify(f.title)}`;
   return "/resources";
 }
 function paidHref(title) {
@@ -158,7 +160,7 @@ const ICONS = {
           <p class="panel-mission">{s.mission}</p>
           <div class="panel-resources">
             {s.free?.map((f) => (
-              <a class="resource resource-free" href={freeHref(f.type)}>
+              <a class="resource resource-free" href={freeHref(f)} target="_blank" rel="noopener">
                 <span class="resource-icon" set:html={ICONS[iconKind(f.type)]} />
                 <span class="resource-copy">
                   <span class="resource-tag">Free</span>
@@ -167,7 +169,7 @@ const ICONS = {
               </a>
             ))}
             {s.paid?.map((p) => (
-              <a class="resource resource-paid" href={paidHref(p.title)}>
+              <a class="resource resource-paid" href={paidHref(p.title)} target="_blank" rel="noopener">
                 <span class="resource-icon" set:html={ICONS.paid} />
                 <span class="resource-copy">
                   <span class="resource-tag">Next Step</span>

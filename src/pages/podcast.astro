@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { episodes, SPOTIFY_URL, YOUTUBE_URL, APPLE_URL } from "../data/episodes.js";
+import { episodes, slugify, SPOTIFY_URL, YOUTUBE_URL, APPLE_URL } from "../data/episodes.js";
 
 function formatDate(d) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -36,7 +36,7 @@ const platforms = [
     <div class="container">
       <div class="episodes">
         {episodes.map((ep) => (
-          <div class="episode-row">
+          <div class="episode-row" id={slugify(ep.title)}>
             <img src={ep.img} alt={ep.title} class="episode-thumb" loading="lazy" />
             <div class="episode-info">
               <h3>{ep.title}</h3>
@@ -116,6 +116,14 @@ const platforms = [
     padding: 1.25rem 0;
     border-bottom: 1px solid var(--border-light);
     color: var(--text-on-light);
+    scroll-margin-top: 6rem;
+  }
+  .episode-row:target {
+    animation: episode-highlight 2s ease;
+  }
+  @keyframes episode-highlight {
+    0%, 100% { background: transparent; }
+    20% { background: var(--bg-light-raised); }
   }
   .episode-thumb {
     width: 140px;

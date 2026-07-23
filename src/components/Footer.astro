@@ -34,7 +34,10 @@
         <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a>
       </div>
     </div>
-    <p class="footer-legal">&copy; {new Date().getFullYear()} The Dudela Co. Turning Dudes Into Dads.</p>
+    <p class="footer-legal">
+      &copy; {new Date().getFullYear()} The Dudela Co. Turning Dudes Into Dads.
+      <span class="footer-credit">Built by Sought After Co</span>
+    </p>
   </div>
 </footer>
 
@@ -123,6 +126,13 @@
     color: var(--text-on-dark-muted);
     border-top: 1px solid var(--forest-600);
     padding-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    justify-content: space-between;
+  }
+  .footer-credit {
+    opacity: 0.7;
   }
   .form-status {
     color: var(--text-on-dark-muted);

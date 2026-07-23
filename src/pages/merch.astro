@@ -3,88 +3,99 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 
-// Three hat designs. Swap `img` for the real product photo once it's uploaded
-// to /public/images, and swap `checkoutUrl` for the real hosted checkout link
-// from John's invoicing software (one link per design — see chat).
-const PRICE = "$38";
-const hats = [
-  {
-    name: "Design One",
-    accent: "forest",
-    img: null,
-    checkoutUrl: "mailto:dude@thedudelaco.com?subject=Dudela%20Hat%20Order%20—%20Design%20One",
-  },
-  {
-    name: "Design Two",
-    accent: "amber",
-    img: null,
-    checkoutUrl: "mailto:dude@thedudelaco.com?subject=Dudela%20Hat%20Order%20—%20Design%20Two",
-  },
-  {
-    name: "Design Three",
-    accent: "rust",
-    img: null,
-    checkoutUrl: "mailto:dude@thedudelaco.com?subject=Dudela%20Hat%20Order%20—%20Design%20Three",
-  },
+const colorways = [
+  { name: "Forest / Forest", swatch: "#2a3322" },
+  { name: "Forest / Orange", swatch: "#e27d25" },
+  { name: "Navy / Orange", swatch: "#1c2634" },
 ];
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Three new Dudela hat designs. $38, free shipping, hand-packed and shipped by John and Mike.">
+<BaseLayout title="Dudela Hats — Merch" description="Three new Dudela hat colorways are almost here. Join the waitlist — $38, free shipping, and a free month of the Spit-Up Society with every order.">
   <Nav />
 
   <section class="hero section-dark">
-    <div class="container">
-      <p class="eyebrow">New Merch</p>
-      <h1>Dudela hats just landed. Three designs.</h1>
-      <p class="hero-sub">
-        $38 each, free shipping. We pack and ship these ourselves — no warehouse, no
-        middleman, just us putting a hat in a box with your name on it.
-      </p>
-    </div>
-  </section>
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">New Merch</p>
+        <h1>Dudela hats are almost here.</h1>
+        <p class="hero-sub">
+          Three colorways, hand-packed and shipped by us. $38, free shipping — and every order
+          comes with a free month of the Spit-Up Society. Join the waitlist and we'll email you
+          the second they're ready to ship.
+        </p>
 
-  <section class="shop section-light">
-    <div class="container shop-grid">
-      {hats.map((h) => (
-        <div class={`hat-card accent-${h.accent}`}>
-          <div class="hat-photo">
-            {h.img ? (
-              <img src={h.img} alt={h.name} />
-            ) : (
-              <div class="hat-photo-placeholder">
-                <img src="/logo/dudela-badge-green.png" alt="" class="hat-placeholder-badge" />
-                <span>Photo coming soon</span>
-              </div>
-            )}
-          </div>
-          <div class="hat-body">
-            <h3>{h.name}</h3>
-            <div class="hat-meta">
-              <span class="hat-price">{PRICE}</span>
-              <span class="hat-shipping">Free shipping</span>
-            </div>
-            <a href={h.checkoutUrl} class="btn btn-primary">Get This Hat</a>
-          </div>
+        <form class="email-form" id="merch-form">
+          <input type="hidden" name="magnet" value="hat-waitlist" />
+          <input type="hidden" name="source" value="/merch" />
+          <input type="text" name="name" placeholder="First name" />
+          <input type="email" name="email" placeholder="you@email.com" required />
+          <button type="submit" class="btn btn-primary">Join the Waitlist</button>
+        </form>
+        <p id="merch-form-status" class="form-status"></p>
+
+        <div id="merch-success" class="merch-success" style="display:none;">
+          <p>You're on the list. We'll email you the second these ship.</p>
         </div>
-      ))}
+
+        <div class="colorways">
+          {colorways.map((c) => (
+            <span class="colorway">
+              <span class="swatch" style={`background:${c.swatch};`}></span>
+              {c.name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <img src="/images/dudela-hats-three-colorways.webp" alt="Three Dudela hat colorways" class="hero-photo" />
     </div>
   </section>
 
-  <section class="how section-light">
-    <div class="container how-grid">
+  <script>
+    const form = document.getElementById("merch-form") as HTMLFormElement | null;
+    const status = document.getElementById("merch-form-status") as HTMLParagraphElement | null;
+    const success = document.getElementById("merch-success") as HTMLDivElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Adding you to the list…";
+      try {
+        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "";
+          form.style.display = "none";
+          if (success) success.style.display = "block";
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+  <section class="perks section-light">
+    <div class="container perks-grid">
       <div>
-        <span class="how-index">01</span>
-        <h3>Pick your hat</h3>
-        <p>Choose the design you want above.</p>
+        <span class="perk-index">01</span>
+        <h3>$38, free shipping</h3>
+        <p>No shipping fees, no minimums. Just the hat, straight to your door.</p>
       </div>
       <div>
-        <span class="how-index">02</span>
-        <h3>Check out</h3>
-        <p>Complete your order and shipping details — takes less than a minute.</p>
+        <span class="perk-index">02</span>
+        <h3>A free month on us</h3>
+        <p>Every hat order comes with a free month of the Spit-Up Society — our community and live Q&amp;As.</p>
       </div>
       <div>
-        <span class="how-index">03</span>
-        <h3>We pack and ship</h3>
-        <p>John or Mike hand-packs it and gets it in the mail. Free shipping, no minimums.</p>
+        <span class="perk-index">03</span>
+        <h3>Tag us when it lands</h3>
+        <p>
+          When your hat shows up, tag <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">@the_dudela_official</a>
+          — we repost our favorites.
+        </p>
       </div>
     </div>
   </section>
@@ -94,129 +105,117 @@ const hats = [
 
 <style>
   .hero {
-    padding: 9rem 0 3.5rem;
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
   }
   .hero h1 {
     font-family: var(--font-display);
     font-size: clamp(2rem, 4.5vw, 3.2rem);
-    max-width: 18ch;
+    max-width: 16ch;
     margin: 0.5rem 0 1rem;
   }
   .hero-sub {
     color: var(--text-on-dark-muted);
-    max-width: 52ch;
+    max-width: 48ch;
+    margin-bottom: 1.75rem;
   }
-  .shop {
+  .email-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .email-form input {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+    min-height: 1.2em;
+  }
+  .merch-success {
+    margin-top: 0.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-sm);
+    background: var(--forest-700);
+    border: 1px solid var(--amber-500);
+  }
+  .merch-success p {
+    margin: 0;
+    color: var(--cream-100);
+    font-family: var(--font-label);
+    font-size: 0.92rem;
+  }
+  .colorways {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  .colorway {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    color: var(--text-on-dark-muted);
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(245, 239, 227, 0.3);
+  }
+  .hero-photo {
+    width: 100%;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 50px rgba(18, 24, 15, 0.35);
+  }
+  .perks {
     padding: var(--space-6) 0;
   }
-  .shop-grid {
+  .perks-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.75rem;
   }
-  .hat-card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-light);
-    background: var(--bg-light-raised);
-    overflow: hidden;
-    border-top: 4px solid var(--forest-700);
-  }
-  .accent-forest {
-    border-top-color: var(--forest-700);
-  }
-  .accent-amber {
-    border-top-color: var(--amber-500);
-  }
-  .accent-rust {
-    border-top-color: var(--rust-600);
-  }
-  .hat-photo {
-    aspect-ratio: 1 / 1;
-    background: var(--forest-900);
-  }
-  .hat-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .hat-photo-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    color: var(--text-on-dark-muted);
-    font-family: var(--font-label);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .hat-placeholder-badge {
-    width: 64px;
-    height: 64px;
-    opacity: 0.5;
-  }
-  .hat-body {
-    padding: 1.5rem 1.5rem 1.75rem;
-  }
-  .hat-body h3 {
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    margin: 0 0 0.75rem;
-  }
-  .hat-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
-  }
-  .hat-price {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    color: var(--rust-600);
-  }
-  .hat-shipping {
-    font-family: var(--font-label);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--amber-500) !important;
-  }
-  .hat-body .btn {
-    width: 100%;
-    text-align: center;
-    justify-content: center;
-  }
-  .how {
-    padding: 0 0 var(--space-6);
-  }
-  .how-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    border-top: 1px solid var(--border-light);
-    padding-top: var(--space-5);
-  }
-  .how-index {
+  .perk-index {
     font-family: var(--font-display);
     font-size: 1.5rem;
     color: var(--rust-600);
     display: block;
     margin-bottom: 0.5rem;
   }
-  .how-grid h3 {
+  .perks-grid h3 {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     margin: 0 0 0.5rem;
   }
-  .how-grid p {
+  .perks-grid p {
     color: var(--text-on-light-muted);
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+  }
+  .perks-grid a {
+    color: var(--rust-600);
+    font-weight: 600;
+  }
+
+  @media (min-width: 860px) {
+    .hero-grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
   }
 </style>
