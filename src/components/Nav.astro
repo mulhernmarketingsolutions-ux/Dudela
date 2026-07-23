@@ -13,8 +13,8 @@
 
   <div class="container nav-inner">
     <a href="/" class="wordmark" aria-label="Dudela — home">
-      <img src="/logo/dudela-badge-green.png" alt="Dudela" class="wordmark-badge" />
-      <img src="/logo/dudela-icon-white.png" alt="Dudela" class="wordmark-icon" />
+      <span class="wordmark-disc" aria-hidden="true"></span>
+      <img src="/logo/dudela-logo-white-full.png" alt="Dudela" class="wordmark-logo" />
     </a>
 
     <nav class="links">
@@ -172,36 +172,38 @@
     position: relative;
     z-index: 2;
   }
+  /* The green disc is a plain CSS circle sitting behind the logo, not part
+     of the logo art itself. That way the fist-bump + wordmark image never
+     changes at all — same file, same size, same position — while scrolling
+     only fades/shrinks the disc behind it away, so it reads as "the badge's
+     circle melts into the nav bar" rather than a logo swap. */
   .wordmark {
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;
     text-decoration: none;
-    height: 46px;
-    width: 108px;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
   }
-  .wordmark img {
+  .wordmark-disc {
     position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 100%;
-    object-fit: contain;
-    object-position: left center;
+    inset: 0;
+    border-radius: 50%;
+    background: #6d7d5b;
+    transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
+  }
+  .nav.scrolled .wordmark-disc {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  .wordmark-logo {
+    position: relative;
+    z-index: 1;
+    height: 34px;
+    width: auto;
     display: block;
-    transition: opacity 0.35s var(--ease-out);
-  }
-  .wordmark-badge {
-    opacity: 1;
-  }
-  .wordmark-icon {
-    opacity: 0;
-  }
-  .nav.scrolled .wordmark-badge {
-    opacity: 0;
-  }
-  .nav.scrolled .wordmark-icon {
-    opacity: 1;
   }
   .links {
     display: none;
