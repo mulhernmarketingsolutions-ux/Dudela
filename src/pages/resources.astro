@@ -33,7 +33,11 @@ const resources = [
         const Tag = r.comingSoon ? "div" : "a";
         return (
           <Tag class={`resource-card ${r.comingSoon ? "coming-soon" : ""}`} href={r.comingSoon ? undefined : r.href}>
-            <GuideCover title={r.name} kicker={r.type} ratio="16/11" compact class="resource-cover-el" />
+            {r.comingSoon ? (
+              <img src="/images/coming-soon-cover.png" alt="" class="resource-cover-el resource-cover-placeholder" />
+            ) : (
+              <GuideCover title={r.name} kicker={r.type} ratio="16/11" compact class="resource-cover-el" />
+            )}
             <div class="resource-body">
               <h3>{r.name}</h3>
               <p class="resource-for">{r.for}</p>
@@ -98,6 +102,12 @@ const resources = [
   }
   .resource-cover-el {
     border-radius: 0;
+  }
+  .resource-cover-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 11;
+    object-fit: cover;
+    display: block;
   }
   .resource-body {
     display: flex;

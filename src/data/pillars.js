@@ -19,7 +19,7 @@ export const pillars = [
     slug: "partner",
     name: "Be The Partner She Needs",
     line: "Your marriage changes too.",
-    img: "/images/mom-twins-field.jpg",
+    img: "/images/founder-mike.jpg",
   },
   {
     slug: "walking-into",
@@ -31,7 +31,7 @@ export const pillars = [
     slug: "kind-of-dad",
     name: "Decide What Kind of Dad You Want to Be",
     line: "Become the dad your family needs.",
-    img: "/images/dad-twins-closeup.jpg",
+    img: "/images/IMG_3499_VSCO.JPG",
   },
   {
     slug: "first-days-home",

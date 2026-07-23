@@ -3,7 +3,7 @@
     <a href="/join/spit-up-society" class="announce-link">
       <span class="announce-text">
         <strong>The Spit-Up Society is open.</strong>
-        First live Q&amp;A — Aug 4 @ 7pm.
+        <span class="announce-detail">First live Q&amp;A — Aug 4 @ 7pm.</span>
       </span>
       <span class="announce-cta">Join now &rarr;</span>
     </a>
@@ -58,10 +58,26 @@
   }
   .nav.scrolled,
   .nav.menu-open {
+    padding: 0.75rem 0;
+  }
+  /* The scrolled background/blur lives on a pseudo-element behind .nav-inner
+     rather than on .nav itself. Putting backdrop-filter directly on .nav
+     creates a new containing block for its `position: fixed` children — and
+     .mobile-menu is one of those — which broke the mobile menu's full-screen
+     overlay the instant it opened (menu-open triggers the same filter). */
+  .nav-inner::before {
+    content: "";
+    position: absolute;
+    inset: -1.1rem 0;
+    z-index: -1;
+    transition: background 0.3s var(--ease-out), backdrop-filter 0.3s ease, border-color 0.3s ease;
+    border-bottom: 1px solid transparent;
+  }
+  .nav.scrolled .nav-inner::before,
+  .nav.menu-open .nav-inner::before {
     background: rgba(18, 24, 15, 0.92);
     backdrop-filter: blur(10px);
-    padding: 0.75rem 0;
-    border-bottom: 1px solid rgba(245, 239, 227, 0.08);
+    border-bottom-color: rgba(245, 239, 227, 0.08);
   }
   .announce-banner {
     display: flex;
@@ -69,7 +85,7 @@
     justify-content: center;
     gap: 0.75rem;
     background: var(--amber-500);
-    padding: 0.55rem 2.5rem 0.55rem 1rem;
+    padding: 0.5rem 2.25rem 0.5rem 1rem;
     position: relative;
     text-align: center;
   }
@@ -78,23 +94,48 @@
   }
   .announce-link {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem 0.6rem;
+    gap: 0.6rem;
     text-decoration: none;
     color: var(--forest-900);
     font-family: var(--font-label);
     font-size: 0.82rem;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .announce-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .announce-text strong {
     font-weight: 800;
+  }
+  .announce-detail {
+    margin-left: 0.4rem;
   }
   .announce-cta {
     font-weight: 700;
     text-decoration: underline;
     text-underline-offset: 2px;
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+  @media (max-width: 560px) {
+    .announce-banner {
+      padding: 0.45rem 2.1rem 0.45rem 0.75rem;
+    }
+    .announce-link {
+      font-size: 0.72rem;
+      gap: 0.4rem;
+    }
+    .announce-detail {
+      display: none;
+    }
+    .announce-cta {
+      font-size: 0.72rem;
+    }
   }
   .announce-close {
     position: absolute;
@@ -189,7 +230,7 @@
     position: fixed;
     inset: 0;
     top: 0;
-    z-index: 1;
+    z-index: 5;
     background: var(--forest-900);
     display: flex;
     flex-direction: column;
