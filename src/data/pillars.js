@@ -48,6 +48,6 @@ export const pillars = [
     name: "First Days Home Playbook",
     line: "Survive the first days without losing yourself.",
     hook: "Our hour-by-hour first-72-hours playbook — the one we built after getting it wrong ourselves.",
-    img: "/images/dad-kiss-twins.jpg",
+    img: "/images/john-kissing-twins.webp",
   },
 ];
