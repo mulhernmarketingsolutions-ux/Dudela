@@ -1,0 +1,222 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+// Three hat designs. Swap `img` for the real product photo once it's uploaded
+// to /public/images, and swap `checkoutUrl` for the real hosted checkout link
+// from John's invoicing software (one link per design — see chat).
+const PRICE = "$38";
+const hats = [
+  {
+    name: "Design One",
+    accent: "forest",
+    img: null,
+    checkoutUrl: "mailto:dude@thedudelaco.com?subject=Dudela%20Hat%20Order%20—%20Design%20One",
+  },
+  {
+    name: "Design Two",
+    accent: "amber",
+    img: null,
+    checkoutUrl: "mailto:dude@thedudelaco.com?subject=Dudela%20Hat%20Order%20—%20Design%20Two",
+  },
+  {
+    name: "Design Three",
+    accent: "rust",
+    img: null,
+    checkoutUrl: "mailto:dude@thedudelaco.com?subject=Dudela%20Hat%20Order%20—%20Design%20Three",
+  },
+];
+---
+<BaseLayout title="Dudela Hats — Merch" description="Three new Dudela hat designs. $38, free shipping, hand-packed and shipped by John and Mike.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container">
+      <p class="eyebrow">New Merch</p>
+      <h1>Dudela hats just landed. Three designs.</h1>
+      <p class="hero-sub">
+        $38 each, free shipping. We pack and ship these ourselves — no warehouse, no
+        middleman, just us putting a hat in a box with your name on it.
+      </p>
+    </div>
+  </section>
+
+  <section class="shop section-light">
+    <div class="container shop-grid">
+      {hats.map((h) => (
+        <div class={`hat-card accent-${h.accent}`}>
+          <div class="hat-photo">
+            {h.img ? (
+              <img src={h.img} alt={h.name} />
+            ) : (
+              <div class="hat-photo-placeholder">
+                <img src="/logo/dudela-badge-green.png" alt="" class="hat-placeholder-badge" />
+                <span>Photo coming soon</span>
+              </div>
+            )}
+          </div>
+          <div class="hat-body">
+            <h3>{h.name}</h3>
+            <div class="hat-meta">
+              <span class="hat-price">{PRICE}</span>
+              <span class="hat-shipping">Free shipping</span>
+            </div>
+            <a href={h.checkoutUrl} class="btn btn-primary">Get This Hat</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="how section-light">
+    <div class="container how-grid">
+      <div>
+        <span class="how-index">01</span>
+        <h3>Pick your hat</h3>
+        <p>Choose the design you want above.</p>
+      </div>
+      <div>
+        <span class="how-index">02</span>
+        <h3>Check out</h3>
+        <p>Complete your order and shipping details — takes less than a minute.</p>
+      </div>
+      <div>
+        <span class="how-index">03</span>
+        <h3>We pack and ship</h3>
+        <p>John or Mike hand-packs it and gets it in the mail. Free shipping, no minimums.</p>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 3.5rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    max-width: 18ch;
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 52ch;
+  }
+  .shop {
+    padding: var(--space-6) 0;
+  }
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  .hat-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--bg-light-raised);
+    overflow: hidden;
+    border-top: 4px solid var(--forest-700);
+  }
+  .accent-forest {
+    border-top-color: var(--forest-700);
+  }
+  .accent-amber {
+    border-top-color: var(--amber-500);
+  }
+  .accent-rust {
+    border-top-color: var(--rust-600);
+  }
+  .hat-photo {
+    aspect-ratio: 1 / 1;
+    background: var(--forest-900);
+  }
+  .hat-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hat-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--text-on-dark-muted);
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .hat-placeholder-badge {
+    width: 64px;
+    height: 64px;
+    opacity: 0.5;
+  }
+  .hat-body {
+    padding: 1.5rem 1.5rem 1.75rem;
+  }
+  .hat-body h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    margin: 0 0 0.75rem;
+  }
+  .hat-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .hat-price {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--rust-600);
+  }
+  .hat-shipping {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--amber-500) !important;
+  }
+  .hat-body .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+  .how {
+    padding: 0 0 var(--space-6);
+  }
+  .how-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    padding-top: var(--space-5);
+  }
+  .how-index {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--rust-600);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .how-grid h3 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin: 0 0 0.5rem;
+  }
+  .how-grid p {
+    color: var(--text-on-light-muted);
+    margin: 0;
+    font-size: 0.9rem;
+  }
+</style>
