@@ -1,5 +1,4 @@
 ---
-import PhotoPlaceholder from "./PhotoPlaceholder.astro";
 import { episodes as allEpisodes } from "../data/episodes.js";
 
 // Most recent 8 episodes for the homepage row. Full archive lives on /podcast.
@@ -15,10 +14,14 @@ const episodes = allEpisodes.slice(0, 8).map((e) => e.title);
       <a href="/podcast" class="btn btn-ghost">All Episodes</a>
     </div>
     <div class="episode-row">
-      {episodes.map((ep) => (
+      {episodes.map((ep, i) => (
         <a href="/podcast" class="episode-card">
-          <PhotoPlaceholder label={`Ep. thumbnail: ${ep}`} ratio="16/9" />
+          <span class="episode-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </span>
+          <span class="episode-number">{String(i + 1).padStart(2, "0")}</span>
           <p>{ep}</p>
+          <span class="episode-arrow" aria-hidden="true">&rarr;</span>
         </a>
       ))}
     </div>
@@ -48,20 +51,65 @@ const episodes = allEpisodes.slice(0, 8).map((e) => e.title);
   }
   .episode-row {
     display: flex;
-    gap: 1.25rem;
+    gap: 1rem;
     overflow-x: auto;
     padding-bottom: 0.5rem;
   }
   .episode-card {
     flex: 0 0 auto;
     width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
     text-decoration: none;
     color: var(--text-on-light);
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .episode-card:hover {
+    border-color: var(--amber-500);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(18, 24, 15, 0.1);
+  }
+  .episode-card:hover .episode-arrow {
+    transform: translateX(3px);
+    opacity: 1;
+  }
+  .episode-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--forest-800);
+    color: var(--cream-100);
+  }
+  .episode-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .episode-number {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--rust-600);
+    margin-top: -0.6rem;
   }
   .episode-card p {
     font-family: var(--font-label);
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.35;
+    margin: 0;
+    flex: 1;
+  }
+  .episode-arrow {
     font-size: 0.95rem;
-    margin: 0.75rem 0 0;
+    color: var(--amber-500);
+    opacity: 0.6;
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
 </style>

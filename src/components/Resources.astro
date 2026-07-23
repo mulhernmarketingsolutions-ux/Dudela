@@ -1,22 +1,32 @@
 ---
+const DOC_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`;
+
 const resources = [
   { name: "Free Dad Prep Guide", type: "Free", href: "/guide" },
   { name: "Dudela Prep Kit", type: "$37", href: "/kit" },
-  { name: "Hospital Checklist", type: "Free", href: "/resources/hospital-checklist" },
-  { name: "Birth Plan Template", type: "Free", href: "/resources/birth-plan" },
-  { name: "Sleep Survival Guide", type: "Free", href: "/resources/sleep" },
-  { name: "Dad Challenges", type: "Free", href: "/resources/challenges" },
+  { name: "Hospital Bag Checklist", type: "Coming Soon", href: "/resources", comingSoon: true },
+  { name: "Birth Plan Template", type: "Coming Soon", href: "/resources", comingSoon: true },
+  { name: "Sleep Survival Guide", type: "Coming Soon", href: "/resources", comingSoon: true },
+  { name: "Dad Challenges", type: "Coming Soon", href: "/resources", comingSoon: true },
 ];
 ---
 <section class="resources section-light">
   <div class="container">
-    <p class="eyebrow">Resources</p>
-    <h2>Everything free, organized by what you need next.</h2>
+    <div class="resources-head">
+      <div>
+        <p class="eyebrow">Resources</p>
+        <h2>Everything free, organized by what you need next.</h2>
+      </div>
+      <a href="/resources" class="btn btn-ghost">See All Resources</a>
+    </div>
     <div class="resource-grid">
-      {resources.map((r) => (
-        <a class="resource-card" href={r.href}>
-          <span class="resource-type">{r.type}</span>
+      {resources.map((r, i) => (
+        <a class={`resource-card ${r.comingSoon ? "coming-soon" : ""}`} href={r.href}>
+          <span class="resource-icon" set:html={DOC_ICON} />
+          <span class="resource-index">{String(i + 1).padStart(2, "0")}</span>
           <span class="resource-name">{r.name}</span>
+          <span class={`resource-type ${r.comingSoon ? "is-soon" : ""}`}>{r.type}</span>
+          <span class="resource-arrow" aria-hidden="true">&rarr;</span>
         </a>
       ))}
     </div>
@@ -27,11 +37,23 @@ const resources = [
   .resources {
     padding: var(--space-6) 0;
   }
-  .resources h2 {
+  .resources-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .resources-head h2 {
     font-family: var(--font-display);
     font-size: clamp(1.7rem, 3.6vw, 2.4rem);
-    margin: 0.4rem 0 2rem;
+    margin: 0.4rem 0 0;
     max-width: 20ch;
+  }
+  .resources-head .btn-ghost {
+    border-color: var(--text-on-light-muted);
+    color: var(--text-on-light);
   }
   .resource-grid {
     display: grid;
@@ -39,19 +61,58 @@ const resources = [
     gap: 1rem;
   }
   .resource-card {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.6rem;
     padding: 1.5rem;
     border-radius: var(--radius-md);
     background: var(--bg-light-raised);
     text-decoration: none;
     color: var(--text-on-light);
     border: 1px solid var(--border-light);
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   .resource-card:hover {
     border-color: var(--amber-500);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(18, 24, 15, 0.1);
+  }
+  .resource-card:hover .resource-arrow {
+    transform: translateX(3px);
+    opacity: 1;
+  }
+  .resource-card.coming-soon {
+    opacity: 0.85;
+  }
+  .resource-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--forest-800);
+    color: var(--cream-100);
+    margin-bottom: 0.4rem;
+  }
+  .resource-icon :global(svg) {
+    width: 16px;
+    height: 16px;
+  }
+  .resource-index {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--border-light);
+  }
+  .resource-name {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 1.05rem;
+    line-height: 1.3;
   }
   .resource-type {
     font-family: var(--font-label);
@@ -60,9 +121,16 @@ const resources = [
     letter-spacing: 0.08em;
     color: var(--rust-600);
   }
-  .resource-name {
-    font-family: var(--font-label);
-    font-weight: 600;
-    font-size: 1.05rem;
+  .resource-type.is-soon {
+    color: var(--text-on-light-muted);
+  }
+  .resource-arrow {
+    position: absolute;
+    bottom: 1.4rem;
+    right: 1.5rem;
+    font-size: 0.95rem;
+    color: var(--amber-500);
+    opacity: 0.6;
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
 </style>

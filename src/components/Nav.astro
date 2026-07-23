@@ -1,4 +1,5 @@
 <header class="nav" id="site-nav">
+  <div class="nav-backdrop" aria-hidden="true"></div>
   <div class="announce-banner" id="announce-banner">
     <a href="/join/spit-up-society" class="announce-link">
       <span class="announce-text">
@@ -62,22 +63,28 @@
   .nav.menu-open {
     padding: 0.75rem 0;
   }
-  /* The scrolled background/blur lives on a pseudo-element behind .nav-inner
-     rather than on .nav itself. Putting backdrop-filter directly on .nav
-     creates a new containing block for its `position: fixed` children — and
-     .mobile-menu is one of those — which broke the mobile menu's full-screen
-     overlay the instant it opened (menu-open triggers the same filter). */
-  .nav-inner::before {
-    content: "";
+  /* The scrolled background/blur lives on a dedicated absolutely-positioned
+     div (sized to inset:0 of the header) rather than on .nav itself, and
+     rather than a pseudo-element with a hand-tuned negative inset. Putting
+     backdrop-filter directly on .nav (or sizing a pseudo-element with a
+     fixed negative inset that doesn't track the header's real content
+     height) creates two problems: (1) filter on .nav creates a new
+     containing block for its `position: fixed` children — .mobile-menu is
+     one of those — breaking the mobile menu's full-screen overlay the
+     instant it opens; (2) a fixed inset can bleed into the announce banner
+     above it once scrolled padding shrinks, "scrunching" the banner. Sizing
+     this backdrop to inset:0 of the header avoids both — it always matches
+     the header's real box (banner + nav row) exactly. */
+  .nav-backdrop {
     position: absolute;
-    inset: -1.1rem 0;
+    inset: 0;
     z-index: -1;
     transition: background 0.3s var(--ease-out), backdrop-filter 0.3s ease, border-color 0.3s ease;
     border-bottom: 1px solid transparent;
   }
-  .nav.scrolled .nav-inner::before,
-  .nav.menu-open .nav-inner::before {
-    background: rgba(18, 24, 15, 0.92);
+  .nav.scrolled .nav-backdrop,
+  .nav.menu-open .nav-backdrop {
+    background: rgba(42, 51, 34, 0.94);
     backdrop-filter: blur(10px);
     border-bottom-color: rgba(245, 239, 227, 0.08);
   }
