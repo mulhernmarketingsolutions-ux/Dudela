@@ -43,49 +43,53 @@ import { pillars } from "../data/pillars.js";
     gap: 1.25rem;
     margin-top: 2rem;
   }
+  /* NOTE: this used to be a real 3D rotateY() flip. That relies on
+     backface-visibility + transform-style: preserve-3d, which several mobile
+     WebViews (and some in-app browsers) render incorrectly — both faces show
+     at once, mirrored. Switched to a plain opacity/visibility cross-fade,
+     which has zero 3D rendering dependency and works identically everywhere. */
   .pillar-card {
     position: relative;
     aspect-ratio: 3 / 4;
-    perspective: 1200px;
     cursor: pointer;
   }
   .pillar-card-inner {
     position: absolute;
     inset: 0;
-    transition: transform 0.6s var(--ease-out);
-    transform-style: preserve-3d;
-    -webkit-transform-style: preserve-3d;
-  }
-  .pillar-card:hover .pillar-card-inner,
-  .pillar-card.flipped .pillar-card-inner,
-  .pillar-card:focus-visible .pillar-card-inner {
-    transform: rotateY(180deg);
-    -webkit-transform: rotateY(180deg);
   }
   .pillar-face {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
     border-radius: var(--radius-sm);
     overflow: hidden;
+    transition: opacity 0.35s var(--ease-out), visibility 0.35s var(--ease-out);
   }
-  /* backface-visibility hides a face visually but some browsers still let it
-     eat clicks meant for the face now on top (a known 3D-flip-card gotcha).
-     Explicit pointer-events keeps clicks routed to whichever face is
-     actually visible, so the CTA link on the back is reliably clickable. */
+  .pillar-front {
+    opacity: 1;
+    visibility: visible;
+    z-index: 2;
+  }
   .pillar-back {
+    opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    z-index: 1;
   }
   .pillar-card:hover .pillar-back,
   .pillar-card.flipped .pillar-back,
   .pillar-card:focus-visible .pillar-back {
+    opacity: 1;
+    visibility: visible;
     pointer-events: auto;
+    z-index: 2;
   }
   .pillar-card:hover .pillar-front,
   .pillar-card.flipped .pillar-front,
   .pillar-card:focus-visible .pillar-front {
+    opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    z-index: 1;
   }
   .pillar-front {
     display: flex;
@@ -144,8 +148,6 @@ import { pillars } from "../data/pillars.js";
   }
 
   .pillar-back {
-    transform: rotateY(180deg);
-    -webkit-transform: rotateY(180deg);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;

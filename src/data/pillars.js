@@ -13,7 +13,7 @@ export const pillars = [
     name: "Get Your Head Right",
     line: "The emotional side nobody warns you about.",
     hook: "We break down the exact mental shift that got us through the 2am doubt spirals — so you can skip straight to steady.",
-    img: "/images/dad-kiss-twins.jpg",
+    img: "/images/IMG_3499_VSCO.JPG",
   },
   {
     slug: "money-ready",
@@ -48,8 +48,6 @@ export const pillars = [
     name: "First Days Home Playbook",
     line: "Survive the first days without losing yourself.",
     hook: "Our hour-by-hour first-72-hours playbook — the one we built after getting it wrong ourselves.",
-    // TODO (pending photo drop from John): should become John kissing the
-    // girls, holding both — also only pasted inline in chat, not yet a file.
-    img: "/images/IMG_3499_VSCO.JPG",
+    img: "/images/dad-kiss-twins.jpg",
   },
 ];

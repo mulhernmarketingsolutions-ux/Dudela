@@ -35,10 +35,10 @@
       </div>
     </div>
     <p class="footer-legal">
-      <span>
+      <span class="footer-copy">
         &copy; {new Date().getFullYear()} The Dudela Co. Turning Dudes Into Dads.
-        <a href="/terms">Terms</a>
       </span>
+      <a href="/terms" class="footer-terms-link">Terms</a>
       <a href="https://soughtafter.design" target="_blank" rel="noopener" class="footer-credit">
         <img src="/logo/sought-after-co-mark.png" alt="" class="footer-credit-mark" />
         Built by Sought After Co
@@ -141,6 +141,16 @@
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+  .footer-terms-link {
+    flex: 1 0 100%;
+    order: 1;
+  }
+  .footer-copy {
+    order: 0;
+  }
+  .footer-credit {
+    order: 2;
   }
   .footer-credit {
     display: inline-flex;
