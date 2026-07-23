@@ -148,8 +148,10 @@ const ICONS = {
           </button>
         ))}
       </div>
+      <div class="track-fade" id="track-fade" aria-hidden="true"></div>
       <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
         <span class="scroll-hint-arrow">&rarr;</span>
+        <span class="scroll-hint-label">Swipe</span>
       </div>
     </div>
 
@@ -285,9 +287,23 @@ const ICONS = {
     color: var(--text-on-light);
   }
 
+  .track-fade {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 1.25rem;
+    width: 64px;
+    background: linear-gradient(90deg, transparent, var(--bg-light) 80%);
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.35s ease;
+  }
+  .track-fade.hint-hidden {
+    opacity: 0;
+  }
   .scroll-hint {
     position: absolute;
-    right: 0;
+    right: 4px;
     top: 28px;
     transform: translate(50%, -50%);
     display: flex;
@@ -300,8 +316,10 @@ const ICONS = {
     color: var(--forest-900);
     pointer-events: none;
     opacity: 1;
+    box-shadow: 0 4px 14px rgba(226, 125, 37, 0.45);
     transition: opacity 0.35s ease;
-    z-index: 2;
+    z-index: 3;
+    animation: hintPulse 1.6s ease-in-out infinite;
   }
   .scroll-hint.hint-hidden {
     opacity: 0;
@@ -311,9 +329,35 @@ const ICONS = {
     line-height: 1;
     animation: hintNudge 1.1s ease-in-out infinite;
   }
+  .scroll-hint-label {
+    display: none;
+  }
   @keyframes hintNudge {
     0%, 100% { transform: translateX(0); }
     50% { transform: translateX(4px); }
+  }
+  @keyframes hintPulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(226, 125, 37, 0.45); }
+    50% { box-shadow: 0 4px 22px rgba(226, 125, 37, 0.75); }
+  }
+
+  @media (max-width: 640px) {
+    .scroll-hint {
+      width: 48px;
+      height: 48px;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .scroll-hint-arrow {
+      font-size: 1.1rem;
+    }
+    .scroll-hint-label {
+      display: block;
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
   }
 
   .panel {
@@ -406,6 +450,48 @@ const ICONS = {
   const track = document.getElementById("roadmap-track");
   const trackFill = document.getElementById("track-fill");
   const scrollHint = document.getElementById("scroll-hint");
+  const trackFade = document.getElementById("track-fade");
+
+  function hideHint() {
+    scrollHint?.classList.add("hint-hidden");
+    trackFade?.classList.add("hint-hidden");
+  }
+
+  // One-time "peek" nudge: physically scrolls the track a little to the
+  // right and back so it's obvious there's more to see, rather than relying
+  // only on a static hint icon (easy to miss, especially on mobile). The
+  // programmatic scroll it performs also fires the 'scroll' event, so a
+  // flag keeps that from tripping the "user scrolled, hide the hint" logic.
+  let isPeeking = false;
+
+  function peekScroll() {
+    if (!track) return;
+    if (track.scrollLeft > 4) return; // user already moved it
+    if (track.scrollWidth <= track.clientWidth + 4) return; // nothing to scroll
+
+    isPeeking = true;
+    const start = track.scrollLeft;
+    const peekAmount = Math.min(64, track.scrollWidth - track.clientWidth);
+    const duration = 850;
+    let startTime: number | null = null;
+
+    function step(ts: number) {
+      if (startTime === null) startTime = ts;
+      const t = Math.min((ts - startTime) / duration, 1);
+      const offset = Math.sin(t * Math.PI) * peekAmount;
+      if (track && track.scrollLeft <= start + 4) {
+        track.scrollLeft = start + offset;
+      }
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setTimeout(() => {
+          isPeeking = false;
+        }, 50);
+      }
+    }
+    requestAnimationFrame(step);
+  }
 
   function updateFill(btn: HTMLElement) {
     if (!track || !trackFill) return;
@@ -441,17 +527,18 @@ const ICONS = {
     const activeBtn = track.querySelector(".stage.active") as HTMLElement | null;
     if (activeBtn) updateFill(activeBtn);
 
-    track.addEventListener(
-      "scroll",
-      () => {
-        scrollHint?.classList.add("hint-hidden");
-      },
-      { once: true, passive: true }
-    );
+    function onUserScroll() {
+      if (isPeeking) return;
+      hideHint();
+      track?.removeEventListener("scroll", onUserScroll);
+    }
+    track.addEventListener("scroll", onUserScroll, { passive: true });
 
     // If the track doesn't overflow (nothing to scroll), don't show the hint at all.
     if (track.scrollWidth <= track.clientWidth + 4) {
-      scrollHint?.classList.add("hint-hidden");
+      hideHint();
+    } else {
+      setTimeout(peekScroll, 900);
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -464,7 +551,7 @@ const ICONS = {
       const active = track.querySelector(".stage.active") as HTMLElement | null;
       if (active) updateFill(active);
       if (track.scrollWidth <= track.clientWidth + 4) {
-        scrollHint?.classList.add("hint-hidden");
+        hideHint();
       }
     });
   }

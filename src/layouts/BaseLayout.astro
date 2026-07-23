@@ -18,6 +18,10 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toStri
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Stops iOS Safari from auto-detecting number-like sequences (dates,
+         phone numbers, the "01" "02" stage/episode indices sprinkled all
+         over this site) and rendering them as blue underlined links. -->
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/png" href="/logo/dudela-badge-green.png" />
