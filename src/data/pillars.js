@@ -12,36 +12,42 @@ export const pillars = [
     slug: "head-right",
     name: "Get Your Head Right",
     line: "The emotional side nobody warns you about.",
+    hook: "We break down the exact mental shift that got us through the 2am doubt spirals — so you can skip straight to steady.",
     img: "/images/dad-kiss-twins.jpg",
   },
   {
     slug: "money-ready",
     name: "Get Your Money Ready",
     line: "Real numbers, real wins, even on a budget.",
+    hook: "Actual dollar figures, not vague budgeting advice — the real numbers we wish someone had shown us.",
     img: "/images/IMG_3904_(1).webp",
   },
   {
     slug: "partner",
     name: "Be The Partner She Needs",
     line: "Your marriage changes too.",
+    hook: "The conversations that saved our marriages, word for word — and what not to say in the first six weeks.",
     img: "/images/founder-mike.jpg",
   },
   {
     slug: "walking-into",
     name: "Know What You're Walking Into",
     line: "Know exactly what's coming.",
+    hook: "A stage-by-stage breakdown of labor, delivery, and the fourth trimester — so nothing catches you off guard.",
     img: "/images/mike-riley-face-to-face.png",
   },
   {
     slug: "kind-of-dad",
     name: "Decide What Kind of Dad You Want to Be",
     line: "Become the dad your family needs.",
+    hook: "A short exercise that forces you to decide who you want to be — before the sleep deprivation decides for you.",
     img: "/images/dad-twins-playful.jpg",
   },
   {
     slug: "first-days-home",
     name: "First Days Home Playbook",
     line: "Survive the first days without losing yourself.",
+    hook: "Our hour-by-hour first-72-hours playbook — the one we built after getting it wrong ourselves.",
     // TODO (pending photo drop from John): should become John kissing the
     // girls, holding both — also only pasted inline in chat, not yet a file.
     img: "/images/IMG_3499_VSCO.JPG",

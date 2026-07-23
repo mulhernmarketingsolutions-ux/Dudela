@@ -6,15 +6,28 @@ import { pillars } from "../data/pillars.js";
     <p class="eyebrow">The six pillars</p>
     <div class="pillars-grid">
       {pillars.map((p, i) => (
-        <a class="pillar-card" href={`/kit#${p.slug}`}>
-          {p.img && <img class="pillar-photo" src={p.img} alt={p.name} loading="lazy" />}
-          <div class="pillar-scrim"></div>
-          <span class="pillar-index">{String(i + 1).padStart(2, "0")}</span>
-          <div class="pillar-copy">
-            <h3>{p.name}</h3>
-            <p>{p.line}</p>
+        <div class="pillar-card" tabindex="0" role="button" aria-label={`${p.name} — flip for more, or press Enter`}>
+          <div class="pillar-card-inner">
+            <div class="pillar-face pillar-front">
+              {p.img && <img class="pillar-photo" src={p.img} alt={p.name} loading="lazy" />}
+              <div class="pillar-scrim"></div>
+              <span class="pillar-index">{String(i + 1).padStart(2, "0")}</span>
+              <div class="pillar-copy">
+                <h3>{p.name}</h3>
+                <p>{p.line}</p>
+                <span class="pillar-flip-hint">Tap for more &rarr;</span>
+              </div>
+            </div>
+            <div class="pillar-face pillar-back">
+              <div>
+                <span class="pillar-back-index">{String(i + 1).padStart(2, "0")}</span>
+                <h3>{p.name}</h3>
+                <p class="pillar-hook">{p.hook}</p>
+              </div>
+              <a href="/kit#buy" class="pillar-cta">See it in the Prep Kit &rarr;</a>
+            </div>
           </div>
-        </a>
+        </div>
       ))}
     </div>
   </div>
@@ -31,24 +44,35 @@ import { pillars } from "../data/pillars.js";
     margin-top: 2rem;
   }
   .pillar-card {
+    aspect-ratio: 3 / 4;
+    perspective: 1200px;
+    cursor: pointer;
+  }
+  .pillar-card-inner {
     position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s var(--ease-out);
+    transform-style: preserve-3d;
+  }
+  .pillar-card:hover .pillar-card-inner,
+  .pillar-card.flipped .pillar-card-inner,
+  .pillar-card:focus-visible .pillar-card-inner {
+    transform: rotateY(180deg);
+  }
+  .pillar-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .pillar-front {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    aspect-ratio: 3 / 4;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    text-decoration: none;
-    color: var(--cream-100);
     padding: 1.25rem;
     background: linear-gradient(160deg, var(--forest-700) 0%, var(--forest-800) 100%);
-    transition: transform 0.3s var(--ease-out);
-  }
-  .pillar-card:hover {
-    transform: translateY(-4px);
-  }
-  .pillar-card:hover .pillar-photo {
-    transform: scale(1.05);
   }
   .pillar-photo {
     position: absolute;
@@ -57,7 +81,6 @@ import { pillars } from "../data/pillars.js";
     height: 100%;
     object-fit: cover;
     z-index: 0;
-    transition: transform 0.5s var(--ease-out);
   }
   .pillar-scrim {
     position: absolute;
@@ -76,16 +99,93 @@ import { pillars } from "../data/pillars.js";
   .pillar-copy {
     position: relative;
     z-index: 2;
+    color: var(--cream-100);
   }
-  .pillar-card h3 {
+  .pillar-copy h3 {
     font-family: var(--font-display);
     font-size: 1.35rem;
     line-height: 1.15;
     margin: 0 0 0.4rem;
   }
-  .pillar-card p {
+  .pillar-copy p {
     font-size: 0.85rem;
     color: var(--text-on-dark-muted);
     margin: 0;
   }
+  .pillar-flip-hint {
+    display: block;
+    margin-top: 0.9rem;
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--amber-500);
+    opacity: 0.85;
+  }
+
+  .pillar-back {
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem;
+    background: linear-gradient(160deg, var(--forest-800) 0%, var(--forest-900) 100%);
+    border: 1px solid var(--forest-600);
+    color: var(--cream-100);
+  }
+  .pillar-back-index {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--amber-500);
+    margin-bottom: 0.75rem;
+  }
+  .pillar-back h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+  }
+  .pillar-hook {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: var(--text-on-dark-muted);
+    margin: 0;
+  }
+  .pillar-cta {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--amber-500);
+    text-decoration: none;
+    border-top: 1px solid var(--forest-600);
+    padding-top: 1rem;
+    transition: gap 0.2s ease;
+  }
+  .pillar-cta:hover {
+    text-decoration: underline;
+  }
 </style>
+
+<script>
+  // Flip cards: hover handles desktop, but touch devices have no hover, so a
+  // tap toggles the flip. Taps on the CTA itself are left alone so the link
+  // still navigates normally.
+  document.querySelectorAll(".pillar-card").forEach((card) => {
+    function toggle(e: Event) {
+      if ((e.target as HTMLElement).closest(".pillar-cta")) return;
+      e.preventDefault();
+      card.classList.toggle("flipped");
+    }
+    card.addEventListener("click", toggle);
+    card.addEventListener("keydown", (e) => {
+      const ke = e as KeyboardEvent;
+      if (ke.key === "Enter" || ke.key === " ") {
+        ke.preventDefault();
+        card.classList.toggle("flipped");
+      }
+    });
+  });
+</script>
