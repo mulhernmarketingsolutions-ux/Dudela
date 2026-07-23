@@ -5,8 +5,8 @@ import Footer from "../components/Footer.astro";
 import GuideCover from "../components/GuideCover.astro";
 
 const resources = [
-  { name: "Free Dad Prep Guide", type: "Free", for: "For dads who haven't started yet", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide", featured: true, img: "/images/free-guide-cover.png", imgPosition: "center top" },
-  { name: "Dudela Prep Kit", type: "$37", for: "For dads who want the full playbook", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit", featured: true, img: "/images/prep-kit-cover.jpeg", imgPosition: "left center" },
+  { name: "Free Dad Prep Guide", type: "Free", cta: "Get it free", for: "For dads who haven't started yet", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide", featured: true, img: "/images/free-guide-cover.png", imgPosition: "center top" },
+  { name: "Dudela Prep Kit", type: "$37", cta: "Get the Kit", for: "For dads who want the full playbook", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit", featured: true, img: "/images/prep-kit-cover.jpeg", imgPosition: "left center" },
   { name: "Hospital Bag Checklist", type: "Coming Soon", for: "For dads a few weeks out from delivery", desc: "Everything to pack, nothing you don't need.", comingSoon: true },
   { name: "Birth Plan Template", type: "Coming Soon", for: "For dads walking into the delivery room", desc: "Know your job in the room before you're in it.", comingSoon: true },
   { name: "Baby Shower Checklist", type: "Coming Soon", for: "For dads hosting or helping plan", desc: "Show up for her, not just the gifts.", comingSoon: true },
@@ -40,10 +40,16 @@ const resources = [
             ) : (
               <GuideCover title={r.name} kicker={r.type} ratio="4/5" compact class="resource-cover-el" />
             )}
+            <span class={`resource-type-badge ${r.comingSoon ? "is-coming-soon" : "is-live"}`}>{r.type}</span>
             <div class="resource-body">
               <h3>{r.name}</h3>
               <p class="resource-for">{r.for}</p>
               <p>{r.desc}</p>
+              {r.comingSoon ? (
+                <span class="resource-cta resource-cta-disabled">Coming soon</span>
+              ) : (
+                <span class="resource-cta">{r.cta || "View"} &rarr;</span>
+              )}
             </div>
           </Tag>
         );
@@ -78,6 +84,7 @@ const resources = [
     gap: 1.25rem;
   }
   .resource-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-md);
@@ -86,18 +93,25 @@ const resources = [
     text-decoration: none;
     color: var(--text-on-light);
     overflow: hidden;
+    box-shadow: 0 2px 10px rgba(18, 24, 15, 0.06);
     transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   .resource-card:hover {
     border-color: var(--amber-500);
     transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(18, 24, 15, 0.1);
+    box-shadow: 0 12px 30px rgba(18, 24, 15, 0.14);
+  }
+  .resource-card:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 0 6px 16px rgba(18, 24, 15, 0.16);
   }
   .resource-card.coming-soon {
     cursor: default;
     opacity: 0.7;
+    box-shadow: none;
   }
-  .resource-card.coming-soon:hover {
+  .resource-card.coming-soon:hover,
+  .resource-card.coming-soon:active {
     border-color: var(--border-light);
     transform: none;
     box-shadow: none;
@@ -109,11 +123,31 @@ const resources = [
     object-fit: cover;
     display: block;
   }
+  .resource-type-badge {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    z-index: 2;
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    background: var(--amber-500);
+    color: var(--forest-900);
+  }
+  .resource-type-badge.is-coming-soon {
+    background: rgba(18, 24, 15, 0.75);
+    color: var(--cream-100);
+  }
   .resource-body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     padding: 1.5rem 1.75rem 1.75rem;
+    flex: 1;
   }
   .resource-card h3 {
     font-family: var(--font-label);
@@ -132,5 +166,29 @@ const resources = [
     font-size: 0.9rem;
     color: var(--text-on-light-muted);
     margin: 0;
+  }
+  .resource-cta {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    margin-top: 0.6rem;
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--forest-900);
+    background: var(--amber-500);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 1rem;
+    transition: background 0.2s ease;
+  }
+  .resource-card:hover .resource-cta {
+    background: var(--amber-600);
+  }
+  .resource-cta-disabled {
+    background: transparent;
+    color: var(--text-on-light-muted);
+    border: 1px solid var(--border-light);
   }
 </style>
