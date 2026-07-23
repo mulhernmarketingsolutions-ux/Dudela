@@ -1,4 +1,15 @@
 <header class="nav" id="site-nav">
+  <div class="announce-banner" id="announce-banner">
+    <a href="/join/spit-up-society" class="announce-link">
+      <span class="announce-text">
+        <strong>The Spit-Up Society is open.</strong>
+        First live Q&amp;A — Aug 4 @ 7pm.
+      </span>
+      <span class="announce-cta">Join now &rarr;</span>
+    </a>
+    <button type="button" class="announce-close" id="announce-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
   <div class="container nav-inner">
     <a href="/" class="wordmark">
       <img src="/logo/dudela-wordmark-cream.png" alt="Dudela" />
@@ -51,6 +62,56 @@
     backdrop-filter: blur(10px);
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(245, 239, 227, 0.08);
+  }
+  .announce-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: var(--amber-500);
+    padding: 0.55rem 2.5rem 0.55rem 1rem;
+    position: relative;
+    text-align: center;
+  }
+  .nav.announce-hidden .announce-banner {
+    display: none;
+  }
+  .announce-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem 0.6rem;
+    text-decoration: none;
+    color: var(--forest-900);
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+  }
+  .announce-text strong {
+    font-weight: 800;
+  }
+  .announce-cta {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+  .announce-close {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--forest-900);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+    padding: 0.25rem;
+  }
+  .announce-close:hover {
+    opacity: 1;
   }
   .nav-inner {
     display: flex;
@@ -170,6 +231,21 @@
   const nav = document.getElementById("site-nav");
   const hamburger = document.getElementById("hamburger-btn");
   const mobileMenu = document.getElementById("mobile-menu");
+  const announceClose = document.getElementById("announce-close");
+
+  const ANNOUNCE_KEY = "dudela-announce-dismissed-spit-up-society-aug4";
+  try {
+    if (localStorage.getItem(ANNOUNCE_KEY)) {
+      nav?.classList.add("announce-hidden");
+    }
+  } catch {}
+
+  announceClose?.addEventListener("click", () => {
+    nav?.classList.add("announce-hidden");
+    try {
+      localStorage.setItem(ANNOUNCE_KEY, "1");
+    } catch {}
+  });
 
   const onScroll = () => {
     if (!nav) return;
