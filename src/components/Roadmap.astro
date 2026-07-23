@@ -114,38 +114,65 @@ function paidHref(title) {
   if (title.includes("Spit-Up Society")) return "/join/spit-up-society";
   return "/join";
 }
+function iconKind(type) {
+  return type === "Episode" ? "mic" : "doc";
+}
+
+const ICONS = {
+  mic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+  doc: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
+  paid: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><polyline points="9 8 16 8 16 15"/></svg>`,
+};
 ---
 <section class="roadmap section-light" id="roadmap">
   <div class="container">
     <p class="eyebrow">The signature feature</p>
-    <h2>The Dad Roadmap</h2>
-    <p class="roadmap-sub">Every milestone from finding out to the first birthday. Click a stage to see what's next.</p>
+    <h2>The Roadmap We Wish We Had</h2>
+    <p class="roadmap-sub">
+      We learned every one of these stages the hard way, one at a time. Tap through to see what
+      we wish we'd had at each one.
+    </p>
 
-    <div class="track" id="roadmap-track">
-      {stages.map((s, i) => (
-        <button class="stage" data-stage={s.id} class:list={{ active: i === 4 }}>
-          <span class="stage-index">{String(i + 1).padStart(2, "0")}</span>
-          <span class="stage-label">{s.label}</span>
-        </button>
-      ))}
+    <div class="track-wrap">
+      <div class="track" id="roadmap-track">
+        <div class="track-line"></div>
+        <div class="track-fill" id="track-fill"></div>
+        {stages.map((s, i) => (
+          <button class="stage" data-stage={s.id} data-index={i} class:list={{ active: i === 4 }}>
+            <span class="stage-dot">
+              <span class="stage-index">{String(i + 1).padStart(2, "0")}</span>
+            </span>
+            <span class="stage-label">{s.label}</span>
+          </button>
+        ))}
+      </div>
+      <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+        <span class="scroll-hint-arrow">&rarr;</span>
+      </div>
     </div>
 
     <div class="panels">
       {stages.map((s, i) => (
         <div class="panel" data-panel={s.id} style={i === 4 ? "display:block" : "display:none"}>
-          <p class="panel-mission-label">Dad Mission</p>
+          <p class="panel-mission-label">What We Wish We'd Known</p>
           <p class="panel-mission">{s.mission}</p>
           <div class="panel-resources">
             {s.free?.map((f) => (
               <a class="resource resource-free" href={freeHref(f.type)}>
-                <span class="resource-tag">Free</span>
-                <span>{f.title}</span>
+                <span class="resource-icon" set:html={ICONS[iconKind(f.type)]} />
+                <span class="resource-copy">
+                  <span class="resource-tag">Free</span>
+                  <span>{f.title}</span>
+                </span>
               </a>
             ))}
             {s.paid?.map((p) => (
               <a class="resource resource-paid" href={paidHref(p.title)}>
-                <span class="resource-tag">Next Step</span>
-                <span>{p.title} — {p.price}</span>
+                <span class="resource-icon" set:html={ICONS.paid} />
+                <span class="resource-copy">
+                  <span class="resource-tag">Next Step</span>
+                  <span>{p.title} — {p.price}</span>
+                </span>
               </a>
             ))}
           </div>
@@ -166,51 +193,127 @@ function paidHref(title) {
   }
   .roadmap-sub {
     color: var(--text-on-light-muted);
-    max-width: 50ch;
+    max-width: 52ch;
     margin-bottom: 2.5rem;
   }
+  .track-wrap {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
   .track {
+    position: relative;
     display: flex;
-    gap: 0.75rem;
+    gap: 1.75rem;
     overflow-x: auto;
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
+    padding: 0.5rem 0.25rem 1.25rem;
     scrollbar-width: thin;
   }
+  .track-line {
+    position: absolute;
+    left: 0.25rem;
+    right: 0.25rem;
+    top: 28px;
+    height: 2px;
+    background: var(--border-light);
+    z-index: 0;
+  }
+  .track-fill {
+    position: absolute;
+    left: 0.25rem;
+    top: 28px;
+    height: 2px;
+    background: var(--amber-500);
+    z-index: 0;
+    width: 0;
+    transition: width 0.35s var(--ease-out);
+  }
   .stage {
+    position: relative;
+    z-index: 1;
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-light);
-    background: var(--bg-light-raised);
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 108px;
+    padding: 0;
+    background: none;
+    border: none;
     cursor: pointer;
     font-family: var(--font-label);
-    text-align: left;
-    min-width: 148px;
+    text-align: center;
+  }
+  .stage-dot {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-light-raised);
+    border: 2px solid var(--border-light);
     transition: all 0.25s var(--ease-out);
   }
-  .stage:hover {
+  .stage:hover .stage-dot {
     border-color: var(--amber-500);
   }
-  .stage.active {
+  .stage.active .stage-dot {
     background: var(--forest-800);
     border-color: var(--forest-800);
   }
-  .stage.active .stage-index,
-  .stage.active .stage-label {
-    color: var(--cream-100);
-  }
   .stage-index {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
     opacity: 0.5;
+    transition: opacity 0.2s ease, color 0.2s ease;
+  }
+  .stage.active .stage-index {
+    opacity: 1;
+    color: var(--cream-100);
   }
   .stage-label {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    max-width: 108px;
+    line-height: 1.2;
+    color: var(--text-on-light-muted);
+    transition: color 0.2s ease;
   }
+  .stage.active .stage-label {
+    color: var(--text-on-light);
+  }
+
+  .scroll-hint {
+    position: absolute;
+    right: 0;
+    top: 28px;
+    transform: translate(50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    z-index: 2;
+  }
+  .scroll-hint.hint-hidden {
+    opacity: 0;
+  }
+  .scroll-hint-arrow {
+    font-size: 1rem;
+    line-height: 1;
+    animation: hintNudge 1.1s ease-in-out infinite;
+  }
+  @keyframes hintNudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+
   .panel {
     background: var(--forest-800);
     color: var(--cream-100);
@@ -239,8 +342,8 @@ function paidHref(title) {
   .resource {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.7rem 1rem;
+    gap: 0.75rem;
+    padding: 0.7rem 1.1rem;
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
     border: 1px solid var(--forest-600);
@@ -252,6 +355,27 @@ function paidHref(title) {
     border-color: var(--amber-500);
     transform: translateY(-2px);
   }
+  .resource-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: var(--cream-100);
+    background: var(--forest-600);
+  }
+  .resource-icon :global(svg) {
+    width: 16px;
+    height: 16px;
+  }
+  .resource-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-start;
+  }
   .resource-tag {
     font-family: var(--font-label);
     font-size: 0.65rem;
@@ -259,13 +383,16 @@ function paidHref(title) {
     letter-spacing: 0.08em;
     padding: 0.2rem 0.5rem;
     border-radius: 3px;
-  }
-  .resource-free .resource-tag {
     background: var(--forest-600);
     color: var(--cream-100);
   }
   .resource-paid {
     border-color: var(--amber-500);
+  }
+  .resource-paid .resource-icon {
+    background: transparent;
+    border: 1.5px solid var(--amber-500);
+    color: var(--amber-500);
   }
   .resource-paid .resource-tag {
     background: var(--amber-500);
@@ -275,6 +402,14 @@ function paidHref(title) {
 
 <script>
   const track = document.getElementById("roadmap-track");
+  const trackFill = document.getElementById("track-fill");
+  const scrollHint = document.getElementById("scroll-hint");
+
+  function updateFill(btn: HTMLElement) {
+    if (!track || !trackFill) return;
+    const target = btn.offsetLeft + btn.offsetWidth / 2;
+    trackFill.style.width = `${target}px`;
+  }
 
   function selectStage(id: string, scroll = false) {
     const btn = track?.querySelector(`[data-stage="${id}"]`) as HTMLElement | null;
@@ -282,6 +417,7 @@ function paidHref(title) {
 
     track?.querySelectorAll("[data-stage]").forEach((el) => el.classList.remove("active"));
     btn.classList.add("active");
+    updateFill(btn);
 
     document.querySelectorAll("[data-panel]").forEach((el) => {
       (el as HTMLElement).style.display = el.getAttribute("data-panel") === id ? "block" : "none";
@@ -300,10 +436,34 @@ function paidHref(title) {
       selectStage(btn.dataset.stage, false);
     });
 
+    const activeBtn = track.querySelector(".stage.active") as HTMLElement | null;
+    if (activeBtn) updateFill(activeBtn);
+
+    track.addEventListener(
+      "scroll",
+      () => {
+        scrollHint?.classList.add("hint-hidden");
+      },
+      { once: true, passive: true }
+    );
+
+    // If the track doesn't overflow (nothing to scroll), don't show the hint at all.
+    if (track.scrollWidth <= track.clientWidth + 4) {
+      scrollHint?.classList.add("hint-hidden");
+    }
+
     const params = new URLSearchParams(window.location.search);
     const stageParam = params.get("stage");
     if (stageParam) {
       selectStage(stageParam, true);
     }
+
+    window.addEventListener("resize", () => {
+      const active = track.querySelector(".stage.active") as HTMLElement | null;
+      if (active) updateFill(active);
+      if (track.scrollWidth <= track.clientWidth + 4) {
+        scrollHint?.classList.add("hint-hidden");
+      }
+    });
   }
 </script>
