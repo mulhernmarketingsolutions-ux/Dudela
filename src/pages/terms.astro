@@ -1,0 +1,150 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+---
+<BaseLayout title="Terms & Disclaimer — Dudela" description="Terms of service and disclaimer for The Dudela Co. — our guides, workshops, coaching, membership, and merch.">
+  <Nav />
+
+  <section class="page-hero section-dark">
+    <div class="container">
+      <p class="eyebrow">Legal</p>
+      <h1>Terms &amp; Disclaimer</h1>
+      <p class="hero-sub">Last updated {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.</p>
+    </div>
+  </section>
+
+  <section class="legal section-light">
+    <div class="container legal-inner">
+      <p class="lead">
+        We're two dads sharing what we learned the hard way — not doctors, not therapists, not
+        financial advisors, and not lawyers. Please read this page before booking anything,
+        buying anything, or taking anything we say as gospel.
+      </p>
+
+      <h2>1. Not professional advice</h2>
+      <p>
+        Nothing on this site, in our podcast, our guides, our Prep Kit, our workshops, our
+        coaching calls, or the Spit-Up Society community is medical, psychological, legal, or
+        financial advice. John and Mike are not licensed physicians, mental health
+        professionals, attorneys, or financial advisors, and nothing we publish should replace
+        the judgment of one. Abigail's commentary reflects her professional background in
+        special education, not a clinical relationship with you. Always talk to your own
+        doctor, midwife, therapist, or other qualified professional about your specific
+        situation, especially anything related to pregnancy, birth, mental health, or your
+        child's health and development.
+      </p>
+
+      <h2>2. Personal experience, not guarantees</h2>
+      <p>
+        Everything we share — the six pillars, the Roadmap, our stories, our frameworks — comes
+        from our own experience as dads and from conversations with our community. Your
+        situation is your own. We don't guarantee any specific outcome from using our guides,
+        attending a workshop, joining a cohort, booking coaching, or being part of the Spit-Up
+        Society.
+      </p>
+
+      <h2>3. Digital products (Guide &amp; Prep Kit)</h2>
+      <p>
+        The Free Dad Prep Guide and the Dudela Prep Kit are instant-download digital products.
+        Because you get access immediately, digital purchases are generally final and
+        non-refundable — but if something's genuinely wrong on our end (a broken download, a
+        billing error), email <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a> and
+        we'll make it right.
+      </p>
+
+      <h2>4. Workshops, cohorts &amp; coaching</h2>
+      <p>
+        Live sessions (the Before Birth Workshop, the Steady Dad Cohort) and 1:1 coaching are
+        booked in advance and may have limited spots. Payment is due at booking unless we tell
+        you otherwise. If you need to reschedule, email us as soon as you can and we'll do our
+        best to find another time — we don't guarantee a specific makeup slot. These sessions
+        are conversations between dads, not therapy or medical treatment.
+      </p>
+
+      <h2>5. The Spit-Up Society (membership)</h2>
+      <p>
+        The Spit-Up Society is a paid monthly membership. You're billed on a recurring basis
+        until you cancel; you can cancel at any time and you'll keep access through the end of
+        the period you already paid for. We don't prorate partial months.
+      </p>
+
+      <h2>6. Merch</h2>
+      <p>
+        Hats and other physical merch are hand-packed and shipped by us, not a warehouse or
+        fulfillment company — please expect shipping to take a little longer than a big-box
+        retailer. Joining the merch waitlist doesn't guarantee a specific ship date or that a
+        given colorway will still be available when it's your turn.
+      </p>
+
+      <h2>7. Intellectual property</h2>
+      <p>
+        The Dudela name, the six-pillar framework, our guides, and our podcast are ours. You're
+        welcome to use what you learn in your own life and to talk about it publicly — please
+        just don't resell or republish our materials as your own.
+      </p>
+
+      <h2>8. Limitation of liability</h2>
+      <p>
+        To the fullest extent allowed by law, The Dudela Co., John, and Mike aren't liable for
+        any decision you make based on our content, products, or conversations with us. You're
+        responsible for your own choices, and for your family's health and safety decisions in
+        particular.
+      </p>
+
+      <h2>9. Changes</h2>
+      <p>
+        We may update these terms as the business grows — new products, new formats, new
+        policies. We'll update the date at the top of this page when we do.
+      </p>
+
+      <h2>10. Questions</h2>
+      <p>
+        Reach us anytime at <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a>.
+      </p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero {
+    padding: 9rem 0 3rem;
+  }
+  .page-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    margin: 0.5rem 0 0.75rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    font-size: 0.9rem;
+  }
+  .legal {
+    padding: var(--space-6) 0;
+  }
+  .legal-inner {
+    max-width: 700px;
+  }
+  .lead {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    line-height: 1.5;
+    margin: 0 0 2.5rem;
+  }
+  .legal-inner h2 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 2rem 0 0.75rem;
+  }
+  .legal-inner p {
+    color: var(--text-on-light-muted);
+    line-height: 1.65;
+    margin: 0 0 1rem;
+  }
+  .legal-inner a {
+    color: var(--rust-600);
+    font-weight: 600;
+  }
+</style>

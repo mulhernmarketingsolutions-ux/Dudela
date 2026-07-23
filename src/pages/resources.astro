@@ -5,8 +5,8 @@ import Footer from "../components/Footer.astro";
 import GuideCover from "../components/GuideCover.astro";
 
 const resources = [
-  { name: "Free Dad Prep Guide", type: "Free", for: "For dads who haven't started yet", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide", featured: true, img: "/images/free-guide-cover.png", imgPosition: "top" },
-  { name: "Dudela Prep Kit", type: "$37", for: "For dads who want the full playbook", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit", featured: true, img: "/images/prep-kit-cover.jpeg" },
+  { name: "Free Dad Prep Guide", type: "Free", for: "For dads who haven't started yet", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide", featured: true, img: "/images/free-guide-cover.png", imgPosition: "center top" },
+  { name: "Dudela Prep Kit", type: "$37", for: "For dads who want the full playbook", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit", featured: true, img: "/images/prep-kit-cover.jpeg", imgPosition: "left center" },
   { name: "Hospital Bag Checklist", type: "Coming Soon", for: "For dads a few weeks out from delivery", desc: "Everything to pack, nothing you don't need.", comingSoon: true },
   { name: "Birth Plan Template", type: "Coming Soon", for: "For dads walking into the delivery room", desc: "Know your job in the room before you're in it.", comingSoon: true },
   { name: "Baby Shower Checklist", type: "Coming Soon", for: "For dads hosting or helping plan", desc: "Show up for her, not just the gifts.", comingSoon: true },
@@ -36,7 +36,7 @@ const resources = [
             {r.comingSoon ? (
               <img src="/images/coming-soon-cover.png" alt="" class="resource-cover-el" />
             ) : r.img ? (
-              <img src={r.img} alt={r.name} class="resource-cover-el" style={`object-position: center ${r.imgPosition || "center"};`} />
+              <img src={r.img} alt={r.name} class="resource-cover-el" style={`object-position: ${r.imgPosition || "center"};`} />
             ) : (
               <GuideCover title={r.name} kicker={r.type} ratio="4/5" compact class="resource-cover-el" />
             )}

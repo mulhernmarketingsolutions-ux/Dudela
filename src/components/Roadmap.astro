@@ -42,7 +42,7 @@ const stages = [
     mission: "Pack the bag. Freeze the meals. Ask her how she's really feeling.",
     free: [
       { title: "Hospital Bag Checklist", type: "Checklist" },
-      { title: "What Should I Focus On Right Now? Prepping for Fatherhood Before Baby Arrives", type: "Episode" },
+      { title: "What Should I Focus On Right Now? Pregame for Fatherhood Before Baby Arrives", type: "Episode" },
     ],
     paid: [{ title: "Dudela Prep Kit", price: "$37" }],
   },
@@ -113,7 +113,10 @@ function freeHref(f) {
 }
 function paidHref(title) {
   if (title.includes("Prep Kit")) return "/kit";
+  if (title.includes("Workshop")) return "/workshop";
   if (title.includes("Spit-Up Society")) return "/join/spit-up-society";
+  if (title.includes("Cohort")) return "/join#cohort";
+  if (title.includes("Coaching")) return "/join#coaching";
   return "/join";
 }
 function iconKind(type) {
@@ -243,6 +246,9 @@ const ICONS = {
     padding: 0;
     background: none;
     border: none;
+    appearance: none;
+    -webkit-appearance: none;
+    color: inherit;
     cursor: pointer;
     font-family: var(--font-label);
     text-align: center;
@@ -268,6 +274,7 @@ const ICONS = {
   .stage-index {
     font-size: 0.8rem;
     font-weight: 700;
+    color: var(--text-on-light-muted);
     opacity: 0.5;
     transition: opacity 0.2s ease, color 0.2s ease;
   }

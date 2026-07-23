@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 
 const ladder = [
   {
+    slug: "guide",
     step: "Free",
     name: "Dad Prep Guide",
     price: "Free",
@@ -13,6 +14,7 @@ const ladder = [
     cta: "Get the Guide",
   },
   {
+    slug: "kit",
     step: "Core",
     name: "Dudela Prep Kit",
     price: "$37",
@@ -21,6 +23,7 @@ const ladder = [
     cta: "Get the Prep Kit",
   },
   {
+    slug: "workshop",
     step: "Live",
     name: "Steady Dad: Before Birth Workshop",
     price: "$100",
@@ -29,6 +32,7 @@ const ladder = [
     cta: "Reserve Your Spot",
   },
   {
+    slug: "spit-up-society",
     step: "Community",
     name: "The Spit-Up Society",
     price: "$5/mo",
@@ -37,6 +41,7 @@ const ladder = [
     cta: "Join the Huddle",
   },
   {
+    slug: "cohort",
     step: "Group",
     name: "Steady Dad Cohort",
     price: "Coming Soon",
@@ -45,6 +50,7 @@ const ladder = [
     cta: "Join the Waitlist",
   },
   {
+    slug: "coaching",
     step: "1:1",
     name: "Personal Coaching",
     price: "$1,000+/mo",
@@ -68,7 +74,7 @@ const ladder = [
   <section class="ladder section-light">
     <div class="container">
       {ladder.map((item, i) => (
-        <div class="ladder-row">
+        <div class="ladder-row" id={item.slug}>
           <div class="ladder-step">
             <span class="ladder-index">{String(i + 1).padStart(2, "0")}</span>
             <span class="ladder-badge">{item.step}</span>
@@ -112,6 +118,14 @@ const ladder = [
     gap: 1.25rem;
     padding: 2rem 0;
     border-bottom: 1px solid var(--border-light);
+    scroll-margin-top: 6rem;
+  }
+  .ladder-row:target {
+    animation: ladder-highlight 2s ease;
+  }
+  @keyframes ladder-highlight {
+    0%, 100% { background: transparent; }
+    20% { background: var(--bg-light-raised); }
   }
   .ladder-row:first-child {
     padding-top: 0;
