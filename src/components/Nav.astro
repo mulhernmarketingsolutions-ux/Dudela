@@ -12,8 +12,9 @@
   </div>
 
   <div class="container nav-inner">
-    <a href="/" class="wordmark">
-      <img src="/logo/dudela-wordmark-cream.png" alt="Dudela" />
+    <a href="/" class="wordmark" aria-label="Dudela — home">
+      <img src="/logo/dudela-badge-green.png" alt="Dudela" class="wordmark-badge" />
+      <img src="/logo/dudela-icon-white.png" alt="Dudela" class="wordmark-icon" />
     </a>
 
     <nav class="links">
@@ -172,14 +173,35 @@
     z-index: 2;
   }
   .wordmark {
+    position: relative;
     display: flex;
     align-items: center;
     text-decoration: none;
+    height: 46px;
+    width: 108px;
   }
   .wordmark img {
-    height: 48px;
-    width: auto;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    object-position: left center;
     display: block;
+    transition: opacity 0.35s var(--ease-out);
+  }
+  .wordmark-badge {
+    opacity: 1;
+  }
+  .wordmark-icon {
+    opacity: 0;
+  }
+  .nav.scrolled .wordmark-badge {
+    opacity: 0;
+  }
+  .nav.scrolled .wordmark-icon {
+    opacity: 1;
   }
   .links {
     display: none;
