@@ -19,7 +19,7 @@ import { pillars } from "../data/pillars.js";
               </div>
             </div>
             <div class="pillar-face pillar-back">
-              <div>
+              <div class="pillar-back-content">
                 <span class="pillar-back-index">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{p.name}</h3>
                 <p class="pillar-hook">{p.hook}</p>
@@ -69,6 +69,23 @@ import { pillars } from "../data/pillars.js";
     -webkit-backface-visibility: hidden;
     border-radius: var(--radius-sm);
     overflow: hidden;
+  }
+  /* backface-visibility hides a face visually but some browsers still let it
+     eat clicks meant for the face now on top (a known 3D-flip-card gotcha).
+     Explicit pointer-events keeps clicks routed to whichever face is
+     actually visible, so the CTA link on the back is reliably clickable. */
+  .pillar-back {
+    pointer-events: none;
+  }
+  .pillar-card:hover .pillar-back,
+  .pillar-card.flipped .pillar-back,
+  .pillar-card:focus-visible .pillar-back {
+    pointer-events: auto;
+  }
+  .pillar-card:hover .pillar-front,
+  .pillar-card.flipped .pillar-front,
+  .pillar-card:focus-visible .pillar-front {
+    pointer-events: none;
   }
   .pillar-front {
     display: flex;
@@ -131,61 +148,71 @@ import { pillars } from "../data/pillars.js";
     -webkit-transform: rotateY(180deg);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 1.5rem;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.1rem;
     background: linear-gradient(160deg, var(--forest-800) 0%, var(--forest-900) 100%);
     border: 1px solid var(--forest-600);
     color: var(--cream-100);
   }
+  .pillar-back-content {
+    overflow-y: auto;
+    min-height: 0;
+  }
   .pillar-back-index {
     display: block;
     font-family: var(--font-display);
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     color: var(--amber-500);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
   }
   .pillar-back h3 {
     font-family: var(--font-display);
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     line-height: 1.2;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
   }
   .pillar-hook {
-    font-size: 0.88rem;
-    line-height: 1.45;
+    font-size: 0.8rem;
+    line-height: 1.4;
     color: var(--text-on-dark-muted);
     margin: 0;
   }
   .pillar-cta {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
     font-family: var(--font-label);
     font-weight: 700;
-    font-size: 0.82rem;
-    color: var(--amber-500);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--forest-900);
+    background: var(--amber-500);
     text-decoration: none;
-    border-top: 1px solid var(--forest-600);
-    padding-top: 1rem;
-    transition: gap 0.2s ease;
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.75rem;
   }
   .pillar-cta:hover {
-    text-decoration: underline;
+    background: var(--amber-600);
   }
 </style>
 
 <script>
   // Flip cards: hover handles desktop, but touch devices have no hover, so a
-  // tap toggles the flip. Taps on the CTA itself are left alone so the link
-  // still navigates normally.
+  // tap toggles the flip. The flip-trigger listener lives ONLY on the front
+  // face — never on the whole card — so it can never intercept a click meant
+  // for the real <a class="pillar-cta"> link on the back.
   document.querySelectorAll(".pillar-card").forEach((card) => {
-    function toggle(e: Event) {
-      if ((e.target as HTMLElement).closest(".pillar-cta")) return;
+    const front = card.querySelector(".pillar-front");
+    front?.addEventListener("click", (e) => {
       e.preventDefault();
       card.classList.toggle("flipped");
-    }
-    card.addEventListener("click", toggle);
+    });
     card.addEventListener("keydown", (e) => {
       const ke = e as KeyboardEvent;
+      if ((ke.target as HTMLElement).closest(".pillar-cta")) return;
       if (ke.key === "Enter" || ke.key === " ") {
         ke.preventDefault();
         card.classList.toggle("flipped");
