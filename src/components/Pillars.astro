@@ -19,12 +19,14 @@ import { pillars } from "../data/pillars.js";
               </div>
             </div>
             <div class="pillar-face pillar-back">
+              {p.img && <img class="pillar-photo pillar-photo-back" src={p.img} alt="" loading="lazy" />}
+              <div class="pillar-back-scrim"></div>
               <div class="pillar-back-content">
                 <span class="pillar-back-index">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{p.name}</h3>
                 <p class="pillar-hook">{p.hook}</p>
               </div>
-              <a href="/kit#buy" class="pillar-cta">See it in the Prep Kit &rarr;</a>
+              <a href="/kit" class="pillar-cta">Explore the Prep Kit &rarr;</a>
             </div>
           </div>
         </div>
@@ -153,11 +155,29 @@ import { pillars } from "../data/pillars.js";
     justify-content: flex-end;
     gap: 0.75rem;
     padding: 1.1rem;
-    background: linear-gradient(160deg, var(--forest-800) 0%, var(--forest-900) 100%);
+    background: var(--forest-900);
     border: 1px solid var(--forest-600);
     color: var(--cream-100);
   }
+  .pillar-photo-back {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0.55;
+    filter: saturate(0.7) brightness(0.75);
+  }
+  .pillar-back-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(165deg, rgba(20, 27, 17, 0.55) 0%, rgba(15, 20, 13, 0.88) 60%, rgba(12, 16, 10, 0.96) 100%);
+  }
   .pillar-back-content {
+    position: relative;
+    z-index: 2;
     overflow-y: auto;
     min-height: 0;
   }
@@ -181,6 +201,8 @@ import { pillars } from "../data/pillars.js";
     margin: 0;
   }
   .pillar-cta {
+    position: relative;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
