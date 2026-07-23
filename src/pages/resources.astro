@@ -7,12 +7,12 @@ import GuideCover from "../components/GuideCover.astro";
 const resources = [
   { name: "Free Dad Prep Guide", type: "Free", for: "For dads who haven't started yet", desc: "The universal starting point. Five sections: emotional, financial, partnership, advocacy, identity.", href: "/guide", featured: true },
   { name: "Dudela Prep Kit", type: "$37", for: "For dads who want the full playbook", desc: "The flagship guide. Six pillars, nine printable tools, real founder stories.", href: "/kit", featured: true },
-  { name: "Hospital Bag Checklist", type: "Free", for: "For dads a few weeks out from delivery", desc: "Everything to pack, nothing you don't need.", href: "#" },
-  { name: "Birth Plan Template", type: "Free", for: "For dads walking into the delivery room", desc: "Know your job in the room before you're in it.", href: "#" },
-  { name: "Baby Shower Checklist", type: "Free", for: "For dads hosting or helping plan", desc: "Show up for her, not just the gifts.", href: "#" },
-  { name: "Sleep Survival Guide", type: "Free", for: "For dads in the newborn fog", desc: "Be steady even when you're exhausted.", href: "#" },
-  { name: "Return-to-Work Guide", type: "Free", for: "For dads heading back to the office", desc: "Show up for your job without checking out at home.", href: "#" },
-  { name: "Dad Challenges", type: "Free", for: "For dads who want small wins this week", desc: "Small, specific things to do this week.", href: "#" },
+  { name: "Hospital Bag Checklist", type: "Coming Soon", for: "For dads a few weeks out from delivery", desc: "Everything to pack, nothing you don't need.", comingSoon: true },
+  { name: "Birth Plan Template", type: "Coming Soon", for: "For dads walking into the delivery room", desc: "Know your job in the room before you're in it.", comingSoon: true },
+  { name: "Baby Shower Checklist", type: "Coming Soon", for: "For dads hosting or helping plan", desc: "Show up for her, not just the gifts.", comingSoon: true },
+  { name: "Sleep Survival Guide", type: "Coming Soon", for: "For dads in the newborn fog", desc: "Be steady even when you're exhausted.", comingSoon: true },
+  { name: "Return-to-Work Guide", type: "Coming Soon", for: "For dads heading back to the office", desc: "Show up for your job without checking out at home.", comingSoon: true },
+  { name: "Dad Challenges", type: "Coming Soon", for: "For dads who want small wins this week", desc: "Small, specific things to do this week.", comingSoon: true },
 ];
 ---
 <BaseLayout title="Resources — Dudela" description="Free guides and checklists, organized by what you need next.">
@@ -29,16 +29,19 @@ const resources = [
 
   <section class="resource-list section-light">
     <div class="container resource-grid">
-      {resources.map((r) => (
-        <a class="resource-card" href={r.href}>
-          <GuideCover title={r.name} kicker={r.type} ratio="16/11" compact class="resource-cover-el" />
-          <div class="resource-body">
-            <h3>{r.name}</h3>
-            <p class="resource-for">{r.for}</p>
-            <p>{r.desc}</p>
-          </div>
-        </a>
-      ))}
+      {resources.map((r) => {
+        const Tag = r.comingSoon ? "div" : "a";
+        return (
+          <Tag class={`resource-card ${r.comingSoon ? "coming-soon" : ""}`} href={r.comingSoon ? undefined : r.href}>
+            <GuideCover title={r.name} kicker={r.type} ratio="16/11" compact class="resource-cover-el" />
+            <div class="resource-body">
+              <h3>{r.name}</h3>
+              <p class="resource-for">{r.for}</p>
+              <p>{r.desc}</p>
+            </div>
+          </Tag>
+        );
+      })}
     </div>
   </section>
 
@@ -83,6 +86,15 @@ const resources = [
     border-color: var(--amber-500);
     transform: translateY(-3px);
     box-shadow: 0 12px 30px rgba(18, 24, 15, 0.1);
+  }
+  .resource-card.coming-soon {
+    cursor: default;
+    opacity: 0.7;
+  }
+  .resource-card.coming-soon:hover {
+    border-color: var(--border-light);
+    transform: none;
+    box-shadow: none;
   }
   .resource-cover-el {
     border-radius: 0;
