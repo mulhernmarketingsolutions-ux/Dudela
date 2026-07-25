@@ -35,7 +35,7 @@ const MAGNETS: Record<string, { subject: string; fileName: string; url: string }
 const CONFIRMATIONS: Record<string, { subject: string; body: string }> = {
   "free-guide": {
     subject: "You're in — your free Dad Prep Guide is on its way",
-    body: "Thanks for grabbing the Free Dad Prep Guide. We're finishing up the download — you'll get a follow-up email with the link very soon. In the meantime, keep an eye on your inbox for the first \"Ask Another Dad\" email.",
+    body: "Thanks for grabbing the Free Dad Prep Guide. We're finishing up the download — you'll get a follow-up email with the link very soon. In the meantime, keep an eye on your inbox for the first Dudela Newsletter email.",
   },
   "hat-waitlist": {
     subject: "You're on the Dudela hat waitlist",
@@ -47,7 +47,7 @@ const CONFIRMATIONS: Record<string, { subject: string; body: string }> = {
   },
   "newsletter": {
     subject: "You're on the list",
-    body: "Welcome to Ask Another Dad — one email a week, no fluff. First one lands soon.",
+    body: "Welcome to the Dudela Newsletter — one email a week, no fluff. First one lands soon.",
   },
 };
 
