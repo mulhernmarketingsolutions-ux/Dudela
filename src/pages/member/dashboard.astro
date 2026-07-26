@@ -1,0 +1,153 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { getAuthedMember } from "../../lib/auth";
+
+const env = (Astro.locals as any).runtime.env;
+const member = await getAuthedMember(Astro.cookies, env);
+if (!member) {
+  return Astro.redirect("/member/login");
+}
+
+const firstName = member.name ? member.name.split(" ")[0] : "there";
+const error = Astro.url.searchParams.get("error");
+const errorMessages: Record<string, string> = {
+  "no-billing-account": "We don't have a billing account on file for you yet — email dude@thedudelaco.com and we'll sort it out.",
+  portal: "Couldn't open the billing portal just now. Try again in a minute, or email dude@thedudelaco.com.",
+};
+const errorMessage = error ? errorMessages[error] || "" : "";
+---
+<BaseLayout title="Member Dashboard — Dudela" description="Your Spit-Up Society member area.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Spit-Up Society</p>
+      <h1>Hey {firstName}.</h1>
+      {member.status === "canceled" ? (
+        <p class="hero-sub status-canceled">
+          Your membership lapsed, so some of this is on pause. Rejoin any time — <a href="/join/spit-up-society">$5/mo →</a>
+        </p>
+      ) : (
+        <p class="hero-sub">You're an active member. Here's everything in one place.</p>
+      )}
+    </div>
+  </section>
+
+  <section class="grid section-light">
+    <div class="container card-grid">
+      <a href="/member/womb-watch" class="card">
+        <h3>Womb Watch</h3>
+        <p>Behind-the-scenes updates from Mike &amp; Abigail's pregnancy, in real time.</p>
+        <span class="card-cta">Read the latest →</span>
+      </a>
+
+      <a href="/member/ask" class="card">
+        <h3>Ask a Question</h3>
+        <p>Send in what you want covered on the next live Q&amp;A — or any time.</p>
+        <span class="card-cta">Ask now →</span>
+      </a>
+
+      <div class="card">
+        <h3>Next Live Q&amp;A</h3>
+        <p>August 4th at 7pm. We'll email the link the day of — no need to track it down yourself.</p>
+      </div>
+
+      <a href={member.stripe_customer_id ? "/api/create-portal-session" : "/member/dashboard?error=no-billing-account"} class="card">
+        <h3>Manage Membership</h3>
+        <p>Update your card, see billing history, or cancel — handled directly by Stripe.</p>
+        <span class="card-cta">Open billing portal →</span>
+      </a>
+    </div>
+
+    {errorMessage && <p class="dash-error container">{errorMessage}</p>}
+
+    <div class="container logout-row">
+      <a href="/api/auth/logout" class="logout-link">Log out</a>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 8rem 0 3.5rem;
+  }
+  .hero-inner {
+    max-width: 640px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 2.8rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+  }
+  .status-canceled a {
+    color: var(--amber-500);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .grid {
+    padding: var(--space-5) 0 var(--space-6);
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .card {
+    display: block;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1.75rem;
+    text-decoration: none;
+    color: var(--text-on-light);
+    transition: transform 0.2s var(--ease-out), border-color 0.2s ease;
+  }
+  a.card:hover {
+    transform: translateY(-2px);
+    border-color: var(--amber-500);
+  }
+  .card h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem;
+  }
+  .card p {
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+  }
+  .card-cta {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--rust-600);
+  }
+  .dash-error {
+    margin-top: 1.5rem;
+    color: var(--rust-600);
+    font-size: 0.9rem;
+  }
+  .logout-row {
+    margin-top: 2.5rem;
+  }
+  .logout-link {
+    color: var(--text-on-light-muted);
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  @media (min-width: 700px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

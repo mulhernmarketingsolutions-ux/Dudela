@@ -72,6 +72,31 @@ export async function createCheckoutSession(
   return res.json() as Promise<{ id: string; url: string }>;
 }
 
+// Creates a Stripe Billing Portal session so members can update their card,
+// see invoices, or cancel — without us building any of that UI ourselves.
+// Used by /api/create-portal-session.ts from the gated member dashboard.
+export async function createPortalSession(
+  env: StripeEnv,
+  opts: { customerId: string; returnUrl: string }
+): Promise<{ url: string }> {
+  const params: Record<string, string> = {
+    customer: opts.customerId,
+    return_url: opts.returnUrl,
+  };
+  const res = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: toFormBody(params),
+  });
+  if (!res.ok) {
+    throw new Error(`Stripe portal session create failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json() as Promise<{ url: string }>;
+}
+
 // Subscription lifecycle events (customer.subscription.deleted, .updated) only include the
 // customer ID, not their email — fetch it from the Customers API so the cancellation
 // webhook can still tag the right contact in Loops.

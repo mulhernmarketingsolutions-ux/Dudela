@@ -6,3 +6,17 @@ compatibility_flags = ["nodejs_compat"]
 [assets]
 binding = "ASSETS"
 directory = "./dist"
+
+# Member area (magic-link login, Womb Watch posts, member questions) — see
+# src/lib/db.ts and migrations/0001_init.sql. One-time setup, from this
+# directory, once you're back at a terminal with `wrangler login` done:
+#   1. wrangler d1 create dudela
+#   2. Paste the database_id it prints into database_id below.
+#   3. wrangler d1 execute dudela --remote --file=./migrations/0001_init.sql
+#   4. wrangler secret put ADMIN_PASSWORD   (shared password for /admin/womb-watch)
+# Until database_id is filled in, the member-area routes will error — the
+# rest of the site is unaffected since this binding is additive.
+[[d1_databases]]
+binding = "DB"
+database_name = "dudela"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"

@@ -1,0 +1,181 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { isAdminAuthed } from "../../lib/auth";
+import { listPosts } from "../../lib/db";
+
+const env = (Astro.locals as any).runtime.env;
+const authed = await isAdminAuthed(Astro.cookies, env);
+if (!authed) {
+  return Astro.redirect("/admin/login");
+}
+
+const posts = await listPosts(env, "womb-watch");
+const posted = Astro.url.searchParams.get("posted");
+const error = Astro.url.searchParams.get("error");
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+---
+<BaseLayout title="Womb Watch Admin — Dudela" description="">
+  <section class="admin-shell">
+    <div class="container admin-inner">
+      <div class="admin-header">
+        <p class="eyebrow">Dudela Admin</p>
+        <h1>Womb Watch</h1>
+        <a href="/api/admin/logout" class="logout-link">Log out</a>
+      </div>
+
+      {posted && <p class="notice notice-success">Posted — active members have been notified.</p>}
+      {error === "missing-fields" && <p class="notice notice-error">Title and body are both required.</p>}
+
+      <form method="POST" action="/api/admin/posts" class="post-form">
+        <label>
+          Title
+          <input type="text" name="title" required />
+        </label>
+        <label>
+          Body <span class="hint">(plain text — line breaks are preserved)</span>
+          <textarea name="body" rows="8" required></textarea>
+        </label>
+        <input type="hidden" name="category" value="womb-watch" />
+        <button type="submit" class="btn btn-primary">Publish + Notify Members</button>
+      </form>
+
+      <hr class="divider" />
+
+      <h2 class="existing-heading">Published ({posts.length})</h2>
+      <div class="existing-posts">
+        {posts.length === 0 && <p class="empty-state">Nothing published yet.</p>}
+        {posts.map((post) => (
+          <div class="existing-post">
+            <p class="existing-date">{formatDate(post.published_at)}</p>
+            <h3>{post.title}</h3>
+            <p class="existing-body">{post.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .admin-shell {
+    padding: 4rem 0 6rem;
+    min-height: 100vh;
+  }
+  .admin-inner {
+    max-width: 720px;
+  }
+  .admin-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .admin-header h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    margin: 0.25rem 0 0;
+  }
+  .logout-link {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--text-on-light-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .notice {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .notice-success {
+    background: rgba(87, 104, 74, 0.15);
+    border: 1px solid var(--forest-500);
+  }
+  .notice-error {
+    background: rgba(163, 73, 43, 0.1);
+    border: 1px solid var(--rust-600);
+    color: var(--rust-600);
+  }
+  .post-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1.75rem;
+  }
+  .post-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .hint {
+    font-weight: 400;
+    opacity: 0.7;
+    text-transform: none;
+  }
+  .post-form input,
+  .post-form textarea {
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    resize: vertical;
+  }
+  .post-form button {
+    align-self: flex-start;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 3rem 0 2rem;
+  }
+  .existing-heading {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin: 0 0 1.5rem;
+  }
+  .existing-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .empty-state {
+    color: var(--text-on-light-muted);
+  }
+  .existing-post {
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 1.5rem;
+  }
+  .existing-date {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.4rem;
+  }
+  .existing-post h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.4rem;
+  }
+  .existing-body {
+    white-space: pre-wrap;
+    color: var(--text-on-light-muted);
+    margin: 0;
+    font-size: 0.92rem;
+  }
+</style>

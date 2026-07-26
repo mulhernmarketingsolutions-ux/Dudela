@@ -1,0 +1,111 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { getAuthedMember } from "../../lib/auth";
+
+const env = (Astro.locals as any).runtime.env;
+const member = await getAuthedMember(Astro.cookies, env);
+if (!member) {
+  return Astro.redirect("/member/login");
+}
+---
+<BaseLayout title="Ask a Question — Dudela" description="Submit a question for the next live Q&A.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Spit-Up Society</p>
+      <h1>Ask a Question</h1>
+      <p class="hero-sub">
+        Pregnancy, birth, the newborn blur, marriage after baby — whatever's actually on your mind.
+        We read these before every live Q&amp;A, real questions get answered first.
+      </p>
+      <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
+
+      <form class="ask-form" id="ask-form">
+        <textarea name="question" rows="5" placeholder="What do you want us to cover?" required></textarea>
+        <button type="submit" class="btn btn-primary">Send It In</button>
+      </form>
+      <p id="ask-form-status" class="form-status"></p>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("ask-form") as HTMLFormElement | null;
+    const status = document.getElementById("ask-form-status") as HTMLParagraphElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Sending…";
+      try {
+        const res = await fetch("/api/member/ask-question", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "Got it — thanks for sending that in.";
+          form.reset();
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+      }
+      btn.disabled = false;
+    });
+  </script>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 8rem 0 6rem;
+    min-height: 65vh;
+  }
+  .hero-inner {
+    max-width: 620px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 4.5vw, 2.9rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.5rem;
+  }
+  .back-link {
+    display: inline-block;
+    color: var(--amber-500);
+    font-size: 0.9rem;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 2.5rem;
+  }
+  .ask-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .ask-form textarea {
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+    resize: vertical;
+  }
+  .ask-form button {
+    align-self: flex-start;
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+    margin-top: 0.9rem;
+    min-height: 1.2em;
+  }
+</style>

@@ -126,3 +126,33 @@ export async function sendLoopsCancellationEvent(
     source: opts.source || "stripe",
   });
 }
+
+// Fired once per active member when John/Mike publish something in the gated
+// member area (new Womb Watch post today; same event covers future post
+// categories too). NOTE: these eventNames don't have a matching Loops
+// Workflow yet — build one per event in the Loops dashboard (Workflows →
+// New → "Event" trigger) the same way the onboarding sequences were built,
+// otherwise this call is a no-op from the member's perspective even though
+// the API call itself succeeds.
+export const MEMBER_NOTIFICATION_EVENTS: Record<string, { eventName: string }> = {
+  "womb-watch": { eventName: "womb-watch-new-post" },
+  "merch-drop": { eventName: "member-merch-drop" },
+};
+
+export async function sendMemberNotificationEvent(
+  env: LoopsEnv,
+  opts: { email: string; firstName?: string; category: string; userGroup: string }
+) {
+  const mapping = MEMBER_NOTIFICATION_EVENTS[opts.category];
+  if (!mapping) {
+    console.error(`No Loops notification mapping for category "${opts.category}"`);
+    return null;
+  }
+  return sendEvent(env, {
+    email: opts.email,
+    firstName: opts.firstName,
+    eventName: mapping.eventName,
+    userGroup: opts.userGroup,
+    source: "member-area",
+  });
+}

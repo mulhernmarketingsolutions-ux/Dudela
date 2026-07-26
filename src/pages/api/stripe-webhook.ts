@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
+import { upsertMemberFromStripe, markMemberCanceledByStripeCustomerId } from "../../lib/db";
 
 export const prerender = false;
 
@@ -139,6 +140,24 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       const productInfo = PRODUCTS[product] || { name: product, price: amountTotal };
+
+      // Membership products (Spit-Up Society, and any future recurring product) get a
+      // row in D1 so they can log into the gated member area via magic link. One-time
+      // purchases (Prep Kit) don't need an account — they're delivered by email.
+      if (productInfo.isSubscription) {
+        try {
+          await upsertMemberFromStripe(env, {
+            email,
+            name,
+            product,
+            stripeCustomerId: session.customer || undefined,
+            stripeSubscriptionId: session.subscription || undefined,
+          });
+        } catch (err) {
+          console.error("Member upsert failed:", err);
+        }
+      }
+
       try {
         await sendEmail(env, {
           to: email,
@@ -172,6 +191,12 @@ export async function POST({ request, locals }: APIContext) {
     const subscription = event.data.object;
     const product: string = subscription.metadata?.product || "spit-up-society";
     const customerId: string = subscription.customer;
+
+    try {
+      await markMemberCanceledByStripeCustomerId(env, customerId);
+    } catch (err) {
+      console.error("Member cancel-status update failed:", err);
+    }
 
     try {
       const { email, name } = await getCustomer(env, customerId);

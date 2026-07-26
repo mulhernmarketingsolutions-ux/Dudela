@@ -1,0 +1,111 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { getAuthedMember } from "../../lib/auth";
+import { listPosts } from "../../lib/db";
+
+const env = (Astro.locals as any).runtime.env;
+const member = await getAuthedMember(Astro.cookies, env);
+if (!member) {
+  return Astro.redirect("/member/login");
+}
+
+const posts = await listPosts(env, "womb-watch");
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+---
+<BaseLayout title="Womb Watch — Dudela" description="Behind-the-scenes updates from Mike & Abigail's pregnancy.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Spit-Up Society</p>
+      <h1>Womb Watch</h1>
+      <p class="hero-sub">Behind-the-scenes, in real time, straight from Mike &amp; Abigail. Nothing polished about this one.</p>
+      <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
+    </div>
+  </section>
+
+  <section class="posts section-light">
+    <div class="container posts-inner">
+      {posts.length === 0 && (
+        <p class="empty-state">Nothing posted yet — check back soon.</p>
+      )}
+      {posts.map((post) => (
+        <article class="post">
+          <p class="post-date">{formatDate(post.published_at)}</p>
+          <h2>{post.title}</h2>
+          <div class="post-body">{post.body}</div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 8rem 0 3rem;
+  }
+  .hero-inner {
+    max-width: 640px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 4.5vw, 2.9rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.5rem;
+  }
+  .back-link {
+    color: var(--amber-500);
+    font-size: 0.9rem;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .posts {
+    padding: var(--space-5) 0 var(--space-6);
+  }
+  .posts-inner {
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .empty-state {
+    color: var(--text-on-light-muted);
+  }
+  .post {
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 2.5rem;
+  }
+  .post:last-child {
+    border-bottom: none;
+  }
+  .post-date {
+    font-family: var(--font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.5rem;
+  }
+  .post h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    margin: 0 0 1rem;
+  }
+  .post-body {
+    color: var(--text-on-light);
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+</style>
