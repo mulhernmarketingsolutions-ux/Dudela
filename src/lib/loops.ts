@@ -21,13 +21,19 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
   "fall-cohort-waitlist": { eventName: "lead-fall-cohort", userGroup: "Lead – Fall Cohort" },
 };
 
-export async function sendLoopsEvent(
-  env: LoopsEnv,
-  opts: { email: string; name?: string; magnet: string; source?: string }
-) {
-  const mapping = LOOPS_EVENTS[opts.magnet] || LOOPS_EVENTS["newsletter"];
-  const firstName = opts.name ? opts.name.split(" ")[0] : undefined;
+// Maps each Stripe `product` value (see create-checkout-session.ts) to the Loops event
+// fired on successful purchase/subscription. One workflow per eventName in Loops,
+// triggered off a Stripe webhook instead of a site form. userGroup here doubles as the
+// permanent "customer_/member_" style tag referenced in the email ecosystem architecture
+// doc — it's what future Ongoing Newsletter sends filter on to suppress repeat pitches.
+export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
+  "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
+};
 
+async function sendEvent(
+  env: LoopsEnv,
+  opts: { email: string; firstName?: string; eventName: string; userGroup: string; source?: string }
+) {
   const res = await fetch("https://app.loops.so/api/v1/events/send", {
     method: "POST",
     headers: {
@@ -36,9 +42,9 @@ export async function sendLoopsEvent(
     },
     body: JSON.stringify({
       email: opts.email,
-      firstName,
-      eventName: mapping.eventName,
-      userGroup: mapping.userGroup,
+      firstName: opts.firstName,
+      eventName: opts.eventName,
+      userGroup: opts.userGroup,
       source: opts.source || "website",
     }),
   });
@@ -49,4 +55,42 @@ export async function sendLoopsEvent(
     return null;
   }
   return res.json();
+}
+
+export async function sendLoopsEvent(
+  env: LoopsEnv,
+  opts: { email: string; name?: string; magnet: string; source?: string }
+) {
+  const mapping = LOOPS_EVENTS[opts.magnet] || LOOPS_EVENTS["newsletter"];
+  const firstName = opts.name ? opts.name.split(" ")[0] : undefined;
+  return sendEvent(env, {
+    email: opts.email,
+    firstName,
+    eventName: mapping.eventName,
+    userGroup: mapping.userGroup,
+    source: opts.source,
+  });
+}
+
+// Fired from the Stripe webhook handler on checkout.session.completed /
+// customer.subscription.created — tags the buyer as a customer/member in Loops so the
+// Post-Purchase Onboarding sequence (or Membership Welcome sequence) kicks in, and so
+// they're permanently excluded from top-of-funnel pitches for the same product.
+export async function sendLoopsPurchaseEvent(
+  env: LoopsEnv,
+  opts: { email: string; name?: string; product: string; source?: string }
+) {
+  const mapping = PURCHASE_EVENTS[opts.product];
+  if (!mapping) {
+    console.error(`No Loops purchase mapping for product "${opts.product}"`);
+    return null;
+  }
+  const firstName = opts.name ? opts.name.split(" ")[0] : undefined;
+  return sendEvent(env, {
+    email: opts.email,
+    firstName,
+    eventName: mapping.eventName,
+    userGroup: mapping.userGroup,
+    source: opts.source || "stripe",
+  });
 }

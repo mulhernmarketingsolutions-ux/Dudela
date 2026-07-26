@@ -2,11 +2,11 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 // Mirrors the real link-in-bio page (used in Instagram/TikTok bios), plus
-// the two affiliate/product links that live there: the Gumroad Prep Kit
-// checkout and the Taking Cara Babies sleep affiliate link.
+// the Prep Kit checkout (own Stripe checkout, see /api/create-checkout-session)
+// and the Taking Cara Babies sleep affiliate link.
 const links = [
   { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free", primary: true },
-  { label: "The Dudela Prep Kit", href: "https://dudelaco.gumroad.com/l/dudela-prep-kit", tag: "$37", external: true },
+  { label: "The Dudela Prep Kit", href: "/api/create-checkout-session?product=prep-kit", tag: "$37" },
   { label: "Taking Cara Babies", sub: "The sleep resource we recommend to every dad", href: "https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC", tag: null, external: true },
   { label: "The Dudela Podcast", href: "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ", tag: null, external: true },
   { label: "Join the Spit-Up Society", href: "/join/spit-up-society", tag: "$5/mo" },
