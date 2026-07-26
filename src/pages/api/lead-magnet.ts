@@ -23,11 +23,11 @@ export const prerender = false;
 // then this map is empty-safe: if a magnet isn't listed here, the generic CONFIRMATIONS
 // email below is sent instead, so submitters always hear something back.
 const MAGNETS: Record<string, { subject: string; fileName: string; url: string }> = {
-  // "free-guide": {
-  //   subject: "Your free guide — 15 Things Every Dad Should Do Before the Baby Arrives",
-  //   fileName: "Dudela – Free Dad Prep Guide.pdf",
-  //   url: "https://thedudelaco.com/downloads/free-dad-prep-guide.pdf",
-  // },
+  "free-guide": {
+    subject: "Your free guide — 15 Things Every Dad Should Do Before the Baby Arrives",
+    fileName: "Dudela – 15 Things Every Dad Should Do Before the Baby Arrives.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-15-things.pdf",
+  },
 };
 
 // Generic "you're confirmed" copy per magnet, used whenever MAGNETS doesn't have a real
