@@ -51,27 +51,57 @@ const CONFIRMATIONS: Record<string, { subject: string; body: string }> = {
   },
 };
 
-function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: string }) {
-  const firstName = name ? name.split(" ")[0] : "there";
+// Shared branded shell — dark forest header with the Dudela mark, cream card body,
+// amber CTA. Keeps all lead-magnet emails feeling like the site instead of a bare
+// system message. Uses email-safe fonts only (no webfonts — most clients strip them).
+function emailShell(innerHtml: string) {
   return `
-    <div style="font-family: sans-serif; color: #1c2319; max-width: 480px;">
-      <p>Hey ${firstName},</p>
-      <p>Here's your download, straight from us — no fluff, just the guide.</p>
-      <p><a href="${magnetInfo.url}" style="display:inline-block;background:#e27d25;color:#1c2319;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:700;">Download ${magnetInfo.fileName}</a></p>
-      <p>— John &amp; Mike, Dudela</p>
+    <div style="background:#12180f;padding:40px 16px;font-family:Arial,Helvetica,sans-serif;">
+      <div style="max-width:460px;margin:0 auto;background:#f5efe3;border-radius:14px;overflow:hidden;">
+        <div style="background:#1c2319;padding:26px 32px;text-align:center;">
+          <img src="https://thedudelaco.com/logo/dudela-logo-white-full.png" alt="Dudela" style="height:36px;width:auto;display:inline-block;" />
+        </div>
+        <div style="padding:36px 32px;">
+          ${innerHtml}
+        </div>
+        <div style="padding:0 32px 28px;">
+          <p style="color:#8a9280;font-size:12px;line-height:1.5;margin:0;border-top:1px solid #e2d9c4;padding-top:16px;">
+            The Dudela Co. &middot; Turning Dudes Into Dads &middot;
+            <a href="https://thedudelaco.com" style="color:#8a9280;">thedudelaco.com</a>
+          </p>
+        </div>
+      </div>
     </div>
   `;
 }
 
+function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: string }) {
+  const firstName = name ? name.split(" ")[0] : "there";
+  return emailShell(`
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+      Here it is — <strong>15 Things Every Dad Should Do Before the Baby Arrives</strong>.
+      Straight from us, no fluff. Save it somewhere you'll actually look at it again.
+    </p>
+    <div style="text-align:center;margin:30px 0 26px;">
+      <a href="${magnetInfo.url}" style="display:inline-block;background:#e27d25;color:#12180f;padding:15px 30px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
+        Download the Guide
+      </a>
+    </div>
+    <p style="color:#4a5540;font-size:14px;line-height:1.6;margin:0 0 4px;">
+      Want to go five times deeper? The <a href="https://thedudelaco.com/kit" style="color:#c66815;font-weight:700;text-decoration:none;">Dudela Prep Kit</a> is the next step when you're ready.
+    </p>
+    <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
+  `);
+}
+
 function confirmationEmailHtml(name: string, body: string) {
   const firstName = name ? name.split(" ")[0] : "there";
-  return `
-    <div style="font-family: sans-serif; color: #1c2319; max-width: 480px;">
-      <p>Hey ${firstName},</p>
-      <p>${body}</p>
-      <p>— John &amp; Mike, Dudela</p>
-    </div>
-  `;
+  return emailShell(`
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 24px;">${body}</p>
+    <p style="color:#1c2319;font-size:15px;margin:0;">— John &amp; Mike, Dudela</p>
+  `);
 }
 
 function notifyEmailHtml(opts: { name: string; email: string; magnet: string; source: string }) {
