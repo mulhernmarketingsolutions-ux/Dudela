@@ -1,0 +1,122 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Nav from "../../../components/Nav.astro";
+import Footer from "../../../components/Footer.astro";
+---
+<BaseLayout title="You're in — The Spit-Up Society" description="Welcome to the Spit-Up Society. Here's what happens next.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Membership confirmed</p>
+      <h1>Welcome to the Spit-Up Society.</h1>
+      <p class="hero-sub">
+        You're in — $5/month, cancel anytime. A confirmation email is headed to your inbox
+        now. Our first live Q&amp;A is <strong>August 4th at 7pm</strong> — we'll email you
+        the link.
+      </p>
+      <a href="/join/spit-up-society" class="btn btn-primary">See what's included</a>
+    </div>
+  </section>
+
+  <section class="next section-light">
+    <div class="container next-inner">
+      <p class="eyebrow">What to expect</p>
+      <h2>No app to download. No dues drama. Just people who get it.</h2>
+      <div class="next-grid">
+        <div class="next-card">
+          <h3>Weekly Huddles</h3>
+          <p>A standing check-in with dads who are exactly where you are.</p>
+        </div>
+        <div class="next-card">
+          <h3>Live Q&amp;A, Twice a Month</h3>
+          <p>Direct access to John and Mike. Bring your real questions.</p>
+        </div>
+        <div class="next-card">
+          <h3>Womb Watch</h3>
+          <p>Behind-the-scenes audio and video following Mike and Abigail through pregnancy, in real time.</p>
+        </div>
+      </div>
+      <p class="next-footnote">
+        We're actively building out a proper members' home for all of this directly on the
+        site — for now, everything ships straight to your inbox.
+      </p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 5rem;
+    text-align: center;
+  }
+  .hero-inner {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5.5vw, 3.2rem);
+    margin: 0.5rem 0 1.25rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+    margin-bottom: 2rem;
+  }
+  .hero-sub strong {
+    color: var(--amber-500);
+  }
+  .next {
+    padding: var(--space-6) 0;
+  }
+  .next-inner {
+    max-width: 820px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .next h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    max-width: 26ch;
+    margin: 0.5rem auto 2rem;
+  }
+  .next-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    text-align: left;
+  }
+  .next-card {
+    background: var(--cream-100, #f5efe3);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .next-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+  }
+  .next-card p {
+    color: var(--text-on-light-muted);
+    margin: 0;
+    font-size: 0.92rem;
+  }
+  .next-footnote {
+    color: var(--text-on-light-muted);
+    font-size: 0.88rem;
+    margin-top: 2rem;
+    font-style: italic;
+  }
+  @media (min-width: 700px) {
+    .next-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

@@ -28,6 +28,16 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
 // doc — it's what future Ongoing Newsletter sends filter on to suppress repeat pitches.
 export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
+  "spit-up-society": { eventName: "member-spit-up-society", userGroup: "Member – Spit-Up Society" },
+};
+
+// Fired on customer.subscription.deleted — separate from PURCHASE_EVENTS since it's a
+// cancellation, not a purchase, but keyed the same way by `product` for consistency.
+export const CANCELLATION_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
+  "spit-up-society": {
+    eventName: "member-spit-up-society-lapsed",
+    userGroup: "Lapsed Member – Spit-Up Society",
+  },
 };
 
 async function sendEvent(
@@ -83,6 +93,28 @@ export async function sendLoopsPurchaseEvent(
   const mapping = PURCHASE_EVENTS[opts.product];
   if (!mapping) {
     console.error(`No Loops purchase mapping for product "${opts.product}"`);
+    return null;
+  }
+  const firstName = opts.name ? opts.name.split(" ")[0] : undefined;
+  return sendEvent(env, {
+    email: opts.email,
+    firstName,
+    eventName: mapping.eventName,
+    userGroup: mapping.userGroup,
+    source: opts.source || "stripe",
+  });
+}
+
+// Fired from the Stripe webhook handler on customer.subscription.deleted — tags a member
+// as lapsed so future Ongoing Newsletter sends can offer a win-back instead of pretending
+// they're still an active member.
+export async function sendLoopsCancellationEvent(
+  env: LoopsEnv,
+  opts: { email: string; name?: string; product: string; source?: string }
+) {
+  const mapping = CANCELLATION_EVENTS[opts.product];
+  if (!mapping) {
+    console.error(`No Loops cancellation mapping for product "${opts.product}"`);
     return null;
   }
   const firstName = opts.name ? opts.name.split(" ")[0] : undefined;

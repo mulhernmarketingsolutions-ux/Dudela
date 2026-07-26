@@ -30,10 +30,14 @@ export async function createCheckoutSession(
     cancelUrl: string;
     customerEmail?: string;
     metadata?: Record<string, string>;
+    // "payment" for one-time purchases (Prep Kit), "subscription" for recurring
+    // membership billing (Spit-Up Society). Defaults to "payment" to match existing callers.
+    mode?: "payment" | "subscription";
   }
 ) {
+  const mode = opts.mode || "payment";
   const params: Record<string, string> = {
-    mode: "payment",
+    mode,
     "line_items[0][price]": opts.priceId,
     "line_items[0][quantity]": "1",
     success_url: opts.successUrl,
@@ -43,6 +47,13 @@ export async function createCheckoutSession(
   if (opts.metadata) {
     for (const [k, v] of Object.entries(opts.metadata)) {
       params[`metadata[${k}]`] = v;
+      // For subscription mode, Stripe attaches Checkout Session metadata to the
+      // Session itself but NOT to the resulting Subscription object automatically.
+      // Mirror it onto subscription_data[metadata] too so the cancellation webhook
+      // (customer.subscription.deleted) can still read which product this was.
+      if (mode === "subscription") {
+        params[`subscription_data[metadata][${k}]`] = v;
+      }
     }
   }
 
@@ -59,6 +70,23 @@ export async function createCheckoutSession(
     throw new Error(`Stripe checkout session create failed: ${res.status} ${await res.text()}`);
   }
   return res.json() as Promise<{ id: string; url: string }>;
+}
+
+// Subscription lifecycle events (customer.subscription.deleted, .updated) only include the
+// customer ID, not their email — fetch it from the Customers API so the cancellation
+// webhook can still tag the right contact in Loops.
+export async function getCustomer(
+  env: StripeEnv,
+  customerId: string
+): Promise<{ email: string | null; name: string | null }> {
+  const res = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  if (!res.ok) {
+    throw new Error(`Stripe customer fetch failed: ${res.status} ${await res.text()}`);
+  }
+  const customer = (await res.json()) as { email: string | null; name: string | null };
+  return { email: customer.email, name: customer.name };
 }
 
 // Verifies the Stripe-Signature header per Stripe's documented v1 scheme:

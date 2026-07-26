@@ -11,8 +11,22 @@ export const prerender = false;
 //
 // Required Cloudflare secrets: STRIPE_SECRET_KEY (see lib/stripe.ts), plus one STRIPE_PRICE_*
 // var per product below.
-const PRODUCTS: Record<string, { priceEnvVar: string; returnPath: string }> = {
-  "prep-kit": { priceEnvVar: "STRIPE_PRICE_PREP_KIT", returnPath: "/kit" },
+const PRODUCTS: Record<
+  string,
+  { priceEnvVar: string; returnPath: string; thankYouPath: string; mode: "payment" | "subscription" }
+> = {
+  "prep-kit": {
+    priceEnvVar: "STRIPE_PRICE_PREP_KIT",
+    returnPath: "/kit",
+    thankYouPath: "/kit/thank-you",
+    mode: "payment",
+  },
+  "spit-up-society": {
+    priceEnvVar: "STRIPE_PRICE_SPIT_UP_SOCIETY",
+    returnPath: "/join/spit-up-society",
+    thankYouPath: "/join/spit-up-society/thank-you",
+    mode: "subscription",
+  },
 };
 
 export async function GET({ request, locals }: APIContext) {
@@ -36,7 +50,8 @@ export async function GET({ request, locals }: APIContext) {
   try {
     const session = await createCheckoutSession(env, {
       priceId,
-      successUrl: `${origin}${productConfig.returnPath}?purchase=success`,
+      mode: productConfig.mode,
+      successUrl: `${origin}${productConfig.thankYouPath}`,
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
       customerEmail: email,
       metadata: { product },

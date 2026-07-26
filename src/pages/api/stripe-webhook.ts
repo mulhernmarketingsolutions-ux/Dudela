@@ -1,29 +1,36 @@
 import type { APIContext } from "astro";
-import { verifyStripeSignature } from "../../lib/stripe";
-import { sendLoopsPurchaseEvent } from "../../lib/loops";
+import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
+import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
 
 export const prerender = false;
 
 // Stripe webhook endpoint. Configure in Stripe Dashboard → Developers → Webhooks:
 //   URL: https://thedudelaco.com/api/stripe-webhook
-//   Events to send: checkout.session.completed
+//   Events to send: checkout.session.completed, customer.subscription.deleted
 // Paste the resulting signing secret into Cloudflare as STRIPE_WEBHOOK_SECRET.
 //
-// This is the source of truth for "did the purchase actually happen" — never rely on the
-// success_url redirect alone, since a buyer can close the tab before that page loads.
+// This is the source of truth for "did the purchase/signup actually happen" — never rely
+// on the success_url redirect alone, since a buyer can close the tab before that page loads.
 //
 // PRODUCTS below maps the `product` value we set as Checkout Session metadata (see
-// create-checkout-session.ts) to the delivery file. Once the real Prep Kit PDF is hosted
-// under /public/downloads/, add its url here and buyers get it immediately in the receipt
-// email — until then they get a "confirmed, sending shortly" note and John gets an internal
-// heads-up so it can be sent manually.
-const PRODUCTS: Record<string, { name: string; price: string; fileName?: string; url?: string }> = {
+// create-checkout-session.ts) to receipt-email copy. isSubscription flips the copy from
+// "here's your download" to "welcome to the membership." fileName/url are only relevant
+// for one-time digital products — leave unset for subscriptions.
+const PRODUCTS: Record<
+  string,
+  { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string }
+> = {
   "prep-kit": {
     name: "The Dudela Prep Kit",
     price: "$37",
     fileName: "dudela-prep-kit.pdf",
     url: "https://thedudelaco.com/downloads/dudela-prep-kit.pdf",
+  },
+  "spit-up-society": {
+    name: "The Spit-Up Society",
+    price: "$5/mo",
+    isSubscription: true,
   },
 };
 
@@ -48,8 +55,25 @@ function emailShell(innerHtml: string) {
   `;
 }
 
-function receiptEmailHtml(name: string, product: { name: string; price: string; fileName?: string; url?: string }) {
+function receiptEmailHtml(
+  name: string,
+  product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string }
+) {
   const firstName = name ? name.split(" ")[0] : "there";
+
+  if (product.isSubscription) {
+    return emailShell(`
+      <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+      <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+        You're in — welcome to <strong>${product.name}</strong> (${product.price}). This confirms your membership is active.
+      </p>
+      <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+        Keep an eye on your inbox for the details on our first live Q&amp;A and how to join the community.
+      </p>
+      <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
+    `);
+  }
+
   const deliveryBlock = product.url
     ? `
       <div style="text-align:center;margin:30px 0 26px;">
@@ -72,10 +96,10 @@ function receiptEmailHtml(name: string, product: { name: string; price: string; 
   `);
 }
 
-function notifyEmailHtml(opts: { email: string; name: string; product: string; amount: string }) {
+function notifyEmailHtml(opts: { email: string; name: string; product: string; amount: string; event: string }) {
   return `
     <div style="font-family: sans-serif; color: #1c2319; max-width: 480px;">
-      <p><strong>New purchase:</strong> ${opts.product} (${opts.amount})</p>
+      <p><strong>${opts.event}:</strong> ${opts.product}${opts.amount ? ` (${opts.amount})` : ""}</p>
       <p>Name: ${opts.name || "(not given)"}<br/>
       Email: ${opts.email}</p>
     </div>
@@ -128,13 +152,49 @@ export async function POST({ request, locals }: APIContext) {
       try {
         await sendEmail(env, {
           to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
-          subject: `New purchase — ${product} — ${email}`,
-          html: notifyEmailHtml({ email, name, product, amount: amountTotal }),
+          subject: `New ${productInfo.isSubscription ? "member" : "purchase"} — ${product} — ${email}`,
+          html: notifyEmailHtml({
+            email,
+            name,
+            product,
+            amount: amountTotal,
+            event: productInfo.isSubscription ? "New subscriber" : "New purchase",
+          }),
           replyTo: email,
         });
       } catch (err) {
         console.error("Purchase internal notification failed:", err);
       }
+    }
+  }
+
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object;
+    const product: string = subscription.metadata?.product || "spit-up-society";
+    const customerId: string = subscription.customer;
+
+    try {
+      const { email, name } = await getCustomer(env, customerId);
+      if (email) {
+        try {
+          await sendLoopsCancellationEvent(env, { email, name: name || "", product });
+        } catch (err) {
+          console.error("Loops cancellation event failed:", err);
+        }
+
+        try {
+          await sendEmail(env, {
+            to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
+            subject: `Subscription cancelled — ${product} — ${email}`,
+            html: notifyEmailHtml({ email, name: name || "", product, amount: "", event: "Cancellation" }),
+            replyTo: email,
+          });
+        } catch (err) {
+          console.error("Cancellation internal notification failed:", err);
+        }
+      }
+    } catch (err) {
+      console.error("Stripe customer lookup failed for cancellation:", err);
     }
   }
 
