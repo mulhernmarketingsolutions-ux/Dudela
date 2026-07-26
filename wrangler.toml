@@ -8,15 +8,12 @@ binding = "ASSETS"
 directory = "./dist"
 
 # Member area (magic-link login, Womb Watch posts, member questions) — see
-# src/lib/db.ts and migrations/0001_init.sql. One-time setup, from this
-# directory, once you're back at a terminal with `wrangler login` done:
-#   1. wrangler d1 create dudela
-#   2. Paste the database_id it prints into database_id below.
-#   3. wrangler d1 execute dudela --remote --file=./migrations/0001_init.sql
-#   4. wrangler secret put ADMIN_PASSWORD   (shared password for /admin/womb-watch)
-# Until database_id is filled in, the member-area routes will error — the
-# rest of the site is unaffected since this binding is additive.
+# src/lib/db.ts and migrations/0001_init.sql. Already provisioned via the
+# Cloudflare dashboard: D1 database "dudela" created, migrations/0001_init.sql
+# applied (6 tables), bound to this Worker as "DB", and ADMIN_PASSWORD secret
+# set for /admin/womb-watch. Nothing left to do here — this just needs to
+# ship on the next deploy.
 [[d1_databases]]
 binding = "DB"
 database_name = "dudela"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "13a7f296-441d-48be-9a54-380a0a816adf"
