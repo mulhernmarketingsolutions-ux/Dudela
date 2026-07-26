@@ -1,13 +1,15 @@
 import type { APIContext } from "astro";
 import { getGoogleAccessToken, appendSheetRow, GOOGLE_SCOPES } from "../../lib/google";
-import { addMailerLiteSubscriber } from "../../lib/mailerlite";
+import { sendLoopsEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
 
 export const prerender = false;
 
 // Handles every lead-magnet form on the site (free guide, checklists, etc).
 // 1. Logs the submission to the "Leads" tab of the shared Google Sheet.
-// 2. Adds the person to MailerLite so the existing nurture sequence keeps doing its job.
+// 2. Sends an event to Loops (see ../../lib/loops.ts) so the matching welcome/nurture
+//    workflow fires over there. Loops replaced MailerLite — see
+//    "Dudela Email System & Welcome Sequence.md" for the full reasoning.
 // 3. Sends the submitter a confirmation email (via Resend) — either the real PDF delivery
 //    email (if MAGNETS has a hosted file for this magnet) or a generic "you're in" email
 //    otherwise (see CONFIRMATIONS below).
@@ -15,8 +17,8 @@ export const prerender = false;
 //    the Google Sheet manually.
 //
 // Required Cloudflare secrets: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
-// GOOGLE_SHEET_ID, MAILERLITE_API_KEY, MAILERLITE_GROUP_ID (optional), RESEND_API_KEY,
-// RESEND_FROM_EMAIL, NOTIFY_EMAIL (optional — defaults to dude@thedudelaco.com).
+// GOOGLE_SHEET_ID, LOOPS_API_KEY, RESEND_API_KEY, RESEND_FROM_EMAIL, NOTIFY_EMAIL (optional —
+// defaults to dude@thedudelaco.com).
 //
 // MAGNETS below maps each `magnet` value (sent by the form) to its subject line and the
 // PDF's public URL. Drop real PDF files in /public/downloads/ and update the url — until
@@ -156,10 +158,10 @@ export async function POST({ request, locals }: APIContext) {
   }
 
   try {
-    await addMailerLiteSubscriber(env, { email, name, groupId: env.MAILERLITE_GROUP_ID });
+    await sendLoopsEvent(env, { email, name, magnet, source });
   } catch (err) {
-    console.error("Lead magnet MailerLite add failed:", err);
-    errors.push("mailerlite");
+    console.error("Lead magnet Loops event failed:", err);
+    errors.push("loops");
   }
 
   // Submitter-facing email: real PDF delivery if we have one hosted for this magnet,
