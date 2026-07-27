@@ -81,8 +81,12 @@ const ICONS = {
     <a href="/merch">Merch</a>
     <a href="/join">Pricing</a>
     <a href="/about">About</a>
-    <a href="/member/login" class="mobile-member-link">Member Login</a>
-    <a href="/join/spit-up-society" class="btn btn-primary mobile-join">Join</a>
+    <!-- Only one button belongs inside the open menu. Join already sits
+         pinned in nav-right (z-index above this overlay), so it stays
+         visible the whole time the menu is open — no need to duplicate it
+         down here. Member Login is the one thing worth surfacing as its
+         own button, with the same person icon used outside for continuity. -->
+    <a href="/member/login" class="mobile-member-btn" set:html={`${ICONS.user} Member Login`} />
   </div>
 </header>
 
@@ -292,15 +296,30 @@ const ICONS = {
     width: 20px;
     height: 20px;
   }
-  .mobile-member-link {
+  .mobile-member-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
     font-family: var(--font-label) !important;
-    font-size: 0.95rem !important;
+    font-size: 1rem !important;
     font-weight: 600;
-    color: rgba(245, 239, 227, 0.7) !important;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(245, 239, 227, 0.12);
-    width: 70%;
-    text-align: center;
+    color: var(--cream-100) !important;
+    text-decoration: none;
+    border: 1.5px solid rgba(245, 239, 227, 0.5);
+    border-radius: 999px;
+    padding: 0.75rem 1.85rem;
+    margin-top: 1.25rem;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .mobile-member-btn:hover {
+    border-color: var(--cream-100);
+    background: rgba(245, 239, 227, 0.08);
+  }
+  .mobile-member-btn :global(svg) {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
 
   .hamburger {
@@ -367,12 +386,6 @@ const ICONS = {
     color: var(--cream-100);
     text-decoration: none;
   }
-  .mobile-join {
-    font-family: var(--font-label);
-    font-size: 1rem;
-    margin-top: 0.5rem;
-  }
-
   @media (min-width: 860px) {
     .links {
       display: flex;
