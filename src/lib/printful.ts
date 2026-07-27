@@ -100,11 +100,12 @@ async function findVariantId(env: PrintfulEnv, colorName: string): Promise<numbe
 // This is the single source of truth for "what hats can someone buy" — /merch reads
 // this list to render buy buttons, and the webhook reads it to build the Printful order.
 //
-// CONFIRMED LIST (per John, 2026-07-27):
+// CONFIRMED LIST (per John, 2026-07-27) — kept deliberately simple (2 colors per
+// design, both embroidered) after a long back-and-forth on thread/color options:
 //   1. Cream hat, black bill   — fist-bump front + DUDELA wordmark back, BLACK thread
 //   2. Black hat               — fist-bump front + DUDELA wordmark back, WHITE thread
-//   3. Cream hat, green bill   — upside-down DUDELA front, GREEN print (existing design)
-//   4. Black hat               — upside-down DUDELA front, WHITE print
+//   3. Cream hat, green bill   — upside-down DUDELA front, GREEN thread
+//   4. Black hat               — upside-down DUDELA front, WHITE thread
 export interface HatConfig {
   slug: string; // matches the `product` value used in Stripe metadata / create-checkout-session.ts
   label: string;
@@ -146,7 +147,7 @@ export const HAT_CATALOG: HatConfig[] = [
     label: "Cream Hat, Green Bill — Upside Down",
     printfulColor: "Dark Green/Natural", // confirmed against the live template in the Dudela Printful store
     design: "upsidedown",
-    technique: "dtf",
+    technique: "embroidery", // switched from DTF print to match the fist-bump design's embroidered feel
     frontColor: "#3A4A32",
     frontFileUrl: "https://thedudelaco.com/printful/dudela-upsidedown-front.png",
   },
@@ -155,7 +156,7 @@ export const HAT_CATALOG: HatConfig[] = [
     label: "Black Hat — Upside Down",
     printfulColor: "Black", // not yet built as a template in Printful — verify exact name on first real order
     design: "upsidedown",
-    technique: "dtf",
+    technique: "embroidery",
     frontColor: "#FFFFFF",
     frontFileUrl: "https://thedudelaco.com/printful/dudela-upsidedown-front.png",
   },
