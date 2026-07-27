@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
-import { upsertMemberFromStripe, markMemberCanceledByStripeCustomerId } from "../../lib/db";
+import { upsertMemberFromStripe, markMemberCanceledByStripeCustomerId, createMerchOrder } from "../../lib/db";
 
 export const prerender = false;
 
@@ -20,7 +20,7 @@ export const prerender = false;
 // for one-time digital products — leave unset for subscriptions.
 const PRODUCTS: Record<
   string,
-  { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string }
+  { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean }
 > = {
   "prep-kit": {
     name: "The Dudela Prep Kit",
@@ -33,7 +33,35 @@ const PRODUCTS: Record<
     price: "$5/mo",
     isSubscription: true,
   },
+  "hat-classic": {
+    name: "Dudela Hat — Classic (Cream/Green)",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-black-green": {
+    name: "Dudela Hat — All Black (Green Logo)",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-black-cream": {
+    name: "Dudela Hat — Black (Cream Bill/Lettering)",
+    price: "$38",
+    isMerch: true,
+  },
 };
+
+// Stripe's Basil API version (2025-03-31+) moved collected checkout-time
+// shipping details from `shipping_details` to `collected_information.shipping_details`.
+// Check both so this keeps working whichever the account is actually running.
+function extractShippingDetails(session: any): { name: string | null; address: string | null } {
+  const shipping = session.collected_information?.shipping_details || session.shipping_details;
+  if (!shipping) return { name: null, address: null };
+  const a = shipping.address || {};
+  const addressLine = [a.line1, a.line2, a.city, a.state, a.postal_code, a.country]
+    .filter(Boolean)
+    .join(", ");
+  return { name: shipping.name || null, address: addressLine || null };
+}
 
 function emailShell(innerHtml: string) {
   return `
@@ -58,9 +86,22 @@ function emailShell(innerHtml: string) {
 
 function receiptEmailHtml(
   name: string,
-  product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string }
+  product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean }
 ) {
   const firstName = name ? name.split(" ")[0] : "there";
+
+  if (product.isMerch) {
+    return emailShell(`
+      <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+      <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+        You're in — thanks for grabbing a <strong>${product.name}</strong> (${product.price}). This is your presale receipt.
+      </p>
+      <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+        These are a limited first run, so it'll take us a bit to get them made and shipped — we'll email you the second yours is on its way.
+      </p>
+      <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
+    `);
+  }
 
   if (product.isSubscription) {
     return emailShell(`
@@ -155,6 +196,23 @@ export async function POST({ request, locals }: APIContext) {
           });
         } catch (err) {
           console.error("Member upsert failed:", err);
+        }
+      }
+
+      if (productInfo.isMerch) {
+        try {
+          const { name: shippingName, address: shippingAddress } = extractShippingDetails(session);
+          await createMerchOrder(env, {
+            sessionId: session.id,
+            color: session.metadata?.color || "unknown",
+            email,
+            name,
+            shippingName: shippingName || undefined,
+            shippingAddress: shippingAddress || undefined,
+            amountTotal: typeof session.amount_total === "number" ? session.amount_total : undefined,
+          });
+        } catch (err) {
+          console.error("Merch order insert failed:", err);
         }
       }
 

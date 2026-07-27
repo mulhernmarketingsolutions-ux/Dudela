@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
+import { countMerchOrders } from "../../lib/db";
 
 export const prerender = false;
 
@@ -13,7 +14,18 @@ export const prerender = false;
 // var per product below.
 const PRODUCTS: Record<
   string,
-  { priceEnvVar: string; returnPath: string; thankYouPath: string; mode: "payment" | "subscription" }
+  {
+    priceEnvVar: string;
+    returnPath: string;
+    thankYouPath: string;
+    mode: "payment" | "subscription";
+    // Physical goods need a shipping address collected at Stripe checkout.
+    shipping?: boolean;
+    // Presale scarcity: this colorway's cap in merch_orders (see lib/db.ts).
+    // Only set on the 3 hat products — undefined means "no cap, don't check."
+    merchColor?: string;
+    merchCap?: number;
+  }
 > = {
   "prep-kit": {
     priceEnvVar: "STRIPE_PRICE_PREP_KIT",
@@ -26,6 +38,33 @@ const PRODUCTS: Record<
     returnPath: "/join/spit-up-society",
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
+  },
+  "hat-classic": {
+    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
+    returnPath: "/merch",
+    thankYouPath: "/merch/thank-you",
+    mode: "payment",
+    shipping: true,
+    merchColor: "classic",
+    merchCap: 10,
+  },
+  "hat-black-green": {
+    priceEnvVar: "STRIPE_PRICE_HAT_BLACK_GREEN",
+    returnPath: "/merch",
+    thankYouPath: "/merch/thank-you",
+    mode: "payment",
+    shipping: true,
+    merchColor: "black-green",
+    merchCap: 10,
+  },
+  "hat-black-cream": {
+    priceEnvVar: "STRIPE_PRICE_HAT_BLACK_CREAM",
+    returnPath: "/merch",
+    thankYouPath: "/merch/thank-you",
+    mode: "payment",
+    shipping: true,
+    merchColor: "black-cream",
+    merchCap: 10,
   },
 };
 
@@ -47,6 +86,23 @@ export async function GET({ request, locals }: APIContext) {
   }
 
   const origin = url.origin;
+
+  // Presale scarcity check — block new checkouts once a colorway hits its cap.
+  // This is a "don't open checkout at all" gate, not the source of truth for
+  // preventing a double-sell on a race (that's session_id's UNIQUE constraint
+  // in merch_orders, enforced in the webhook) — good enough for a presale at
+  // this volume, where two people buying the literal last hat in the same
+  // second is a real possibility we're fine handling by refunding one.
+  if (productConfig.merchColor && productConfig.merchCap) {
+    const sold = await countMerchOrders(env, productConfig.merchColor);
+    if (sold >= productConfig.merchCap) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${origin}${productConfig.returnPath}?sold_out=${productConfig.merchColor}` },
+      });
+    }
+  }
+
   try {
     const session = await createCheckoutSession(env, {
       priceId,
@@ -54,7 +110,8 @@ export async function GET({ request, locals }: APIContext) {
       successUrl: `${origin}${productConfig.thankYouPath}`,
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
       customerEmail: email,
-      metadata: { product },
+      metadata: productConfig.merchColor ? { product, color: productConfig.merchColor } : { product },
+      collectShipping: productConfig.shipping,
     });
 
     return new Response(null, {

@@ -33,6 +33,13 @@ export async function createCheckoutSession(
     // "payment" for one-time purchases (Prep Kit), "subscription" for recurring
     // membership billing (Spit-Up Society). Defaults to "payment" to match existing callers.
     mode?: "payment" | "subscription";
+    // Physical goods (the merch hats) need a shipping address — digital
+    // products (Prep Kit, Spit-Up Society) don't set this and get none of
+    // the fields below added to the session.
+    collectShipping?: boolean;
+    // ISO country codes Stripe will accept for shipping_address_collection.
+    // Defaults to US-only, which is all the presale supports for now.
+    shippingCountries?: string[];
   }
 ) {
   const mode = opts.mode || "payment";
@@ -55,6 +62,19 @@ export async function createCheckoutSession(
         params[`subscription_data[metadata][${k}]`] = v;
       }
     }
+  }
+  if (opts.collectShipping) {
+    const countries = opts.shippingCountries?.length ? opts.shippingCountries : ["US"];
+    countries.forEach((c, i) => {
+      params[`shipping_address_collection[allowed_countries][${i}]`] = c;
+    });
+    // Free shipping — matches the "$38, free shipping" copy on /merch. Given as
+    // a zero-amount shipping rate rather than folding it into the price so the
+    // buyer sees "Shipping: Free" as its own line at Stripe checkout.
+    params["shipping_options[0][shipping_rate_data][type]"] = "fixed_amount";
+    params["shipping_options[0][shipping_rate_data][fixed_amount][amount]"] = "0";
+    params["shipping_options[0][shipping_rate_data][fixed_amount][currency]"] = "usd";
+    params["shipping_options[0][shipping_rate_data][display_name]"] = "Free shipping";
   }
 
   const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {

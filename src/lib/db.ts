@@ -317,6 +317,66 @@ export async function getCommunityNoteByMemberId(env: DbEnv, memberId: string): 
   return row ?? null;
 }
 
+// --- Merch presale orders (hat colorways, scarcity cap) ---
+
+export interface MerchOrder {
+  id: string;
+  session_id: string;
+  color: string;
+  email: string;
+  name: string | null;
+  shipping_name: string | null;
+  shipping_address: string | null;
+  amount_total: number | null;
+  created_at: string;
+}
+
+// Presale scarcity: 10 units per colorway. Checked before creating a Stripe
+// Checkout Session (create-checkout-session.ts) so we never sell more than
+// exist, and again isn't re-checked in the webhook — session_id's UNIQUE
+// constraint is what actually prevents a double-sell on a Stripe retry, this
+// count is just the "is this color sold out" gate for new checkouts.
+export async function countMerchOrders(env: DbEnv, color: string): Promise<number> {
+  const row = await env.DB.prepare("SELECT COUNT(*) as n FROM merch_orders WHERE color = ?")
+    .bind(color)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+// Called from the Stripe webhook on checkout.session.completed for a hat
+// product. INSERT OR IGNORE on session_id means a redelivered webhook event
+// for the same session is a harmless no-op instead of a duplicate order.
+export async function createMerchOrder(
+  env: DbEnv,
+  opts: {
+    sessionId: string;
+    color: string;
+    email: string;
+    name?: string;
+    shippingName?: string;
+    shippingAddress?: string;
+    amountTotal?: number;
+  }
+): Promise<void> {
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO merch_orders (id, session_id, color, email, name, shipping_name, shipping_address, amount_total, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      opts.sessionId,
+      opts.color,
+      opts.email,
+      opts.name || null,
+      opts.shippingName || null,
+      opts.shippingAddress || null,
+      opts.amountTotal ?? null,
+      new Date().toISOString()
+    )
+    .run();
+}
+
 export async function createInquiry(
   env: DbEnv,
   opts: { memberEmail: string; memberName?: string; question: string }
