@@ -1,0 +1,295 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { getAuthedMember } from "../../lib/auth";
+import { listCommunityNotes, getCommunityNoteByMemberId } from "../../lib/db";
+
+const env = (Astro.locals as any).runtime.env;
+const member = await getAuthedMember(Astro.cookies, env);
+if (!member) {
+  return Astro.redirect("/member/login");
+}
+
+const notes = await listCommunityNotes(env);
+const myNote = await getCommunityNoteByMemberId(env, member.id);
+
+// Kept intentionally broad and few — this is a quick "where are you at"
+// tag for a bubble card, not the full 11-stage roadmap taxonomy used
+// elsewhere on the site.
+const STAGES = [
+  { id: "expecting", label: "Expecting" },
+  { id: "newborn", label: "Newborn (0–3mo)" },
+  { id: "infant", label: "Infant (3–12mo)" },
+  { id: "toddler", label: "Toddler (1–3yr)" },
+  { id: "preschool", label: "Preschooler (3–5yr)" },
+  { id: "school-age", label: "School Age (5+)" },
+  { id: "multiple", label: "Multiple Kids" },
+];
+const stageLabel = (id: string | null) => STAGES.find((s) => s.id === id)?.label || id || "";
+
+// Three accent tints cycling by index, so the bubble field reads as varied
+// rather than one flat color — same three brand accents used everywhere
+// else on the site (amber/rust/forest), just distributed across cards.
+const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
+---
+<BaseLayout title="The Circle — Dudela" description="A snapshot of the dads in the Spit-Up Society.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Spit-Up Society</p>
+      <h1>The Circle</h1>
+      <p class="hero-sub">
+        Not a group chat, not another feed to check — just a snapshot of who else is in this with you.
+        Every bubble is a real dad in the Society: first name, where he's from, what stage he's in,
+        and one thing he's learned. Add yours below.
+      </p>
+      <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
+    </div>
+  </section>
+
+  <section class="bubble-section section-light">
+    <div class="container">
+      {notes.length === 0 ? (
+        <p class="empty-state">Nobody's added their bubble yet — be the first below.</p>
+      ) : (
+        <div class="bubble-field">
+          {notes.map((note, i) => (
+            <div class={`bubble ${TINTS[i % TINTS.length]}`} style={`animation-delay: ${(i % 7) * 0.6}s; animation-duration: ${7 + (i % 4)}s;`}>
+              {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
+              <p class="bubble-who">
+                {note.first_name}{note.city ? ` · ${note.city}` : ""}
+              </p>
+              <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="form-section section-dark">
+    <div class="container form-inner">
+      <h2>{myNote ? "Update your bubble" : "Add yours to the mix"}</h2>
+      <p class="form-sub">
+        Takes ten seconds. One sentence is plenty — the goal is a snapshot, not an essay.
+      </p>
+
+      <form class="note-form" id="note-form">
+        <div class="row">
+          <label>
+            First name
+            <input type="text" name="first_name" maxlength="40" required value={myNote?.first_name || member.name?.split(" ")[0] || ""} />
+          </label>
+          <label>
+            City <span class="hint">(optional)</span>
+            <input type="text" name="city" maxlength="60" placeholder="Austin, TX" value={myNote?.city || ""} />
+          </label>
+        </div>
+        <label>
+          Dad stage
+          <select name="dad_stage">
+            <option value="">— Select —</option>
+            {STAGES.map((s) => (
+              <option value={s.id} selected={myNote?.dad_stage === s.id}>{s.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          One thing you've learned as a dad <span class="hint">(160 characters, keep it tight)</span>
+          <textarea name="advice" rows="2" maxlength="160" required placeholder="Sleep when you can, but let the dishes wait.">{myNote?.advice || ""}</textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">{myNote ? "Update My Bubble" : "Add My Bubble"}</button>
+      </form>
+      <p id="note-form-status" class="form-status"></p>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("note-form") as HTMLFormElement | null;
+    const status = document.getElementById("note-form-status") as HTMLParagraphElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Saving…";
+      try {
+        const res = await fetch("/api/member/community", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "Saved — refreshing the mix…";
+          setTimeout(() => window.location.reload(), 600);
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 8rem 0 3rem;
+  }
+  .hero-inner {
+    max-width: 640px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 4.5vw, 2.9rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.5rem;
+  }
+  .back-link {
+    color: var(--amber-500);
+    font-size: 0.9rem;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .bubble-section {
+    padding: var(--space-5) 0;
+  }
+  .empty-state {
+    color: var(--text-on-light-muted);
+    text-align: center;
+  }
+  .bubble-field {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem 1.25rem;
+  }
+  .bubble {
+    width: 220px;
+    padding: 1.4rem 1.5rem;
+    border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    text-align: center;
+    animation: bob ease-in-out infinite alternate;
+  }
+  .tint-amber {
+    background: rgba(226, 125, 37, 0.1);
+    border-color: rgba(226, 125, 37, 0.35);
+  }
+  .tint-rust {
+    background: rgba(163, 73, 43, 0.08);
+    border-color: rgba(163, 73, 43, 0.3);
+  }
+  .tint-forest {
+    background: rgba(87, 104, 74, 0.12);
+    border-color: rgba(87, 104, 74, 0.35);
+  }
+  @keyframes bob {
+    from {
+      transform: translateY(0) rotate(-0.5deg);
+    }
+    to {
+      transform: translateY(-10px) rotate(0.5deg);
+    }
+  }
+  .bubble-stage {
+    display: inline-block;
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--rust-600);
+    margin-bottom: 0.6rem;
+  }
+  .bubble-who {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    margin: 0 0 0.6rem;
+    color: var(--text-on-light);
+  }
+  .bubble-advice {
+    font-size: 0.88rem;
+    font-style: italic;
+    color: var(--text-on-light-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .form-section {
+    padding: var(--space-5) 0 var(--space-6);
+  }
+  .form-inner {
+    max-width: 560px;
+  }
+  .form-inner h2 {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    margin: 0 0 0.5rem;
+  }
+  .form-sub {
+    color: var(--text-on-dark-muted);
+    margin-bottom: 1.75rem;
+    font-size: 0.95rem;
+  }
+  .note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .row label {
+    flex: 1;
+    min-width: 180px;
+  }
+  .note-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cream-100);
+  }
+  .hint {
+    font-weight: 400;
+    opacity: 0.65;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .note-form input,
+  .note-form select,
+  .note-form textarea {
+    padding: 0.75rem 0.95rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    resize: vertical;
+  }
+  .note-form button {
+    align-self: flex-start;
+    margin-top: 0.4rem;
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+    margin-top: 0.9rem;
+    min-height: 1.2em;
+  }
+</style>

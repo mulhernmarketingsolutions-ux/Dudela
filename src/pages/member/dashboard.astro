@@ -5,6 +5,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import { getAuthedMember } from "../../lib/auth";
+import { getEmbed } from "../../lib/embed";
 
 const env = (Astro.locals as any).runtime.env;
 const member = await getAuthedMember(Astro.cookies, env);
@@ -31,6 +32,15 @@ const nextCall = {
   pin: "741 991 265#",
 };
 
+// Welcome video from Mike & John, thanking new members for joining. Paste
+// the real link in once it's filmed/uploaded (YouTube unlisted is easiest)
+// — no admin UI for this one since it's a single fixed video, not a feed.
+const welcomeVideo = {
+  videoUrl: "",
+  thumbnailUrl: "",
+};
+const welcomeEmbed = getEmbed(welcomeVideo.videoUrl);
+
 // Feather-style stroke icons, same pattern used in Roadmap.astro — rendered
 // via set:html since these are raw SVG strings, not components.
 const ICONS = {
@@ -39,6 +49,8 @@ const ICONS = {
   video: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
   card: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
   phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
 };
 ---
 <BaseLayout title="Member Dashboard — Dudela" description="Your Spit-Up Society member area.">
@@ -55,6 +67,37 @@ const ICONS = {
       ) : (
         <p class="hero-sub">You're an active member. Mike and John are both actually reading this stuff — here's everything in one place.</p>
       )}
+
+      <div class="welcome-video" data-episode>
+        {welcomeEmbed ? (
+          <div class="video-media" data-media>
+            <div class="video-thumb" data-thumb style={welcomeVideo.thumbnailUrl ? `background-image:url(${welcomeVideo.thumbnailUrl})` : ""}>
+              {!welcomeVideo.thumbnailUrl && <div class="thumb-fallback" set:html={ICONS.video} />}
+              <button type="button" class="play-btn" data-play aria-label="Play welcome video" set:html={ICONS.play}></button>
+            </div>
+            <div class="video-embed" data-embed hidden>
+              {welcomeEmbed.kind === "file" ? (
+                <video controls preload="none" src={welcomeEmbed.src}></video>
+              ) : (
+                <iframe
+                  src=""
+                  data-src={welcomeEmbed.src}
+                  title="Welcome to the Spit-Up Society"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div class="video-placeholder">
+            <div class="thumb-fallback" set:html={ICONS.video} />
+            <p>A welcome video from Mike &amp; John — coming soon.</p>
+          </div>
+        )}
+      </div>
+      <p class="welcome-cta">New here? Once you've watched it, <a href="/member/community">tell us a bit about you →</a></p>
     </div>
   </section>
 
@@ -75,6 +118,13 @@ const ICONS = {
         <h3>Womb Watch</h3>
         <p>Short video check-ins with Mike, week by week — what's actually going on with him, Abigail, and the pregnancy.</p>
         <span class="card-cta">Watch the latest →</span>
+      </a>
+
+      <a href="/member/community" class="card">
+        <div class="card-icon" set:html={ICONS.users} />
+        <h3>The Circle</h3>
+        <p>A snapshot of the other dads in here — first names, cities, stages, and one thing each of them has learned.</p>
+        <span class="card-cta">See the mix →</span>
       </a>
 
       <a href="/member/ask" class="card">
@@ -99,6 +149,24 @@ const ICONS = {
     </div>
   </section>
 
+  <script>
+    // Click-to-play for the welcome video — same lazy-embed pattern used on
+    // /member/womb-watch, just scoped to the single hero video here.
+    document.querySelectorAll<HTMLElement>("[data-episode]").forEach((card) => {
+      const playBtn = card.querySelector<HTMLButtonElement>("[data-play]");
+      const thumb = card.querySelector<HTMLElement>("[data-thumb]");
+      const embedWrap = card.querySelector<HTMLElement>("[data-embed]");
+      playBtn?.addEventListener("click", () => {
+        const iframe = embedWrap?.querySelector<HTMLIFrameElement>("iframe[data-src]");
+        if (iframe && !iframe.src) iframe.src = iframe.dataset.src || "";
+        const video = embedWrap?.querySelector<HTMLVideoElement>("video");
+        thumb?.setAttribute("hidden", "");
+        embedWrap?.removeAttribute("hidden");
+        video?.play().catch(() => {});
+      });
+    });
+  </script>
+
   <Footer />
 </BaseLayout>
 
@@ -120,6 +188,104 @@ const ICONS = {
   .status-canceled a {
     color: var(--amber-500);
     font-weight: 700;
+    text-decoration: none;
+  }
+  .welcome-video {
+    margin-top: 2rem;
+    max-width: 480px;
+  }
+  .video-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .video-thumb {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--forest-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .video-placeholder {
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-md);
+    background: var(--forest-700);
+    border: 1px dashed var(--forest-600);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  .video-placeholder p {
+    color: var(--text-on-dark-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    max-width: 26ch;
+  }
+  .thumb-fallback {
+    width: 40px;
+    height: 40px;
+    color: rgba(245, 239, 227, 0.3);
+  }
+  .thumb-fallback :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+  .play-btn {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: rgba(20, 24, 17, 0.55);
+    border: 2px solid var(--cream-100);
+    color: var(--cream-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .play-btn:hover {
+    transform: scale(1.06);
+    background: var(--amber-500);
+    border-color: var(--amber-500);
+  }
+  .play-btn :global(svg) {
+    width: 20px;
+    height: 20px;
+    margin-left: 3px;
+  }
+  .video-embed {
+    width: 100%;
+    height: 100%;
+  }
+  .video-embed iframe,
+  .video-embed video {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: #000;
+  }
+  .welcome-cta {
+    margin-top: 0.85rem;
+    font-size: 0.85rem;
+    color: var(--text-on-dark-muted);
+  }
+  .welcome-cta a {
+    color: var(--amber-500);
+    font-weight: 600;
     text-decoration: none;
   }
   .grid {

@@ -45,6 +45,21 @@ export interface Inquiry {
   created_at: string;
 }
 
+// One per member — the "perceived community" bubble on /member/community.
+// Not a feed/forum, just a snapshot: who they are, where, what stage,
+// and one thing they've learned. Resubmitting updates their existing row
+// rather than creating a second bubble (see upsertCommunityNote).
+export interface CommunityNote {
+  id: string;
+  member_id: string;
+  first_name: string;
+  city: string | null;
+  dad_stage: string | null;
+  advice: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Hex-encoded random token via Web Crypto (same API already used in
 // lib/stripe.ts for signature verification) — no Node crypto needed.
 export function randomToken(bytes = 32): string {
@@ -256,6 +271,51 @@ export async function deletePost(env: DbEnv, id: string): Promise<void> {
 }
 
 // --- Member inquiries (questions submitted for the live Q&A / anytime) ---
+
+// --- Community notes (the floating bubble cloud on /member/community) ---
+
+// One bubble per member: fill it out once, resubmitting edits it in place
+// rather than piling up duplicates. member_id has a UNIQUE constraint
+// (migrations/0003) so this is a plain upsert.
+export async function upsertCommunityNote(
+  env: DbEnv,
+  opts: { memberId: string; firstName: string; city?: string; dadStage?: string; advice: string }
+): Promise<CommunityNote> {
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT id FROM community_notes WHERE member_id = ?")
+    .bind(opts.memberId)
+    .first<{ id: string }>();
+
+  if (existing) {
+    await env.DB.prepare(
+      `UPDATE community_notes SET first_name = ?, city = ?, dad_stage = ?, advice = ?, updated_at = ? WHERE member_id = ?`
+    )
+      .bind(opts.firstName, opts.city || null, opts.dadStage || null, opts.advice, now, opts.memberId)
+      .run();
+    return (await env.DB.prepare("SELECT * FROM community_notes WHERE member_id = ?").bind(opts.memberId).first<CommunityNote>())!;
+  }
+
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO community_notes (id, member_id, first_name, city, dad_stage, advice, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(id, opts.memberId, opts.firstName, opts.city || null, opts.dadStage || null, opts.advice, now, now)
+    .run();
+  return (await env.DB.prepare("SELECT * FROM community_notes WHERE id = ?").bind(id).first<CommunityNote>())!;
+}
+
+export async function listCommunityNotes(env: DbEnv, limit = 60): Promise<CommunityNote[]> {
+  const res = await env.DB.prepare(`SELECT * FROM community_notes ORDER BY created_at DESC LIMIT ?`)
+    .bind(limit)
+    .all<CommunityNote>();
+  return res.results ?? [];
+}
+
+export async function getCommunityNoteByMemberId(env: DbEnv, memberId: string): Promise<CommunityNote | null> {
+  const row = await env.DB.prepare("SELECT * FROM community_notes WHERE member_id = ?").bind(memberId).first<CommunityNote>();
+  return row ?? null;
+}
 
 export async function createInquiry(
   env: DbEnv,
