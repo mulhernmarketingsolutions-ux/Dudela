@@ -43,20 +43,6 @@ import { pillars } from "../data/pillars.js";
     </div>
   </section>
 
-  <section class="logo-origin section-dark">
-    <div class="container logo-origin-inner">
-      <img src="/images/fist-bump-inspiration.webp" alt="A baby fist-bumping their dad — the photo that inspired the Dudela logo" class="logo-origin-photo" />
-      <div>
-        <p class="eyebrow">Where the logo came from</p>
-        <p class="logo-origin-text">
-          This is the actual photo the Dudela logo is built on — a dad and his kid, fist-bumping.
-          That's the whole brand in one frame: showing up, being present, treating your kid like
-          a person you're genuinely excited to know.
-        </p>
-      </div>
-    </div>
-  </section>
-
   <section class="founders section-light">
     <div class="container founders-grid">
       <div class="founder-card">
@@ -154,30 +140,6 @@ import { pillars } from "../data/pillars.js";
     aspect-ratio: 4/5;
     object-fit: cover;
   }
-  .logo-origin {
-    padding: var(--space-5) 0;
-  }
-  .logo-origin-inner {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.75rem;
-    align-items: center;
-    max-width: 780px;
-  }
-  .logo-origin-photo {
-    width: 100%;
-    max-width: 260px;
-    border-radius: var(--radius-md);
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-  }
-  .logo-origin-text {
-    color: var(--text-on-dark-muted);
-    font-size: 1.05rem;
-    line-height: 1.6;
-    margin: 0.5rem 0 0;
-    max-width: 50ch;
-  }
   .founders {
     padding: 0 0 var(--space-6);
   }
@@ -257,9 +219,6 @@ import { pillars } from "../data/pillars.js";
     }
     .founders-grid {
       grid-template-columns: 1fr 1fr;
-    }
-    .logo-origin-inner {
-      grid-template-columns: auto 1fr;
     }
   }
 </style>
