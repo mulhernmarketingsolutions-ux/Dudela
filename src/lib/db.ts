@@ -29,6 +29,11 @@ export interface Post {
   category: string;
   published_at: string;
   created_at: string;
+  // Added for Womb Watch mini-episodes (video-embed post type). Nullable —
+  // plain text posts in other future categories don't need these.
+  video_url: string | null;
+  thumbnail_url: string | null;
+  week_label: string | null;
 }
 
 export interface Inquiry {
@@ -216,16 +221,38 @@ export async function listPosts(env: DbEnv, category = "womb-watch", limit = 50)
 
 export async function createPost(
   env: DbEnv,
-  opts: { title: string; body: string; category?: string }
+  opts: {
+    title: string;
+    body: string;
+    category?: string;
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    weekLabel?: string;
+  }
 ): Promise<Post> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await env.DB.prepare(
-    `INSERT INTO posts (id, title, body, category, published_at, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO posts (id, title, body, category, published_at, created_at, video_url, thumbnail_url, week_label)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(id, opts.title, opts.body, opts.category || "womb-watch", now, now)
+    .bind(
+      id,
+      opts.title,
+      opts.body,
+      opts.category || "womb-watch",
+      now,
+      now,
+      opts.videoUrl || null,
+      opts.thumbnailUrl || null,
+      opts.weekLabel || null
+    )
     .run();
   return (await env.DB.prepare("SELECT * FROM posts WHERE id = ?").bind(id).first<Post>())!;
+}
+
+export async function deletePost(env: DbEnv, id: string): Promise<void> {
+  await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
 }
 
 // --- Member inquiries (questions submitted for the live Q&A / anytime) ---

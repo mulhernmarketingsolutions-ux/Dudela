@@ -13,6 +13,7 @@ if (!authed) {
 
 const posts = await listPosts(env, "womb-watch");
 const posted = Astro.url.searchParams.get("posted");
+const deleted = Astro.url.searchParams.get("deleted");
 const error = Astro.url.searchParams.get("error");
 
 function formatDate(iso: string) {
@@ -29,16 +30,29 @@ function formatDate(iso: string) {
       </div>
 
       {posted && <p class="notice notice-success">Posted — active members have been notified.</p>}
+      {deleted && <p class="notice notice-success">Deleted.</p>}
       {error === "missing-fields" && <p class="notice notice-error">Title and body are both required.</p>}
 
       <form method="POST" action="/api/admin/posts" class="post-form">
         <label>
-          Title
-          <input type="text" name="title" required />
+          Week <span class="hint">(e.g. "Week 16" — shows as a badge on the card)</span>
+          <input type="text" name="week_label" placeholder="Week 16" />
         </label>
         <label>
-          Body <span class="hint">(plain text — line breaks are preserved)</span>
-          <textarea name="body" rows="8" required></textarea>
+          Title
+          <input type="text" name="title" placeholder="Halfway-ish: the first real kick" required />
+        </label>
+        <label>
+          Body <span class="hint">(plain text — line breaks are preserved. This is the teaser/description under the video.)</span>
+          <textarea name="body" rows="6" required></textarea>
+        </label>
+        <label>
+          Video URL <span class="hint">(YouTube/Vimeo link, or a direct .mp4 — leave blank if this one's audio/text only)</span>
+          <input type="url" name="video_url" placeholder="https://youtube.com/watch?v=..." />
+        </label>
+        <label>
+          Thumbnail URL <span class="hint">(optional — falls back to a placeholder if blank)</span>
+          <input type="url" name="thumbnail_url" placeholder="https://..." />
         </label>
         <input type="hidden" name="category" value="womb-watch" />
         <button type="submit" class="btn btn-primary">Publish + Notify Members</button>
@@ -51,7 +65,17 @@ function formatDate(iso: string) {
         {posts.length === 0 && <p class="empty-state">Nothing published yet.</p>}
         {posts.map((post) => (
           <div class="existing-post">
-            <p class="existing-date">{formatDate(post.published_at)}</p>
+            <div class="existing-meta">
+              <p class="existing-date">
+                {formatDate(post.published_at)}
+                {post.week_label && <span class="existing-week">· {post.week_label}</span>}
+                {post.video_url && <span class="existing-video-tag">· has video</span>}
+              </p>
+              <form method="POST" action="/api/admin/posts-delete" class="delete-form">
+                <input type="hidden" name="id" value={post.id} />
+                <button type="submit" class="delete-btn" onclick="return confirm('Delete this post?')">Delete</button>
+              </form>
+            </div>
             <h3>{post.title}</h3>
             <p class="existing-body">{post.body}</p>
           </div>
@@ -159,6 +183,12 @@ function formatDate(iso: string) {
     border-bottom: 1px solid var(--border-light);
     padding-bottom: 1.5rem;
   }
+  .existing-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
   .existing-date {
     font-family: var(--font-label);
     text-transform: uppercase;
@@ -166,6 +196,29 @@ function formatDate(iso: string) {
     font-size: 0.7rem;
     color: var(--text-on-light-muted);
     margin: 0 0 0.4rem;
+  }
+  .existing-week {
+    color: var(--rust-600);
+    font-weight: 700;
+  }
+  .existing-video-tag {
+    color: var(--forest-500);
+  }
+  .delete-form {
+    flex-shrink: 0;
+  }
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-on-light-muted);
+    font-size: 0.78rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .delete-btn:hover {
+    color: var(--rust-600);
   }
   .existing-post h3 {
     font-family: var(--font-display);

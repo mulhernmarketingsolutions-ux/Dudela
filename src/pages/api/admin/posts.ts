@@ -10,25 +10,32 @@ export const prerender = false;
 // matching Workflow to exist in Loops for members to actually receive
 // anything). A slow/failed notification never blocks the post itself from
 // saving.
+function redirectTo(url: URL, path: string) {
+  return new Response(null, { status: 302, headers: { Location: `${url.origin}${path}` } });
+}
+
 export async function POST({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
   const url = new URL(request.url);
 
   const authed = await isAdminAuthed(cookies, env);
   if (!authed) {
-    return Response.redirect(`${url.origin}/admin/login`, 302);
+    return redirectTo(url, "/admin/login");
   }
 
   const form = await request.formData();
   const title = (form.get("title") || "").toString().trim();
   const body = (form.get("body") || "").toString().trim();
   const category = (form.get("category") || "womb-watch").toString().trim();
+  const videoUrl = (form.get("video_url") || "").toString().trim();
+  const thumbnailUrl = (form.get("thumbnail_url") || "").toString().trim();
+  const weekLabel = (form.get("week_label") || "").toString().trim();
 
   if (!title || !body) {
-    return Response.redirect(`${url.origin}/admin/womb-watch?error=missing-fields`, 302);
+    return redirectTo(url, "/admin/womb-watch?error=missing-fields");
   }
 
-  await createPost(env, { title, body, category });
+  await createPost(env, { title, body, category, videoUrl, thumbnailUrl, weekLabel });
 
   try {
     const members = await listActiveMembers(env);
@@ -46,5 +53,5 @@ export async function POST({ request, locals, cookies }: APIContext) {
     console.error("Member notification fan-out failed:", err);
   }
 
-  return Response.redirect(`${url.origin}/admin/womb-watch?posted=1`, 302);
+  return redirectTo(url, "/admin/womb-watch?posted=1");
 }

@@ -18,6 +18,45 @@ const posts = await listPosts(env, "womb-watch");
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
+
+// Turns whatever URL John/Mike pasted into the admin form into something
+// embeddable. Supports YouTube, Vimeo, and direct video files — anything
+// else just becomes a "watch it here" link so a post never breaks even if
+// the URL is from a platform we didn't anticipate.
+type Embed = { kind: "youtube" | "vimeo" | "file" | "link"; src: string };
+
+function getEmbed(url: string | null): Embed | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu")) {
+      const id = u.hostname.includes("youtu.be")
+        ? u.pathname.slice(1)
+        : u.searchParams.get("v") || u.pathname.split("/").pop() || "";
+      if (id) return { kind: "youtube", src: `https://www.youtube-nocookie.com/embed/${id}` };
+    }
+    if (u.hostname.includes("vimeo.com")) {
+      const id = u.pathname.split("/").filter(Boolean).pop() || "";
+      if (id) return { kind: "vimeo", src: `https://player.vimeo.com/video/${id}` };
+    }
+    if (/\.(mp4|webm|mov)$/i.test(u.pathname)) {
+      return { kind: "file", src: url };
+    }
+    return { kind: "link", src: url };
+  } catch {
+    return null;
+  }
+}
+
+const episodes = posts.map((post) => ({ post, embed: getEmbed(post.video_url) }));
+
+// Feather-style stroke icons, same pattern as Roadmap.astro — rendered via
+// set:html below since these are raw SVG strings, not components.
+const ICONS = {
+  mic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+  doc: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
+};
 ---
 <BaseLayout title="Womb Watch — Dudela" description="Behind-the-scenes updates from Mike & Abigail's pregnancy.">
   <Nav />
@@ -26,25 +65,88 @@ function formatDate(iso: string) {
     <div class="container hero-inner">
       <p class="eyebrow">Spit-Up Society</p>
       <h1>Womb Watch</h1>
-      <p class="hero-sub">Behind-the-scenes, in real time, straight from Mike &amp; Abigail. Nothing polished about this one.</p>
+      <p class="hero-sub">
+        Short check-ins with Mike, week by week — what's actually going on with him, Abigail, and the pregnancy.
+        Nothing polished, nothing scripted.
+      </p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
     </div>
   </section>
 
   <section class="posts section-light">
     <div class="container posts-inner">
-      {posts.length === 0 && (
+      {episodes.length === 0 && (
         <p class="empty-state">Nothing posted yet — check back soon.</p>
       )}
-      {posts.map((post) => (
-        <article class="post">
-          <p class="post-date">{formatDate(post.published_at)}</p>
-          <h2>{post.title}</h2>
-          <div class="post-body">{post.body}</div>
-        </article>
-      ))}
+
+      <div class="episode-grid">
+        {episodes.map(({ post, embed }) => (
+          <article class="episode" data-episode>
+            <div class="episode-media" data-media>
+              {embed && embed.kind !== "link" ? (
+                <>
+                  <div class="episode-thumb" data-thumb style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
+                    {!post.thumbnail_url && <div class="thumb-fallback" aria-hidden="true" set:html={ICONS.mic} />}
+                    <button type="button" class="play-btn" data-play aria-label={`Play ${post.title}`} set:html={ICONS.play}>
+                    </button>
+                    {post.week_label && <span class="week-badge">{post.week_label}</span>}
+                  </div>
+                  <div class="episode-embed" data-embed hidden>
+                    {embed.kind === "file" ? (
+                      <video controls preload="none" poster={post.thumbnail_url || undefined} src={embed.src}></video>
+                    ) : (
+                      <iframe
+                        src=""
+                        data-src={embed.src}
+                        title={post.title}
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                      ></iframe>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div class="episode-thumb no-video" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
+                  {!post.thumbnail_url && <div class="thumb-fallback" aria-hidden="true" set:html={ICONS.doc} />}
+                  {post.week_label && <span class="week-badge">{post.week_label}</span>}
+                  {embed && embed.kind === "link" && (
+                    <a href={embed.src} target="_blank" rel="noopener" class="watch-link">Watch here ↗</a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div class="episode-body">
+              <p class="episode-date">{formatDate(post.published_at)}</p>
+              <h2>{post.title}</h2>
+              <div class="post-body">{post.body}</div>
+            </div>
+          </article>
+        ))}
+      </div>
     </div>
   </section>
+
+  <script>
+    // Click-to-play: swap the static thumbnail for a lazy-loaded iframe/video
+    // only when a member actually wants to watch, instead of embedding every
+    // episode's player up front (keeps the page fast for members with a lot
+    // of episodes to scroll past).
+    document.querySelectorAll<HTMLElement>("[data-episode]").forEach((card) => {
+      const playBtn = card.querySelector<HTMLButtonElement>("[data-play]");
+      const thumb = card.querySelector<HTMLElement>("[data-thumb]");
+      const embedWrap = card.querySelector<HTMLElement>("[data-embed]");
+      playBtn?.addEventListener("click", () => {
+        const iframe = embedWrap?.querySelector<HTMLIFrameElement>("iframe[data-src]");
+        if (iframe && !iframe.src) iframe.src = iframe.dataset.src || "";
+        const video = embedWrap?.querySelector<HTMLVideoElement>("video");
+        thumb?.setAttribute("hidden", "");
+        embedWrap?.removeAttribute("hidden");
+        video?.play().catch(() => {});
+      });
+    });
+  </script>
 
   <Footer />
 </BaseLayout>
@@ -75,22 +177,121 @@ function formatDate(iso: string) {
     padding: var(--space-5) 0 var(--space-6);
   }
   .posts-inner {
-    max-width: 720px;
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+    max-width: 1000px;
   }
   .empty-state {
     color: var(--text-on-light-muted);
   }
-  .post {
-    border-bottom: 1px solid var(--border-light);
-    padding-bottom: 2.5rem;
+  .episode-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
   }
-  .post:last-child {
-    border-bottom: none;
+  .episode {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
-  .post-date {
+  .episode-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--forest-800, #1c231a);
+  }
+  .episode-thumb {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .episode-thumb.no-video {
+    background-color: var(--forest-700);
+  }
+  .thumb-fallback {
+    width: 44px;
+    height: 44px;
+    color: rgba(245, 239, 227, 0.35);
+  }
+  .thumb-fallback :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+  .play-btn {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: rgba(20, 24, 17, 0.55);
+    border: 2px solid var(--cream-100);
+    color: var(--cream-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .play-btn:hover {
+    transform: scale(1.06);
+    background: var(--amber-500);
+    border-color: var(--amber-500);
+  }
+  .play-btn :global(svg) {
+    width: 22px;
+    height: 22px;
+    margin-left: 3px;
+  }
+  .week-badge {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+  }
+  .watch-link {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--cream-100);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .episode-embed {
+    width: 100%;
+    height: 100%;
+  }
+  .episode-embed iframe,
+  .episode-embed video {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: #000;
+  }
+  .episode-body {
+    padding: 1.5rem 1.75rem 1.85rem;
+  }
+  .episode-date {
     font-family: var(--font-label);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -98,14 +299,19 @@ function formatDate(iso: string) {
     color: var(--text-on-light-muted);
     margin: 0 0 0.5rem;
   }
-  .post h2 {
+  .episode-body h2 {
     font-family: var(--font-display);
-    font-size: 1.6rem;
-    margin: 0 0 1rem;
+    font-size: 1.4rem;
+    margin: 0 0 0.75rem;
   }
   .post-body {
     color: var(--text-on-light);
     white-space: pre-wrap;
     line-height: 1.7;
+  }
+  @media (min-width: 720px) {
+    .episode-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 </style>

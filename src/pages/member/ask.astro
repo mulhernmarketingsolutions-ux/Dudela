@@ -12,16 +12,17 @@ if (!member) {
   return Astro.redirect("/member/login");
 }
 ---
-<BaseLayout title="Ask a Question — Dudela" description="Submit a question for the next live Q&A.">
+<BaseLayout title="Ask Us Anything — Dudela" description="Send Mike & John a question for the next live Q&A.">
   <Nav />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Spit-Up Society</p>
-      <h1>Ask a Question</h1>
+      <h1>Ask Us Anything</h1>
       <p class="hero-sub">
-        Pregnancy, birth, the newborn blur, marriage after baby — whatever's actually on your mind.
-        We read these before every live Q&amp;A, real questions get answered first.
+        This goes straight to Mike and John — not a support inbox, not a bot. Pregnancy, birth, the newborn blur,
+        marriage after baby, whatever's actually keeping you up. We read every one before the live Q&amp;A, and
+        real questions get answered first.
       </p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
 
@@ -30,6 +31,10 @@ if (!member) {
         <button type="submit" class="btn btn-primary">Send It In</button>
       </form>
       <p id="ask-form-status" class="form-status"></p>
+
+      <p class="alt-channel">
+        Rather talk it out? <a href="/voicemail">Leave us a voicemail →</a> — we'll answer it on the podcast.
+      </p>
     </div>
   </section>
 
@@ -107,5 +112,17 @@ if (!member) {
     font-size: 0.85rem;
     margin-top: 0.9rem;
     min-height: 1.2em;
+  }
+  .alt-channel {
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--forest-600);
+    color: var(--text-on-dark-muted);
+    font-size: 0.9rem;
+  }
+  .alt-channel a {
+    color: var(--amber-500);
+    font-weight: 600;
+    text-decoration: none;
   }
 </style>
