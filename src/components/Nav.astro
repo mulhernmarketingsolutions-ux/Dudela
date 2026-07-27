@@ -291,18 +291,24 @@ const ICONS = {
     height: 32px;
     color: var(--cream-100);
     flex-shrink: 0;
-    /* A thin cream outline icon has almost no visual weight on its own —
-       fine once the nav has its scrolled/menu-open backdrop behind it, but
-       at the very top of the page the nav is transparent and sits directly
-       over the hero photo. Against a light patch of that photo (sky, pale
-       grass) the icon all but disappears. A permanent dark chip behind it
-       guarantees contrast no matter what's showing through. */
-    background: rgba(20, 24, 17, 0.45);
-    border-radius: 50%;
   }
-  .mobile-member-icon svg {
+  /* :global() is required here — this SVG is injected via set:html as a raw
+     string, so Astro never stamps it with this component's scoped
+     data-astro-cid attribute. A plain (scoped) `.mobile-member-icon svg`
+     selector silently never matches that real element, which is why the
+     icon rendered with no visible glyph (just its 32px box) — no width/
+     height ever reached the actual <svg>, and inline SVG with only a
+     viewBox and no sizing collapses to nothing in Safari. */
+  .mobile-member-icon :global(svg) {
     width: 20px;
     height: 20px;
+    display: block;
+  }
+  /* Hides once the menu is open — the same icon reappears on the Member
+     Login button inside the open menu, so keeping this one visible too
+     would just duplicate it right next to its own twin. */
+  .nav.menu-open .mobile-member-icon {
+    display: none;
   }
   .mobile-member-btn {
     display: flex;
