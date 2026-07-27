@@ -291,6 +291,14 @@ const ICONS = {
     height: 32px;
     color: var(--cream-100);
     flex-shrink: 0;
+    /* A thin cream outline icon has almost no visual weight on its own —
+       fine once the nav has its scrolled/menu-open backdrop behind it, but
+       at the very top of the page the nav is transparent and sits directly
+       over the hero photo. Against a light patch of that photo (sky, pale
+       grass) the icon all but disappears. A permanent dark chip behind it
+       guarantees contrast no matter what's showing through. */
+    background: rgba(20, 24, 17, 0.45);
+    border-radius: 50%;
   }
   .mobile-member-icon svg {
     width: 20px;

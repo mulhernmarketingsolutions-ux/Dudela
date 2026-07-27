@@ -96,6 +96,7 @@ import { pillars } from "../data/pillars.js";
         </p>
         <a href="/podcast" class="btn btn-ghost">Listen to the Podcast</a>
       </div>
+      <img src="/images/fist-bump-inspiration.webp" alt="A dad and his kid" class="podcast-blurb-photo" />
     </div>
   </section>
 
@@ -207,11 +208,24 @@ import { pillars } from "../data/pillars.js";
   .podcast-blurb {
     padding: var(--space-6) 0;
   }
+  .podcast-blurb-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
   .podcast-blurb h2 {
     font-family: var(--font-display);
     font-size: clamp(1.6rem, 3.2vw, 2.3rem);
     margin: 0.5rem 0 1rem;
     max-width: 20ch;
+  }
+  .podcast-blurb-photo {
+    width: 100%;
+    max-width: 280px;
+    border-radius: var(--radius-md);
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
   }
   @media (min-width: 860px) {
     .story-grid {
@@ -219,6 +233,9 @@ import { pillars } from "../data/pillars.js";
     }
     .founders-grid {
       grid-template-columns: 1fr 1fr;
+    }
+    .podcast-blurb-inner {
+      grid-template-columns: 1.3fr 0.7fr;
     }
   }
 </style>

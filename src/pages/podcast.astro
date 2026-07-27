@@ -19,19 +19,16 @@ const platforms = [
   <Nav />
 
   <section class="page-hero section-dark">
-    <div class="container hero-grid">
-      <div>
-        <p class="eyebrow">The Dudela Podcast</p>
-        <h1>John &amp; Mike, unfiltered.</h1>
-        <p class="hero-sub">New episode every other Tuesday.</p>
-        <div class="follow-row">
-          <span class="follow-label">Follow the show:</span>
-          <a href={APPLE_URL} target="_blank" rel="noopener" class="follow-link">Apple Podcasts</a>
-          <a href={SPOTIFY_URL} target="_blank" rel="noopener" class="follow-link">Spotify</a>
-          <a href={YOUTUBE_URL} target="_blank" rel="noopener" class="follow-link">YouTube</a>
-        </div>
+    <div class="container">
+      <p class="eyebrow">The Dudela Podcast</p>
+      <h1>John &amp; Mike, unfiltered.</h1>
+      <p class="hero-sub">New episode every other Tuesday.</p>
+      <div class="follow-row">
+        <span class="follow-label">Follow the show:</span>
+        <a href={APPLE_URL} target="_blank" rel="noopener" class="follow-link">Apple Podcasts</a>
+        <a href={SPOTIFY_URL} target="_blank" rel="noopener" class="follow-link">Spotify</a>
+        <a href={YOUTUBE_URL} target="_blank" rel="noopener" class="follow-link">YouTube</a>
       </div>
-      <img src="/images/fist-bump-inspiration.webp" alt="A dad and his kid" class="hero-photo" />
     </div>
   </section>
 
@@ -67,19 +64,6 @@ const platforms = [
 <style>
   .page-hero {
     padding: 9rem 0 3.5rem;
-  }
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    align-items: center;
-  }
-  .hero-photo {
-    width: 100%;
-    max-width: 320px;
-    border-radius: var(--radius-md);
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
   }
   .page-hero h1 {
     font-family: var(--font-display);
@@ -183,10 +167,5 @@ const platforms = [
     margin-top: 1.5rem;
     font-size: 0.8rem;
     color: var(--text-on-light-muted);
-  }
-  @media (min-width: 860px) {
-    .hero-grid {
-      grid-template-columns: 1.3fr 0.7fr;
-    }
   }
 </style>
