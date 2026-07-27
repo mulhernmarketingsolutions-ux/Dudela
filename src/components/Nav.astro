@@ -33,6 +33,11 @@ const ICONS = {
       <a href="/resources">Resources</a>
       <a href="/workshop">Workshop</a>
       <a href="/merch">Merch</a>
+      <!-- The full pricing ladder (Guide → Kit → Workshop → Spit-Up
+           Society → Cohort → Coaching) — added so it's still reachable
+           now that the "Join" button below points straight at the
+           membership instead of this overview. -->
+      <a href="/join">Pricing</a>
       <a href="/about">About</a>
     </nav>
 
@@ -50,7 +55,12 @@ const ICONS = {
            link stays inside the mobile menu too — this doesn't replace it,
            just gives it a visible entry point on small screens. -->
       <a href="/member/login" class="mobile-member-icon" aria-label="Member Login" set:html={ICONS.user} />
-      <a href="/join" class="btn btn-primary join-btn">Join</a>
+      <!-- Points straight at the $5/mo Spit-Up Society signup, not the
+           full pricing ladder — "Join" sitting next to "Member Login"
+           reads as "become a member," and the Society is the membership
+           this whole portal is built around. The ladder is still one
+           click away via "Pricing" above. -->
+      <a href="/join/spit-up-society" class="btn btn-primary join-btn">Join</a>
       <button type="button" class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
         <span></span>
         <span></span>
@@ -66,9 +76,10 @@ const ICONS = {
     <a href="/resources">Resources</a>
     <a href="/workshop">Workshop</a>
     <a href="/merch">Merch</a>
+    <a href="/join">Pricing</a>
     <a href="/about">About</a>
     <a href="/member/login" class="mobile-member-link">Member Login</a>
-    <a href="/join" class="btn btn-primary mobile-join">Join</a>
+    <a href="/join/spit-up-society" class="btn btn-primary mobile-join">Join</a>
   </div>
 </header>
 
