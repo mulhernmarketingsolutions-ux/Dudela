@@ -18,32 +18,54 @@ const errorMessages: Record<string, string> = {
   expired: "That link's expired or was already used. Request a new one below.",
   server: "Something went wrong on our end. Try again in a minute.",
 };
-const errorMessage = error ? errorMessages[error] || "Something went wrong. Try again." : "";
+const errorMessage = error && error !== "not-a-member" ? errorMessages[error] || "Something went wrong. Try again." : "";
+const notAMember = error === "not-a-member";
 ---
 <BaseLayout title="Member Login — Dudela" description="Log into the Spit-Up Society member area.">
   <Nav />
 
-  <section class="hero section-dark">
-    <div class="container hero-inner">
-      <p class="eyebrow">Spit-Up Society</p>
-      <h1>Member Login</h1>
-      <p class="hero-sub">
-        Enter the email you joined with — we'll send you a one-click link, no password to remember.
-      </p>
+  {notAMember ? (
+    <section class="hero section-dark">
+      <div class="container hero-inner">
+        <p class="eyebrow">Spit-Up Society</p>
+        <h1>That email isn't in the Spit-Up Society yet</h1>
+        <p class="hero-sub">
+          We couldn't find an active membership for that address — so there's nothing to log into yet.
+          If that's not right, double check the email you joined with below. Otherwise, come on in.
+        </p>
 
-      {errorMessage && <p class="form-error">{errorMessage}</p>}
+        <a href="/join/spit-up-society" class="btn btn-primary invite-cta">Join the Spit-Up Society &rarr;</a>
 
-      <form class="login-form" id="login-form">
-        <input type="email" name="email" placeholder="you@email.com" required />
-        <button type="submit" class="btn btn-primary">Send Me a Login Link</button>
-      </form>
-      <p id="login-form-status" class="form-status"></p>
+        <form class="login-form retry-form" id="login-form">
+          <input type="email" name="email" placeholder="Try a different email" required />
+          <button type="submit" class="btn btn-ghost">Send Me a Login Link</button>
+        </form>
+        <p id="login-form-status" class="form-status"></p>
+      </div>
+    </section>
+  ) : (
+    <section class="hero section-dark">
+      <div class="container hero-inner">
+        <p class="eyebrow">Spit-Up Society</p>
+        <h1>Member Login</h1>
+        <p class="hero-sub">
+          Enter the email you joined with — we'll send you a one-click link, no password to remember.
+        </p>
 
-      <p class="hero-footnote">
-        Not a member yet? <a href="/join/spit-up-society">Join the Spit-Up Society →</a>
-      </p>
-    </div>
-  </section>
+        {errorMessage && <p class="form-error">{errorMessage}</p>}
+
+        <form class="login-form" id="login-form">
+          <input type="email" name="email" placeholder="you@email.com" required />
+          <button type="submit" class="btn btn-primary">Send Me a Login Link</button>
+        </form>
+        <p id="login-form-status" class="form-status"></p>
+
+        <p class="hero-footnote">
+          Not a member yet? <a href="/join/spit-up-society">Join the Spit-Up Society →</a>
+        </p>
+      </div>
+    </section>
+  )}
 
   <script>
     const form = document.getElementById("login-form") as HTMLFormElement | null;
@@ -134,5 +156,13 @@ const errorMessage = error ? errorMessages[error] || "Something went wrong. Try 
     color: var(--amber-500);
     font-weight: 600;
     text-decoration: none;
+  }
+  .invite-cta {
+    display: inline-flex;
+    margin-bottom: 2.5rem;
+  }
+  .retry-form {
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--forest-600);
   }
 </style>

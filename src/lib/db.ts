@@ -128,22 +128,31 @@ export async function createMagicLink(env: DbEnv, email: string): Promise<string
   return token;
 }
 
-// Verifies + burns a magic-link token, returning the associated member (or
-// null if the token is missing, expired, already used, or the email no
-// longer matches an active membership record).
-export async function consumeMagicLink(env: DbEnv, token: string): Promise<Member | null> {
+// Verifies + burns a magic-link token. Distinguishes "token invalid/expired/
+// already used" from "token was fine but that email isn't (or isn't any
+// longer) a member" — /api/auth/verify.ts uses this to show a friendlier,
+// on-brand "join instead" message for the latter rather than a generic
+// "expired" error that doesn't fit what actually happened.
+export type MagicLinkResult =
+  | { status: "ok"; member: Member }
+  | { status: "invalid" }
+  | { status: "not-a-member" };
+
+export async function consumeMagicLink(env: DbEnv, token: string): Promise<MagicLinkResult> {
   const row = await env.DB.prepare("SELECT * FROM magic_links WHERE token = ?")
     .bind(token)
     .first<{ token: string; email: string; expires_at: string; used_at: string | null }>();
-  if (!row) return null;
-  if (row.used_at) return null;
-  if (new Date(row.expires_at).getTime() < Date.now()) return null;
+  if (!row) return { status: "invalid" };
+  if (row.used_at) return { status: "invalid" };
+  if (new Date(row.expires_at).getTime() < Date.now()) return { status: "invalid" };
 
   await env.DB.prepare("UPDATE magic_links SET used_at = ? WHERE token = ?")
     .bind(new Date().toISOString(), token)
     .run();
 
-  return getMemberByEmail(env, row.email);
+  const member = await getMemberByEmail(env, row.email);
+  if (!member) return { status: "not-a-member" };
+  return { status: "ok", member };
 }
 
 export async function createSession(env: DbEnv, memberId: string): Promise<{ token: string; expiresAt: string }> {

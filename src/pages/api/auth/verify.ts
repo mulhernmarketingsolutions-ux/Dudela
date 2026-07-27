@@ -17,11 +17,14 @@ export async function GET({ request, locals, cookies }: APIContext) {
   }
 
   try {
-    const member = await consumeMagicLink(env, token);
-    if (!member) {
+    const result = await consumeMagicLink(env, token);
+    if (result.status === "invalid") {
       return Response.redirect(`${url.origin}/member/login?error=expired`, 302);
     }
-    const session = await createSession(env, member.id);
+    if (result.status === "not-a-member") {
+      return Response.redirect(`${url.origin}/member/login?error=not-a-member`, 302);
+    }
+    const session = await createSession(env, result.member.id);
     setSessionCookie(cookies, session.token);
     return Response.redirect(`${url.origin}/member/dashboard`, 302);
   } catch (err) {

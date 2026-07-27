@@ -1,0 +1,60 @@
+---
+// Astro's built-in custom error page for unhandled exceptions during page
+// rendering (see also src/middleware.ts, which catches exceptions thrown by
+// API routes and redirects here too, so nothing on this site ever surfaces
+// Cloudflare's raw "Worker threw exception" error screen to a visitor).
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+---
+<BaseLayout title="Something went wrong — Dudela" description="Something broke on our end. Here's where to go instead.">
+  <Nav />
+
+  <section class="oops section-dark">
+    <div class="container oops-inner">
+      <p class="eyebrow">Our bad</p>
+      <h1>Something broke on our end, not yours.</h1>
+      <p class="sub">
+        We hit a snag loading that page. It's been logged — try again in a minute, or head back to safe ground below.
+      </p>
+
+      <div class="oops-actions">
+        <a href="/" class="btn btn-primary">Back to Home</a>
+        <a href="/member/login" class="btn btn-ghost">Member Login</a>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .oops {
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    padding: 9rem 0 4rem;
+  }
+  .oops-inner {
+    max-width: 560px;
+    text-align: center;
+    margin: 0 auto;
+  }
+  .oops h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.1;
+    margin: 0.5rem 0 1rem;
+  }
+  .sub {
+    color: var(--text-on-dark-muted);
+    max-width: 42ch;
+    margin: 0 auto 2.5rem;
+  }
+  .oops-actions {
+    display: flex;
+    gap: 0.9rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+</style>
