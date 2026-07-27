@@ -12,36 +12,37 @@ import { countMerchOrders } from "../lib/db";
 const env = (Astro.locals as any).runtime.env;
 
 // Source of truth for what's buyable lives in lib/printful.ts (HAT_CATALOG) — this
-// list mirrors it for display purposes. Preview images are the flat artwork files,
-// not real product photos/mockups yet (swap in real mockup photos once available).
+// list mirrors it for display purposes. Real Printful-rendered mockups for the two
+// cream colorways; the two black-cap versions still need mockups (those color
+// variants aren't built as Printful templates yet — see conversation with John).
 const COLORS = [
   {
     slug: "hat-fistbump-cream",
     product: "hat-fistbump-cream",
     name: "Fist Bump — Cream, Black Bill",
     description: "Cream hat, black bill. Fist-bump logo up front, DUDELA wordmark stitched on the back.",
-    images: ["/printful/fist-bump-front.png"],
+    images: ["/images/hat-fistbump-cream-front.png", "/images/hat-fistbump-cream-back.png"],
   },
   {
     slug: "hat-fistbump-black",
     product: "hat-fistbump-black",
     name: "Fist Bump — Black",
     description: "All black. Fist-bump logo up front, DUDELA wordmark stitched on the back.",
-    images: ["/printful/fist-bump-front.png"],
+    images: [],
   },
   {
     slug: "hat-upsidedown-cream",
     product: "hat-upsidedown-cream",
     name: "Upside Down — Cream, Green Bill",
     description: "Cream hat, forest green bill. The upside-down DUDELA wordmark, front and center.",
-    images: ["/printful/dudela-upsidedown-front.png"],
+    images: ["/images/hat-upsidedown-cream-front.png"],
   },
   {
     slug: "hat-upsidedown-black",
     product: "hat-upsidedown-black",
     name: "Upside Down — Black",
     description: "All black. The upside-down DUDELA wordmark, front and center.",
-    images: ["/printful/dudela-upsidedown-front.png"],
+    images: [],
   },
 ];
 
@@ -80,10 +81,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       {colorways.map((c) => (
         <div class="color-card">
           <div class="color-media">
-            {c.images.length > 0 ? (
-              <div class="art-preview">
-                <img src={c.images[0]} alt={`Dudela Hat — ${c.name} artwork`} loading="lazy" />
+            {c.images.length > 1 ? (
+              <div class="photo-pair">
+                {c.images.map((src) => (
+                  <img src={src} alt={`Dudela Hat — ${c.name}`} loading="lazy" />
+                ))}
               </div>
+            ) : c.images.length === 1 ? (
+              <img class="single-photo" src={c.images[0]} alt={`Dudela Hat — ${c.name}`} loading="lazy" />
             ) : (
               <PhotoPlaceholder label="Image coming soon" ratio="1/1" />
             )}
@@ -175,19 +180,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .color-media {
     width: 100%;
   }
-  .art-preview {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--cream-100);
-    padding: 1.5rem;
+  .photo-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
-  .art-preview img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+  .photo-pair img,
+  .single-photo {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
     display: block;
+    background: var(--cream-100);
   }
   .color-body {
     padding: 1.5rem 1.5rem 1.75rem;
