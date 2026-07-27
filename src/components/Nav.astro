@@ -28,6 +28,13 @@
     </nav>
 
     <div class="nav-right">
+      <!-- Always points here regardless of login state — /member/login
+           itself redirects an already-authed member straight to
+           /member/dashboard, so this one link works for both "I need to
+           log in" and "take me to my account" without Nav.astro needing
+           to know the visitor's session (it's rendered on prerendered
+           static pages too, where per-request cookies aren't available). -->
+      <a href="/member/login" class="member-link">Member Login</a>
       <a href="/join" class="btn btn-primary join-btn">Join</a>
       <button type="button" class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
         <span></span>
@@ -45,6 +52,7 @@
     <a href="/workshop">Workshop</a>
     <a href="/merch">Merch</a>
     <a href="/about">About</a>
+    <a href="/member/login" class="mobile-member-link">Member Login</a>
     <a href="/join" class="btn btn-primary mobile-join">Join</a>
   </div>
 </header>
@@ -229,6 +237,29 @@
     padding: 0.6rem 1.3rem;
     font-size: 0.85rem;
   }
+  .member-link {
+    display: none;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(245, 239, 227, 0.85);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+  }
+  .member-link:hover {
+    opacity: 0.7;
+  }
+  .mobile-member-link {
+    font-family: var(--font-label) !important;
+    font-size: 0.95rem !important;
+    font-weight: 600;
+    color: rgba(245, 239, 227, 0.7) !important;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(245, 239, 227, 0.12);
+    width: 70%;
+    text-align: center;
+  }
 
   .hamburger {
     display: flex;
@@ -291,6 +322,9 @@
   @media (min-width: 860px) {
     .links {
       display: flex;
+    }
+    .member-link {
+      display: inline-flex;
     }
     .hamburger {
       display: none;
