@@ -35,20 +35,16 @@ const stageLabel = (id: string | null) => STAGES.find((s) => s.id === id)?.label
 // else on the site (amber/rust/forest), just distributed across cards.
 const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
 
-// Hand-picked start positions (left%/top%) spread across the field so
-// bubbles don't clump in the middle — cycles if there are more notes than
-// slots. Values go slightly negative/past 100 on purpose: combined with
-// the container's overflow:hidden, that's what lets a bubble's drift
-// animation carry it partway off the edge before floating back in.
+// Hand-picked positions (left%/top%) spread across the field so bubbles
+// don't clump in the middle — cycles if there are more notes than slots.
+// Kept safely inside 0–100 (unlike the old roaming version) since these
+// bubbles pop in and out in place rather than traveling around.
 const SLOTS: [number, number][] = [
-  [-2, 4], [22, -4], [48, 8], [72, -2], [92, 12],
-  [6, 30], [34, 22], [60, 32], [86, 24],
-  [-2, 54], [18, 60], [46, 50], [70, 58], [90, 48],
-  [10, 80], [38, 78], [62, 84], [84, 76],
+  [2, 2], [26, 6], [50, 0], [74, 8], [4, 28],
+  [30, 32], [56, 26], [80, 34], [2, 56],
+  [28, 60], [54, 54], [78, 62], [8, 82],
+  [34, 84], [58, 80], [80, 86], [46, 36], [16, 8],
 ];
-// Four drift paths (see @keyframes below) so neighboring bubbles don't
-// all move in lockstep — cycling by index alongside the tint.
-const DRIFTS = ["drift-a", "drift-b", "drift-c", "drift-d"];
 ---
 <BaseLayout title="The Circle — Dudela" description="A snapshot of the dads in the Spit-Up Society.">
   <Nav />
@@ -74,18 +70,23 @@ const DRIFTS = ["drift-a", "drift-b", "drift-c", "drift-d"];
         <div class="bubble-field">
           {notes.map((note, i) => {
             const [left, top] = SLOTS[i % SLOTS.length];
-            const drift = DRIFTS[i % DRIFTS.length];
-            const duration = 16 + (i % 5) * 3; // 16–28s, slow enough to still read
-            const delay = -(i % 9) * 1.7; // negative delay starts mid-cycle so they don't all launch in sync
+            const duration = 9 + (i % 5) * 1.6; // 9–15.4s full pop cycle, varies per bubble
+            const delay = -(i % 11) * 1.3; // negative delay so each starts mid-cycle — a staggered feed, not a synchronized flash
+            const initial = note.first_name.charAt(0).toUpperCase();
             return (
               <div
-                class={`bubble ${TINTS[i % TINTS.length]} ${drift}`}
+                class={`bubble ${TINTS[i % TINTS.length]}`}
                 style={`left: ${left}%; top: ${top}%; animation-duration: ${duration}s; animation-delay: ${delay}s;`}
               >
-                {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
-                <p class="bubble-who">
-                  {note.first_name}{note.city ? ` · ${note.city}` : ""}
-                </p>
+                <div class="bubble-head">
+                  <span class="bubble-avatar">{initial}</span>
+                  <div class="bubble-headtext">
+                    <p class="bubble-who">
+                      {note.first_name}{note.city ? ` · ${note.city}` : ""}
+                    </p>
+                    {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
+                  </div>
+                </div>
                 <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
               </div>
             );
@@ -192,138 +193,121 @@ const DRIFTS = ["drift-a", "drift-b", "drift-c", "drift-d"];
   }
   .bubble-field {
     position: relative;
-    height: 760px;
+    height: 560px;
     max-width: 100%;
-    overflow: hidden;
-    /* soft fade at the top/bottom edges so a bubble drifting toward the
-       edge disappears gently instead of getting a hard clipped cutoff */
-    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
-    mask-image: linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
   }
+  /* Chat/comment-card style instead of the old organic blob: a rounded
+     card with a squared-off bottom-left corner (the classic "message
+     bubble" tell), a colored avatar initial, and a soft drop shadow so it
+     reads as a card floating above the page — like a comment or
+     notification popping in, not a cell drifting around. */
   .bubble {
     position: absolute;
-    width: 220px;
-    padding: 1.4rem 1.5rem;
-    border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%;
+    width: 240px;
+    padding: 1rem 1.2rem;
+    border-radius: 18px 18px 18px 4px;
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
-    text-align: center;
+    box-shadow: 0 10px 28px -10px rgba(28, 35, 25, 0.28);
+    text-align: left;
+    opacity: 0;
+    transform: scale(0.6) translateY(14px);
+    animation-name: pop-in;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
-    will-change: transform;
   }
-  .tint-amber {
-    background: rgba(226, 125, 37, 0.1);
-    border-color: rgba(226, 125, 37, 0.35);
-  }
-  .tint-rust {
-    background: rgba(163, 73, 43, 0.08);
-    border-color: rgba(163, 73, 43, 0.3);
-  }
-  .tint-forest {
-    background: rgba(87, 104, 74, 0.12);
-    border-color: rgba(87, 104, 74, 0.35);
-  }
-  /* Four different roaming paths, cycled across bubbles so the field reads
-     as a loose drifting cloud rather than everything bobbing in lockstep.
-     Ranges are big enough (combined with overflow:hidden + the mask above)
-     that a bubble genuinely drifts toward/past the edge before looping
-     back, instead of just gently bobbing in place. */
-  .drift-a {
-    animation-name: drift-a;
-  }
-  .drift-b {
-    animation-name: drift-b;
-  }
-  .drift-c {
-    animation-name: drift-c;
-  }
-  .drift-d {
-    animation-name: drift-d;
-  }
-  @keyframes drift-a {
-    0% { transform: translate(0, 0) rotate(-2deg); }
-    25% { transform: translate(90px, -60px) rotate(3deg); }
-    50% { transform: translate(30px, 40px) rotate(-1deg); }
-    75% { transform: translate(-80px, -20px) rotate(2deg); }
-    100% { transform: translate(0, 0) rotate(-2deg); }
-  }
-  @keyframes drift-b {
-    0% { transform: translate(0, 0) rotate(2deg); }
-    25% { transform: translate(-100px, 30px) rotate(-3deg); }
-    50% { transform: translate(-20px, -70px) rotate(1deg); }
-    75% { transform: translate(70px, 50px) rotate(-2deg); }
-    100% { transform: translate(0, 0) rotate(2deg); }
-  }
-  @keyframes drift-c {
-    0% { transform: translate(0, 0) rotate(-1deg); }
-    33% { transform: translate(60px, 70px) rotate(2deg); }
-    66% { transform: translate(-90px, 10px) rotate(-3deg); }
-    100% { transform: translate(0, 0) rotate(-1deg); }
-  }
-  @keyframes drift-d {
-    0% { transform: translate(0, 0) rotate(1deg); }
-    33% { transform: translate(-60px, -80px) rotate(-2deg); }
-    66% { transform: translate(100px, -10px) rotate(3deg); }
-    100% { transform: translate(0, 0) rotate(1deg); }
-  }
-  @media (max-width: 640px) {
-    .bubble-field {
-      height: 1100px;
+  /* Pop in with a little overshoot, hold so it's actually readable, then
+     fade back out and wait off-cycle before popping in again — the
+     "someone just commented" rhythm rather than continuous movement. */
+  @keyframes pop-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.6) translateY(14px);
     }
-    .bubble {
-      width: 170px;
-      padding: 1.1rem 1.2rem;
+    8% {
+      opacity: 1;
+      transform: scale(1.05) translateY(0);
     }
-    @keyframes drift-a {
-      0% { transform: translate(0, 0) rotate(-2deg); }
-      25% { transform: translate(45px, -35px) rotate(3deg); }
-      50% { transform: translate(15px, 25px) rotate(-1deg); }
-      75% { transform: translate(-40px, -12px) rotate(2deg); }
-      100% { transform: translate(0, 0) rotate(-2deg); }
+    14% {
+      transform: scale(1) translateY(0);
     }
-    @keyframes drift-b {
-      0% { transform: translate(0, 0) rotate(2deg); }
-      25% { transform: translate(-50px, 18px) rotate(-3deg); }
-      50% { transform: translate(-10px, -35px) rotate(1deg); }
-      75% { transform: translate(35px, 25px) rotate(-2deg); }
-      100% { transform: translate(0, 0) rotate(2deg); }
+    72% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
     }
-    @keyframes drift-c {
-      0% { transform: translate(0, 0) rotate(-1deg); }
-      33% { transform: translate(30px, 35px) rotate(2deg); }
-      66% { transform: translate(-45px, 6px) rotate(-3deg); }
-      100% { transform: translate(0, 0) rotate(-1deg); }
+    88% {
+      opacity: 0;
+      transform: scale(0.88) translateY(-8px);
     }
-    @keyframes drift-d {
-      0% { transform: translate(0, 0) rotate(1deg); }
-      33% { transform: translate(-30px, -40px) rotate(-2deg); }
-      66% { transform: translate(50px, -6px) rotate(3deg); }
-      100% { transform: translate(0, 0) rotate(1deg); }
+    100% {
+      opacity: 0;
+      transform: scale(0.6) translateY(14px);
     }
+  }
+  .bubble-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.55rem;
+  }
+  .bubble-avatar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--cream-100);
+  }
+  .tint-amber .bubble-avatar {
+    background: var(--amber-500);
+  }
+  .tint-rust .bubble-avatar {
+    background: var(--rust-600);
+  }
+  .tint-forest .bubble-avatar {
+    background: var(--forest-500);
+  }
+  .bubble-headtext {
+    min-width: 0;
+  }
+  .bubble-who {
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin: 0;
+    color: var(--text-on-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .bubble-stage {
     display: inline-block;
     font-family: var(--font-label);
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--rust-600);
-    margin-bottom: 0.6rem;
-  }
-  .bubble-who {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    margin: 0 0 0.6rem;
-    color: var(--text-on-light);
+    color: var(--text-on-light-muted);
   }
   .bubble-advice {
-    font-size: 0.88rem;
-    font-style: italic;
-    color: var(--text-on-light-muted);
+    font-size: 0.85rem;
+    color: var(--text-on-light);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.45;
+  }
+  @media (max-width: 640px) {
+    .bubble-field {
+      height: 880px;
+    }
+    .bubble {
+      width: 200px;
+      padding: 0.9rem 1.05rem;
+    }
   }
 
   .form-section {
