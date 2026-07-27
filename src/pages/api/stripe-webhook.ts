@@ -3,6 +3,8 @@ import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
 import { upsertMemberFromStripe, markMemberCanceledByStripeCustomerId, createMerchOrder } from "../../lib/db";
+import { getGoogleAccessToken, appendSheetRow, GOOGLE_SCOPES } from "../../lib/google";
+import { createPrintfulOrder, getHatConfig } from "../../lib/printful";
 
 export const prerender = false;
 
@@ -33,18 +35,23 @@ const PRODUCTS: Record<
     price: "$5/mo",
     isSubscription: true,
   },
-  "hat-classic": {
-    name: "Dudela Hat — Classic (Cream/Green)",
+  "hat-fistbump-cream": {
+    name: "Dudela Hat — Cream/Black Bill, Fist Bump",
     price: "$38",
     isMerch: true,
   },
-  "hat-black-green": {
-    name: "Dudela Hat — All Black (Green Logo)",
+  "hat-fistbump-black": {
+    name: "Dudela Hat — Black, Fist Bump",
     price: "$38",
     isMerch: true,
   },
-  "hat-black-cream": {
-    name: "Dudela Hat — Black (Cream Bill/Lettering)",
+  "hat-upsidedown-cream": {
+    name: "Dudela Hat — Cream/Green Bill, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-upsidedown-black": {
+    name: "Dudela Hat — Black, Upside Down",
     price: "$38",
     isMerch: true,
   },
@@ -61,6 +68,25 @@ function extractShippingDetails(session: any): { name: string | null; address: s
     .filter(Boolean)
     .join(", ");
   return { name: shipping.name || null, address: addressLine || null };
+}
+
+// Same source data as extractShippingDetails, but returns the individual address
+// fields Printful's Orders API needs (recipient.address1/city/state_code/etc) instead
+// of one joined display string.
+function extractPrintfulRecipient(session: any, name: string, email: string) {
+  const shipping = session.collected_information?.shipping_details || session.shipping_details;
+  const a = shipping?.address || {};
+  if (!shipping || !a.line1 || !a.city || !a.country) return null;
+  return {
+    name: shipping.name || name || "Dudela Customer",
+    address1: a.line1,
+    address2: a.line2 || undefined,
+    city: a.city,
+    state_code: a.state || undefined,
+    country_code: a.country,
+    zip: a.postal_code || "",
+    email: email || undefined,
+  };
 }
 
 function emailShell(innerHtml: string) {
@@ -200,11 +226,15 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       if (productInfo.isMerch) {
+        const { name: shippingName, address: shippingAddress } = extractShippingDetails(session);
+        const color = session.metadata?.color || "unknown";
+
+        // D1 is the operational record — it's what the live "X of 10 left" count on
+        // /merch and the presale cap check in create-checkout-session.ts actually read.
         try {
-          const { name: shippingName, address: shippingAddress } = extractShippingDetails(session);
           await createMerchOrder(env, {
             sessionId: session.id,
-            color: session.metadata?.color || "unknown",
+            color,
             email,
             name,
             shippingName: shippingName || undefined,
@@ -213,6 +243,45 @@ export async function POST({ request, locals }: APIContext) {
           });
         } catch (err) {
           console.error("Merch order insert failed:", err);
+        }
+
+        // Places the real order with Printful — this is what makes fulfillment fully
+        // automatic (no hand-packing/shipping on John's end). Requires a real shipping
+        // address; if Stripe didn't collect one for some reason, this logs an error and
+        // falls through rather than throwing, so the buyer's receipt/records still go out.
+        const hatConfig = getHatConfig(color);
+        const recipient = extractPrintfulRecipient(session, name, email);
+        if (hatConfig && recipient) {
+          try {
+            await createPrintfulOrder(env, {
+              hatSlug: color,
+              recipient,
+              externalId: session.id,
+            });
+          } catch (err) {
+            console.error("Printful order creation failed:", err);
+          }
+        } else {
+          console.error(`Skipped Printful order for session ${session.id}: hatConfig=${!!hatConfig} recipient=${!!recipient}`);
+        }
+
+        // Also logged to the shared Sheet's "Merch Orders" tab as a human-readable
+        // backup record — Printful is now the source of truth for fulfillment, but
+        // having a scannable list of name/color/address here is still useful for
+        // spot-checking that orders actually went through.
+        try {
+          const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
+          await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:G", [
+            new Date().toISOString(),
+            name,
+            email,
+            color,
+            shippingName || "",
+            shippingAddress || "",
+            amountTotal,
+          ]);
+        } catch (err) {
+          console.error("Merch order sheet log failed:", err);
         }
       }
 

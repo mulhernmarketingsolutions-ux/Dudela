@@ -39,32 +39,41 @@ const PRODUCTS: Record<
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
   },
-  "hat-classic": {
+  // The 4 buyable hats — see lib/printful.ts HAT_CATALOG for the design/color/thread
+  // config each of these slugs maps to. All four share one $38 Stripe price (same
+  // physical cost regardless of design/color), so they all point at the same price
+  // env var rather than needing 4 separate Stripe Price objects.
+  "hat-fistbump-cream": {
     priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
     returnPath: "/merch",
     thankYouPath: "/merch/thank-you",
     mode: "payment",
     shipping: true,
-    merchColor: "classic",
-    merchCap: 10,
+    merchColor: "hat-fistbump-cream",
   },
-  "hat-black-green": {
-    priceEnvVar: "STRIPE_PRICE_HAT_BLACK_GREEN",
+  "hat-fistbump-black": {
+    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
     returnPath: "/merch",
     thankYouPath: "/merch/thank-you",
     mode: "payment",
     shipping: true,
-    merchColor: "black-green",
-    merchCap: 10,
+    merchColor: "hat-fistbump-black",
   },
-  "hat-black-cream": {
-    priceEnvVar: "STRIPE_PRICE_HAT_BLACK_CREAM",
+  "hat-upsidedown-cream": {
+    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
     returnPath: "/merch",
     thankYouPath: "/merch/thank-you",
     mode: "payment",
     shipping: true,
-    merchColor: "black-cream",
-    merchCap: 10,
+    merchColor: "hat-upsidedown-cream",
+  },
+  "hat-upsidedown-black": {
+    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
+    returnPath: "/merch",
+    thankYouPath: "/merch/thank-you",
+    mode: "payment",
+    shipping: true,
+    merchColor: "hat-upsidedown-black",
   },
 };
 

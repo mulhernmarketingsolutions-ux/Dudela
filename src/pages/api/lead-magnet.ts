@@ -33,15 +33,12 @@ const MAGNETS: Record<string, { subject: string; fileName: string; url: string }
 };
 
 // Generic "you're confirmed" copy per magnet, used whenever MAGNETS doesn't have a real
-// file wired up yet for that type. Every form on the site posts one of these four values.
+// file wired up yet for that type. Every form on the site posts one of these three values
+// (hat-waitlist was removed when /merch got real buy buttons instead of a waitlist form).
 const CONFIRMATIONS: Record<string, { subject: string; body: string }> = {
   "free-guide": {
     subject: "You're in — your free Dad Prep Guide is on its way",
     body: "Thanks for grabbing the Free Dad Prep Guide. We're finishing up the download — you'll get a follow-up email with the link very soon. In the meantime, keep an eye on your inbox for the first Dudela Newsletter email.",
-  },
-  "hat-waitlist": {
-    subject: "You're on the Dudela hat waitlist",
-    body: "You're on the list for a Dudela hat — $38, free shipping, and a free month of the Spit-Up Society with your order. We'll email you the second they're ready to ship. Tag @the_dudela_official when yours shows up.",
   },
   "fall-cohort-waitlist": {
     subject: "You're on the Fall Cohort waitlist",

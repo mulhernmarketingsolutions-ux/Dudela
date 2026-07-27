@@ -11,62 +11,66 @@ import { countMerchOrders } from "../lib/db";
 
 const env = (Astro.locals as any).runtime.env;
 
-const CAP = 10;
-
+// Source of truth for what's buyable lives in lib/printful.ts (HAT_CATALOG) — this
+// list mirrors it for display purposes. Preview images are the flat artwork files,
+// not real product photos/mockups yet (swap in real mockup photos once available).
 const COLORS = [
   {
-    slug: "classic",
-    product: "hat-classic",
-    name: "Classic",
-    description: "Cream hat, forest green bill and lettering.",
-    images: ["/images/hat-classic-front.webp", "/images/hat-classic-side.webp"],
+    slug: "hat-fistbump-cream",
+    product: "hat-fistbump-cream",
+    name: "Fist Bump — Cream, Black Bill",
+    description: "Cream hat, black bill. Fist-bump logo up front, DUDELA wordmark stitched on the back.",
+    images: ["/printful/fist-bump-front.png"],
   },
   {
-    slug: "black-green",
-    product: "hat-black-green",
-    name: "All Black (Green Logo)",
-    description: "All black, with the Dudela logo in forest green.",
-    images: [],
+    slug: "hat-fistbump-black",
+    product: "hat-fistbump-black",
+    name: "Fist Bump — Black",
+    description: "All black. Fist-bump logo up front, DUDELA wordmark stitched on the back.",
+    images: ["/printful/fist-bump-front.png"],
   },
   {
-    slug: "black-cream",
-    product: "hat-black-cream",
-    name: "Black (Cream Bill & Lettering)",
-    description: "Black hat, cream bill and cream lettering.",
-    images: [],
+    slug: "hat-upsidedown-cream",
+    product: "hat-upsidedown-cream",
+    name: "Upside Down — Cream, Green Bill",
+    description: "Cream hat, forest green bill. The upside-down DUDELA wordmark, front and center.",
+    images: ["/printful/dudela-upsidedown-front.png"],
+  },
+  {
+    slug: "hat-upsidedown-black",
+    product: "hat-upsidedown-black",
+    name: "Upside Down — Black",
+    description: "All black. The upside-down DUDELA wordmark, front and center.",
+    images: ["/printful/dudela-upsidedown-front.png"],
   },
 ];
 
+// Printful makes these to order, so there's no real stock cap anymore — countMerchOrders
+// is kept purely as an internal sales count (still useful to glance at), not a gate.
 const colorways = await Promise.all(
   COLORS.map(async (c) => {
     const sold = await countMerchOrders(env, c.slug);
-    return { ...c, sold, remaining: Math.max(0, CAP - sold), soldOut: sold >= CAP };
+    return { ...c, sold };
   })
 );
 
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
-const soldOutColor = url.searchParams.get("sold_out");
 ---
-<BaseLayout title="Dudela Hats — Merch" description="The Dudela hat presale is live. Three colorways, $38, free shipping — only 10 of each, first come first served.">
+<BaseLayout title="Dudela Hats — Merch" description="Two designs, four colors, $38 each, free shipping. Made to order and shipped straight to your door.">
   <Nav />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
-      <p class="eyebrow">Merch Presale</p>
-      <h1>The Dudela hat is here — for a few of us, first.</h1>
+      <p class="eyebrow">Merch</p>
+      <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Three colorways, $38 each, free shipping. This first run is intentionally small —
-        just 10 of each color — so once they're gone, they're gone until the next batch.
+        Two designs, four colors, $38 each, free shipping. Every hat is made to order and
+        shipped straight to your door — no waiting on a batch.
       </p>
 
       {canceled && (
         <p class="notice">Checkout was canceled — nothing was charged. Pick a color below whenever you're ready.</p>
-      )}
-      {soldOutColor && (
-        <p class="notice">
-          That colorway just sold out of its first run — sorry! Check the others below, or watch for the next batch.
-        </p>
       )}
     </div>
   </section>
@@ -77,10 +81,8 @@ const soldOutColor = url.searchParams.get("sold_out");
         <div class="color-card">
           <div class="color-media">
             {c.images.length > 0 ? (
-              <div class="photo-pair">
-                {c.images.map((src) => (
-                  <img src={src} alt={`Dudela Hat — ${c.name}`} loading="lazy" />
-                ))}
+              <div class="art-preview">
+                <img src={c.images[0]} alt={`Dudela Hat — ${c.name} artwork`} loading="lazy" />
               </div>
             ) : (
               <PhotoPlaceholder label="Image coming soon" ratio="1/1" />
@@ -91,19 +93,10 @@ const soldOutColor = url.searchParams.get("sold_out");
             <p class="color-desc">{c.description}</p>
             <div class="color-meta">
               <span class="price">$38</span>
-              {c.soldOut ? (
-                <span class="stock stock-out">Sold out</span>
-              ) : (
-                <span class="stock">{c.remaining} of {CAP} left</span>
-              )}
             </div>
-            {c.soldOut ? (
-              <button type="button" class="btn btn-outline-light" disabled>Sold Out</button>
-            ) : (
-              <a href={`/api/create-checkout-session?product=${c.product}`} class="btn btn-primary">
-                Buy Now — $38
-              </a>
-            )}
+            <a href={`/api/create-checkout-session?product=${c.product}`} class="btn btn-primary">
+              Buy Now — $38
+            </a>
           </div>
         </div>
       ))}
@@ -119,8 +112,8 @@ const soldOutColor = url.searchParams.get("sold_out");
       </div>
       <div>
         <span class="perk-index">02</span>
-        <h3>First run, first come</h3>
-        <p>Only 10 of each colorway this round. When a color's gone, it's gone until the next batch.</p>
+        <h3>Made to order</h3>
+        <p>Every hat is made when you order it — no waiting on restocks, no "sold out."</p>
       </div>
       <div>
         <span class="perk-index">03</span>
@@ -182,14 +175,18 @@ const soldOutColor = url.searchParams.get("sold_out");
   .color-media {
     width: 100%;
   }
-  .photo-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .photo-pair img {
-    width: 100%;
+  .art-preview {
     aspect-ratio: 1 / 1;
-    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream-100);
+    padding: 1.5rem;
+  }
+  .art-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
     display: block;
   }
   .color-body {
@@ -274,9 +271,14 @@ const soldOutColor = url.searchParams.get("sold_out");
     font-weight: 600;
   }
 
-  @media (min-width: 720px) {
+  @media (min-width: 620px) {
     .colors-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 1080px) {
+    .colors-grid {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 </style>

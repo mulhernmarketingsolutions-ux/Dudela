@@ -17,8 +17,10 @@ export interface LoopsEnv {
 export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "free-guide": { eventName: "lead-free-guide", userGroup: "Lead – Free Guide" },
   "newsletter": { eventName: "lead-newsletter", userGroup: "Lead – Newsletter" },
-  "hat-waitlist": { eventName: "lead-hat-waitlist", userGroup: "Lead – Hat Waitlist" },
   "fall-cohort-waitlist": { eventName: "lead-fall-cohort", userGroup: "Lead – Fall Cohort" },
+  // "hat-waitlist" removed — merch.astro no longer has a waitlist form (real
+  // buy buttons + Stripe checkout replaced it), so nothing posts this magnet
+  // value anymore. Hat purchases are tracked via PURCHASE_EVENTS below instead.
 };
 
 // Maps each Stripe `product` value (see create-checkout-session.ts) to the Loops event
@@ -29,6 +31,17 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
 export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
   "spit-up-society": { eventName: "member-spit-up-society", userGroup: "Member – Spit-Up Society" },
+  // Added when the merch presale shipped — these three were missing from this
+  // map at launch, which meant hat buyers were silently never tagged in Loops
+  // at all (sendLoopsPurchaseEvent logs an error and no-ops on an unmapped
+  // product; the purchase itself, receipt email, and D1 order row all still
+  // worked fine, so this went unnoticed). One shared "Customer – Hat" group
+  // rather than one per colorway — for email segmentation, "bought a hat" is
+  // the useful distinction, not which color.
+  "hat-fistbump-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
 };
 
 // Fired on customer.subscription.deleted — separate from PURCHASE_EVENTS since it's a
