@@ -64,5 +64,21 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toStri
       src="https://www.speakpipe.com/loader/h06rk7j4thx5m863wodhtbetbdi6pl2n.js"
       async
     ></script>
+
+    <style is:global>
+      /* SpeakPipe positions its floating "Send Voicemail" tab itself, via
+         inline `!important` styles on `top` and `background-color` that no
+         stylesheet can override. On phone-width screens that ~220px-tall
+         tab sits flush against the right edge, right on top of card text
+         and buttons. display:none is the one property they don't mark
+         !important, so it's the one safe lever we have — hide it under
+         640px. The voicemail flow itself isn't lost: it's still linked
+         explicitly from Ask a Question, the footer, and /voicemail. */
+      @media (max-width: 640px) {
+        #-speakpipe-widget-side-button {
+          display: none !important;
+        }
+      }
+    </style>
   </body>
 </html>

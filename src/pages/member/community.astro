@@ -30,21 +30,10 @@ const STAGES = [
 ];
 const stageLabel = (id: string | null) => STAGES.find((s) => s.id === id)?.label || id || "";
 
-// Three accent tints cycling by index, so the bubble field reads as varied
-// rather than one flat color — same three brand accents used everywhere
-// else on the site (amber/rust/forest), just distributed across cards.
+// Three accent tints cycling by index, so cards read as varied rather
+// than one flat color — same three brand accents used everywhere else on
+// the site (amber/rust/forest), just distributed across cards.
 const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
-
-// Hand-picked positions (left%/top%) spread across the field so bubbles
-// don't clump in the middle — cycles if there are more notes than slots.
-// Kept safely inside 0–100 (unlike the old roaming version) since these
-// bubbles pop in and out in place rather than traveling around.
-const SLOTS: [number, number][] = [
-  [2, 2], [26, 6], [50, 0], [74, 8], [4, 28],
-  [30, 32], [56, 26], [80, 34], [2, 56],
-  [28, 60], [54, 54], [78, 62], [8, 82],
-  [34, 84], [58, 80], [80, 86], [46, 36], [16, 8],
-];
 ---
 <BaseLayout title="The Circle — Dudela" description="A snapshot of the dads in the Spit-Up Society.">
   <Nav />
@@ -54,9 +43,9 @@ const SLOTS: [number, number][] = [
       <p class="eyebrow">Spit-Up Society</p>
       <h1>The Circle</h1>
       <p class="hero-sub">
-        Not a group chat, not another feed to check — just a snapshot of who else is in this with you.
-        Every bubble is a real dad in the Society: first name, where he's from, what stage he's in,
-        and one thing he's learned. Add yours below.
+        Not a group chat, not another feed to check. Read one thing a few real dads in the
+        Society have learned — one at a time, so it's actually easy to sit with — then add
+        your own below for the next dad to read.
       </p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
     </div>
@@ -67,30 +56,43 @@ const SLOTS: [number, number][] = [
       {notes.length === 0 ? (
         <p class="empty-state">Nobody's added their bubble yet — be the first below.</p>
       ) : (
-        <div class="bubble-field">
-          {notes.map((note, i) => {
-            const [left, top] = SLOTS[i % SLOTS.length];
-            const duration = 9 + (i % 5) * 1.6; // 9–15.4s full pop cycle, varies per bubble
-            const delay = -(i % 11) * 1.3; // negative delay so each starts mid-cycle — a staggered feed, not a synchronized flash
-            const initial = note.first_name.charAt(0).toUpperCase();
-            return (
-              <div
-                class={`bubble ${TINTS[i % TINTS.length]}`}
-                style={`left: ${left}%; top: ${top}%; animation-duration: ${duration}s; animation-delay: ${delay}s;`}
-              >
-                <div class="bubble-head">
-                  <span class="bubble-avatar">{initial}</span>
-                  <div class="bubble-headtext">
-                    <p class="bubble-who">
-                      {note.first_name}{note.city ? ` · ${note.city}` : ""}
-                    </p>
-                    {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
+        <div class="spotlight">
+          <p class="spotlight-label">
+            One dad at a time
+            <span class="spotlight-counter"><span id="spotlight-current">1</span> of {notes.length}</span>
+          </p>
+          <div class="spotlight-viewport" id="spotlight-viewport">
+            {notes.map((note, i) => {
+              const initial = note.first_name.charAt(0).toUpperCase();
+              return (
+                <div class={`bubble ${TINTS[i % TINTS.length]}`} data-index={i}>
+                  <div class="bubble-head">
+                    <span class="bubble-avatar">{initial}</span>
+                    <div class="bubble-headtext">
+                      <p class="bubble-who">
+                        {note.first_name}{note.city ? ` · ${note.city}` : ""}
+                      </p>
+                      {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
+                    </div>
                   </div>
+                  <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
                 </div>
-                <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          {notes.length > 1 && (
+            <div class="spotlight-controls">
+              <button type="button" class="spotlight-btn" id="spotlight-prev" aria-label="Previous dad">&larr;</button>
+              {notes.length <= 8 && (
+                <div class="spotlight-dots" id="spotlight-dots">
+                  {notes.map((_, i) => (
+                    <button type="button" class="spotlight-dot" data-index={i} aria-label={`Go to dad ${i + 1}`}></button>
+                  ))}
+                </div>
+              )}
+              <button type="button" class="spotlight-btn" id="spotlight-next" aria-label="Next dad">&rarr;</button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -134,6 +136,77 @@ const SLOTS: [number, number][] = [
   </section>
 
   <script>
+    // One-card-at-a-time spotlight — replaces the old ambient overlapping
+    // field. That version looked lively but crammed 15+ animated cards
+    // into one viewport, which on a phone-width screen meant nothing was
+    // actually readable. The whole point of this section is "read one
+    // thing a few dads have learned," so only ever show one, with
+    // prev/next, dots, swipe, and a slow auto-advance.
+    const cards = Array.from(document.querySelectorAll<HTMLElement>("#spotlight-viewport .bubble"));
+    const dots = Array.from(document.querySelectorAll<HTMLButtonElement>(".spotlight-dot"));
+    const counterEl = document.getElementById("spotlight-current");
+    const prevBtn = document.getElementById("spotlight-prev");
+    const nextBtn = document.getElementById("spotlight-next");
+    const viewport = document.getElementById("spotlight-viewport");
+
+    let current = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    function show(i: number) {
+      if (!cards.length) return;
+      current = ((i % cards.length) + cards.length) % cards.length;
+      cards.forEach((c, idx) => c.classList.toggle("is-current", idx === current));
+      dots.forEach((d, idx) => d.classList.toggle("is-current", idx === current));
+      if (counterEl) counterEl.textContent = String(current + 1);
+    }
+
+    function restartAutoAdvance() {
+      if (timer) clearInterval(timer);
+      if (cards.length > 1) {
+        timer = setInterval(() => show(current + 1), 6000);
+      }
+    }
+
+    if (cards.length) {
+      show(0);
+      restartAutoAdvance();
+    }
+
+    prevBtn?.addEventListener("click", () => {
+      show(current - 1);
+      restartAutoAdvance();
+    });
+    nextBtn?.addEventListener("click", () => {
+      show(current + 1);
+      restartAutoAdvance();
+    });
+    dots.forEach((d) => {
+      d.addEventListener("click", () => {
+        show(Number(d.dataset.index || 0));
+        restartAutoAdvance();
+      });
+    });
+
+    let touchStartX = 0;
+    viewport?.addEventListener(
+      "touchstart",
+      (e) => {
+        touchStartX = e.touches[0].clientX;
+      },
+      { passive: true }
+    );
+    viewport?.addEventListener(
+      "touchend",
+      (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 40) {
+          show(current + (dx < 0 ? 1 : -1));
+          restartAutoAdvance();
+        }
+      },
+      { passive: true }
+    );
+
     const form = document.getElementById("note-form") as HTMLFormElement | null;
     const status = document.getElementById("note-form-status") as HTMLParagraphElement | null;
     form?.addEventListener("submit", async (e) => {
@@ -191,76 +264,79 @@ const SLOTS: [number, number][] = [
     color: var(--text-on-light-muted);
     text-align: center;
   }
-  .bubble-field {
-    position: relative;
-    height: 560px;
-    max-width: 100%;
+  /* One card at a time — the whole point of this section is "read one
+     thing a few dads have learned," not an ambient wall of chat bubbles.
+     The old overlapping animated field looked lively but on a phone-width
+     screen it crammed 15+ cards on top of each other and nothing was
+     readable. This is deliberately boring and clear instead: a single
+     card, prev/next + dots + swipe, slow auto-advance. */
+  .spotlight {
+    max-width: 460px;
+    margin: 0 auto;
   }
-  /* Chat/comment-card style instead of the old organic blob: a rounded
-     card with a squared-off bottom-left corner (the classic "message
-     bubble" tell), a colored avatar initial, and a soft drop shadow so it
-     reads as a card floating above the page — like a comment or
-     notification popping in, not a cell drifting around. */
+  .spotlight-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-on-light-muted);
+    margin-bottom: 1rem;
+  }
+  .spotlight-counter {
+    font-variant-numeric: tabular-nums;
+  }
+  .spotlight-viewport {
+    position: relative;
+    min-height: 190px;
+  }
+  /* Same chat/comment-card look as before (rounded card, squared-off
+     bottom-left corner, colored avatar initial, soft drop shadow) — just
+     shown one at a time instead of scattered and animated. */
   .bubble {
-    position: absolute;
-    width: 240px;
-    padding: 1rem 1.2rem;
+    display: none;
+    width: 100%;
+    padding: 1.5rem 1.6rem;
     border-radius: 18px 18px 18px 4px;
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
     box-shadow: 0 10px 28px -10px rgba(28, 35, 25, 0.28);
     text-align: left;
-    opacity: 0;
-    transform: scale(0.6) translateY(14px);
-    animation-name: pop-in;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
   }
-  /* Pop in with a little overshoot, hold so it's actually readable, then
-     fade back out and wait off-cycle before popping in again — the
-     "someone just commented" rhythm rather than continuous movement. */
-  @keyframes pop-in {
-    0% {
+  .bubble.is-current {
+    display: block;
+    animation: card-in 0.35s ease;
+  }
+  @keyframes card-in {
+    from {
       opacity: 0;
-      transform: scale(0.6) translateY(14px);
+      transform: translateY(8px);
     }
-    8% {
+    to {
       opacity: 1;
-      transform: scale(1.05) translateY(0);
-    }
-    14% {
-      transform: scale(1) translateY(0);
-    }
-    72% {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-    88% {
-      opacity: 0;
-      transform: scale(0.88) translateY(-8px);
-    }
-    100% {
-      opacity: 0;
-      transform: scale(0.6) translateY(14px);
+      transform: translateY(0);
     }
   }
   .bubble-head {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.55rem;
+    gap: 0.7rem;
+    margin-bottom: 0.75rem;
   }
   .bubble-avatar {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     color: var(--cream-100);
   }
   .tint-amber .bubble-avatar {
@@ -278,7 +354,7 @@ const SLOTS: [number, number][] = [
   .bubble-who {
     font-family: var(--font-label);
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     margin: 0;
     color: var(--text-on-light);
     white-space: nowrap;
@@ -288,25 +364,72 @@ const SLOTS: [number, number][] = [
   .bubble-stage {
     display: inline-block;
     font-family: var(--font-label);
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--text-on-light-muted);
   }
   .bubble-advice {
-    font-size: 0.85rem;
+    font-size: 1.05rem;
     color: var(--text-on-light);
     margin: 0;
-    line-height: 1.45;
+    line-height: 1.55;
+  }
+  .spotlight-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .spotlight-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--bg-light-raised);
+    color: var(--text-on-light);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+  }
+  .spotlight-btn:hover {
+    background: var(--border-light);
+  }
+  .spotlight-dots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 220px;
+  }
+  .spotlight-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: var(--border-light);
+    cursor: pointer;
+    padding: 0;
+  }
+  .spotlight-dot.is-current {
+    background: var(--forest-500);
   }
   @media (max-width: 640px) {
-    .bubble-field {
-      height: 880px;
+    .spotlight {
+      max-width: 100%;
     }
     .bubble {
-      width: 200px;
-      padding: 0.9rem 1.05rem;
+      padding: 1.25rem 1.35rem;
+    }
+    .bubble-advice {
+      font-size: 1rem;
     }
   }
 

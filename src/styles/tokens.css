@@ -69,6 +69,14 @@
 
 html {
   scroll-behavior: smooth;
+  /* Belt-and-suspenders against any element (now or added later) bleeding
+     past the viewport edge and letting mobile Safari treat the page as
+     horizontally scrollable/zoomable — the "extra room, slides side to
+     side" feel. overscroll-behavior-y stops the vertical rubber-band
+     bounce at the top/bottom, which is also what was letting a sliver of
+     the fixed nav's own background show above itself during the bounce. */
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -79,6 +87,8 @@ body {
   font-size: 17px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  position: relative;
 }
 
 img {
