@@ -39,42 +39,36 @@ const PRODUCTS: Record<
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
   },
-  // The 4 buyable hats — see lib/printful.ts HAT_CATALOG for the design/color/thread
-  // config each of these slugs maps to. All four share one $38 Stripe price (same
-  // physical cost regardless of design/color), so they all point at the same price
-  // env var rather than needing 4 separate Stripe Price objects.
-  "hat-fistbump-cream": {
-    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
-    returnPath: "/merch",
-    thankYouPath: "/merch/thank-you",
-    mode: "payment",
-    shipping: true,
-    merchColor: "hat-fistbump-cream",
-  },
-  "hat-fistbump-black": {
-    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
-    returnPath: "/merch",
-    thankYouPath: "/merch/thank-you",
-    mode: "payment",
-    shipping: true,
-    merchColor: "hat-fistbump-black",
-  },
-  "hat-upsidedown-cream": {
-    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
-    returnPath: "/merch",
-    thankYouPath: "/merch/thank-you",
-    mode: "payment",
-    shipping: true,
-    merchColor: "hat-upsidedown-cream",
-  },
-  "hat-upsidedown-black": {
-    priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
-    returnPath: "/merch",
-    thankYouPath: "/merch/thank-you",
-    mode: "payment",
-    shipping: true,
-    merchColor: "hat-upsidedown-black",
-  },
+  // The 12 buyable hats (2 designs x 6 colors) — see lib/printful.ts HAT_CATALOG for
+  // the design/color/thread config each of these slugs maps to. All twelve share one
+  // $38 Stripe price (same physical cost regardless of design/color), so they all
+  // point at the same price env var rather than needing 12 separate Stripe Price objects.
+  ...Object.fromEntries(
+    [
+      "hat-fistbump-cream",
+      "hat-fistbump-black",
+      "hat-fistbump-white",
+      "hat-fistbump-navy",
+      "hat-fistbump-khaki",
+      "hat-fistbump-green",
+      "hat-upsidedown-cream",
+      "hat-upsidedown-black",
+      "hat-upsidedown-white",
+      "hat-upsidedown-navy",
+      "hat-upsidedown-khaki",
+      "hat-upsidedown-blackbill",
+    ].map((slug) => [
+      slug,
+      {
+        priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
+        returnPath: "/merch",
+        thankYouPath: "/merch/thank-you",
+        mode: "payment" as const,
+        shipping: true,
+        merchColor: slug,
+      },
+    ])
+  ),
 };
 
 export async function GET({ request, locals }: APIContext) {

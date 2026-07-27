@@ -40,8 +40,16 @@ export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: str
   // the useful distinction, not which color.
   "hat-fistbump-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-navy": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-khaki": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-green": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-navy": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-khaki": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-blackbill": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
 };
 
 // Fired on customer.subscription.deleted — separate from PURCHASE_EVENTS since it's a

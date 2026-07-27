@@ -12,53 +12,125 @@ import { countMerchOrders } from "../lib/db";
 const env = (Astro.locals as any).runtime.env;
 
 // Source of truth for what's buyable lives in lib/printful.ts (HAT_CATALOG) — this
-// list mirrors it for display purposes. Real Printful-rendered mockups for the two
-// cream colorways; the two black-cap versions still need mockups (those color
-// variants aren't built as Printful templates yet — see conversation with John).
-const COLORS = [
+// mirrors it, grouped by design so the page can show one card per design with a
+// color picker inside it, instead of one flat card per color (easier to compare,
+// and matches how John actually thinks about these: 2 designs, pick your color).
+const DESIGNS = [
   {
-    slug: "hat-fistbump-cream",
-    product: "hat-fistbump-cream",
-    name: "Fist Bump — Cream, Black Bill",
-    description: "The original. A small fist bump up front, DUDELA stitched across the back — for when a high-five feels like too much.",
-    images: ["/images/hat-fistbump-cream-front.png", "/images/hat-fistbump-cream-back.png"],
+    key: "fistbump",
+    title: "Fist Bump",
+    tagline: "Small logo up front, DUDELA stitched across the back.",
+    colors: [
+      {
+        slug: "hat-fistbump-cream",
+        name: "Cream, Black Bill",
+        swatch: "#ece3d1",
+        description: "The original. A small fist bump up front, DUDELA stitched across the back — for when a high-five feels like too much.",
+        images: ["/images/hat-fistbump-cream-front.png", "/images/hat-fistbump-cream-back.png"],
+      },
+      {
+        slug: "hat-fistbump-black",
+        name: "Black",
+        swatch: "#141414",
+        description: "Same fist bump, blacked out, stitched in white so it still shows up.",
+        images: [],
+      },
+      {
+        slug: "hat-fistbump-white",
+        name: "White",
+        swatch: "#f5f5f0",
+        description: "Clean and bright, fist bump stitched in black.",
+        images: [],
+      },
+      {
+        slug: "hat-fistbump-navy",
+        name: "Navy",
+        swatch: "#1c2740",
+        description: "Deep navy, stitched in white so it pops.",
+        images: [],
+      },
+      {
+        slug: "hat-fistbump-khaki",
+        name: "Khaki",
+        swatch: "#c3b091",
+        description: "Neutral khaki, stitched in black.",
+        images: [],
+      },
+      {
+        slug: "hat-fistbump-green",
+        name: "Cream, Green Bill",
+        swatch: "#57684a",
+        description: "Cream crown, forest green bill, stitched to match.",
+        images: [],
+      },
+    ],
   },
   {
-    slug: "hat-fistbump-black",
-    product: "hat-fistbump-black",
-    name: "Fist Bump — Black",
-    description: "Same fist bump, blacked out, stitched in white so it still shows up.",
-    images: [],
-  },
-  {
-    slug: "hat-upsidedown-cream",
-    product: "hat-upsidedown-cream",
-    name: "Upside Down — Cream, Green Bill",
-    description: "DUDELA, flipped upside down and arched like a varsity letter. Forest green bill — the original.",
-    images: ["/images/hat-upsidedown-cream-front.png"],
-  },
-  {
-    slug: "hat-upsidedown-black",
-    product: "hat-upsidedown-black",
-    name: "Upside Down — Black",
-    description: "Same upside-down wordmark, blacked out, stitched in white.",
-    images: [],
+    key: "upsidedown",
+    title: "Upside Down",
+    tagline: "The DUDELA wordmark, flipped and arched, front and center.",
+    colors: [
+      {
+        slug: "hat-upsidedown-cream",
+        name: "Cream, Green Bill",
+        swatch: "#57684a",
+        description: "DUDELA, flipped upside down and arched like a varsity letter. Forest green bill — the original.",
+        images: ["/images/hat-upsidedown-cream-front.png"],
+      },
+      {
+        slug: "hat-upsidedown-black",
+        name: "Black",
+        swatch: "#141414",
+        description: "Same upside-down wordmark, blacked out, stitched in white.",
+        images: [],
+      },
+      {
+        slug: "hat-upsidedown-white",
+        name: "White",
+        swatch: "#f5f5f0",
+        description: "Clean and bright, wordmark stitched in black.",
+        images: [],
+      },
+      {
+        slug: "hat-upsidedown-navy",
+        name: "Navy",
+        swatch: "#1c2740",
+        description: "Deep navy, stitched in white.",
+        images: [],
+      },
+      {
+        slug: "hat-upsidedown-khaki",
+        name: "Khaki",
+        swatch: "#c3b091",
+        description: "Neutral khaki, stitched in black.",
+        images: [],
+      },
+      {
+        slug: "hat-upsidedown-blackbill",
+        name: "Cream, Black Bill",
+        swatch: "#ece3d1",
+        description: "Cream crown, black bill, wordmark stitched in black.",
+        images: [],
+      },
+    ],
   },
 ];
 
 // Printful makes these to order, so there's no real stock cap anymore — countMerchOrders
 // is kept purely as an internal sales count (still useful to glance at), not a gate.
-const colorways = await Promise.all(
-  COLORS.map(async (c) => {
-    const sold = await countMerchOrders(env, c.slug);
-    return { ...c, sold };
-  })
+const designs = await Promise.all(
+  DESIGNS.map(async (d) => ({
+    ...d,
+    colors: await Promise.all(
+      d.colors.map(async (c) => ({ ...c, sold: await countMerchOrders(env, c.slug) }))
+    ),
+  }))
 );
 
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Two designs, four colors, $38 each, free shipping. Made to order and shipped straight to your door.">
+<BaseLayout title="Dudela Hats — Merch" description="Two designs, six colors each, $38, free shipping. Made to order and shipped straight to your door.">
   <Nav />
 
   <section class="hero section-dark">
@@ -66,7 +138,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <p class="eyebrow">Merch</p>
       <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Two designs, four colors, $38 each, free shipping. Every hat is made to order and
+        Two designs, six colors each, $38, free shipping. Every hat is made to order and
         shipped straight to your door — no waiting on a batch.
       </p>
 
@@ -78,33 +150,55 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
   <section class="colors section-light">
     <div class="container colors-grid">
-      {colorways.map((c) => (
-        <div class="color-card">
-          <div class="color-media">
-            {c.images.length > 1 ? (
-              <div class="photo-pair">
-                {c.images.map((src) => (
-                  <img src={src} alt={`Dudela Hat — ${c.name}`} loading="lazy" />
+      {designs.map((d) => {
+        const first = d.colors[0];
+        return (
+          <div class="design-card" data-design={d.key}>
+            <div class="design-media" data-media>
+              {first.images.length > 1 ? (
+                <div class="photo-pair">
+                  {first.images.map((src) => (
+                    <img src={src} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
+                  ))}
+                </div>
+              ) : first.images.length === 1 ? (
+                <img class="single-photo" src={first.images[0]} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
+              ) : (
+                <PhotoPlaceholder label="Image coming soon" ratio="1/1" />
+              )}
+            </div>
+            <div class="design-body">
+              <h3>{d.title}</h3>
+              <p class="design-tagline">{d.tagline}</p>
+              <p class="color-desc" data-desc>{first.description}</p>
+
+              <div class="swatches" role="group" aria-label={`${d.title} color`}>
+                {d.colors.map((c, i) => (
+                  <button
+                    type="button"
+                    class={`swatch${i === 0 ? " active" : ""}`}
+                    style={`--swatch: ${c.swatch}`}
+                    title={c.name}
+                    aria-label={c.name}
+                    data-slug={c.slug}
+                    data-name={c.name}
+                    data-desc={c.description}
+                    data-images={JSON.stringify(c.images)}
+                  />
                 ))}
               </div>
-            ) : c.images.length === 1 ? (
-              <img class="single-photo" src={c.images[0]} alt={`Dudela Hat — ${c.name}`} loading="lazy" />
-            ) : (
-              <PhotoPlaceholder label="Image coming soon" ratio="1/1" />
-            )}
-          </div>
-          <div class="color-body">
-            <h3>{c.name}</h3>
-            <p class="color-desc">{c.description}</p>
-            <div class="color-meta">
-              <span class="price">$38</span>
+
+              <div class="color-meta">
+                <span class="price">$38</span>
+                <span class="color-name" data-colorname>{first.name}</span>
+              </div>
+              <a href={`/api/create-checkout-session?product=${first.slug}`} class="btn btn-primary" data-buy>
+                Buy Now — $38
+              </a>
             </div>
-            <a href={`/api/create-checkout-session?product=${c.product}`} class="btn btn-primary">
-              Buy Now — $38
-            </a>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </section>
 
@@ -133,6 +227,45 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
   <Footer />
 </BaseLayout>
+
+<script>
+  // Vanilla JS color-swatch picker — no framework, matches the rest of the site.
+  // Each design card renders its first color server-side; clicking a swatch swaps
+  // the image(s), description, color name, and buy-now link to that color's data,
+  // which is embedded on each swatch button as data-* attributes at build time.
+  document.querySelectorAll<HTMLElement>(".design-card").forEach((card) => {
+    const media = card.querySelector<HTMLElement>("[data-media]");
+    const desc = card.querySelector<HTMLElement>("[data-desc]");
+    const colorName = card.querySelector<HTMLElement>("[data-colorname]");
+    const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
+    const swatches = card.querySelectorAll<HTMLButtonElement>(".swatch");
+    if (!media || !desc || !colorName || !buyBtn) return;
+
+    function renderMedia(images: string[], name: string) {
+      if (!media) return;
+      if (images.length > 1) {
+        media.innerHTML = `<div class="photo-pair">${images
+          .map((src) => `<img src="${src}" alt="Dudela Hat — ${name}" loading="lazy" />`)
+          .join("")}</div>`;
+      } else if (images.length === 1) {
+        media.innerHTML = `<img class="single-photo" src="${images[0]}" alt="Dudela Hat — ${name}" loading="lazy" />`;
+      } else {
+        media.innerHTML = `<div class="photo-placeholder" style="aspect-ratio: 1/1;"><span>Image coming soon</span></div>`;
+      }
+    }
+
+    swatches.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        swatches.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderMedia(JSON.parse(btn.dataset.images || "[]"), btn.dataset.name || "");
+        desc.textContent = btn.dataset.desc || "";
+        colorName.textContent = btn.dataset.name || "";
+        buyBtn.href = `/api/create-checkout-session?product=${btn.dataset.slug}`;
+      });
+    });
+  });
+</script>
 
 <style>
   .hero {
@@ -169,7 +302,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     grid-template-columns: 1fr;
     gap: 2.5rem;
   }
-  .color-card {
+  .design-card {
     display: flex;
     flex-direction: column;
     border: 1px solid var(--border-light);
@@ -177,8 +310,68 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     overflow: hidden;
     background: var(--bg-light-raised);
   }
-  .color-media {
+  .design-media {
     width: 100%;
+  }
+  .design-tagline {
+    color: var(--text-on-light-muted);
+    font-size: 0.85rem;
+    margin: 0 0 0.75rem;
+  }
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0 0 1.1rem;
+  }
+  .swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--swatch);
+    border: 2px solid var(--border-light);
+    cursor: pointer;
+    padding: 0;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+  .swatch.active {
+    border-color: var(--forest-800);
+    box-shadow: 0 0 0 2px var(--bg-light-raised), 0 0 0 4px var(--forest-800);
+  }
+  .color-name {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-on-light-muted);
+  }
+  :global(.photo-placeholder) {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04) 0px,
+        rgba(255, 255, 255, 0.04) 2px,
+        transparent 2px,
+        transparent 14px
+      ),
+      linear-gradient(155deg, #2a3322 0%, #1c2319 55%, #12180f 100%);
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+  }
+  :global(.photo-placeholder span) {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(245, 239, 227, 0.55);
+    border: 1px dashed rgba(245, 239, 227, 0.25);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
   }
   .photo-pair {
     display: grid;
@@ -274,14 +467,9 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-weight: 600;
   }
 
-  @media (min-width: 620px) {
+  @media (min-width: 720px) {
     .colors-grid {
       grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  @media (min-width: 1080px) {
-    .colors-grid {
-      grid-template-columns: repeat(4, 1fr);
     }
   }
 </style>

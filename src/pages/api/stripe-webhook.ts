@@ -45,6 +45,26 @@ const PRODUCTS: Record<
     price: "$38",
     isMerch: true,
   },
+  "hat-fistbump-white": {
+    name: "Dudela Hat — White, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-fistbump-navy": {
+    name: "Dudela Hat — Navy, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-fistbump-khaki": {
+    name: "Dudela Hat — Khaki, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-fistbump-green": {
+    name: "Dudela Hat — Cream/Green Bill, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
   "hat-upsidedown-cream": {
     name: "Dudela Hat — Cream/Green Bill, Upside Down",
     price: "$38",
@@ -52,6 +72,26 @@ const PRODUCTS: Record<
   },
   "hat-upsidedown-black": {
     name: "Dudela Hat — Black, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-upsidedown-white": {
+    name: "Dudela Hat — White, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-upsidedown-navy": {
+    name: "Dudela Hat — Navy, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-upsidedown-khaki": {
+    name: "Dudela Hat — Khaki, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-upsidedown-blackbill": {
+    name: "Dudela Hat — Cream/Black Bill, Upside Down",
     price: "$38",
     isMerch: true,
   },
@@ -123,7 +163,7 @@ function receiptEmailHtml(
         You're in — thanks for grabbing a <strong>${product.name}</strong> (${product.price}). This is your presale receipt.
       </p>
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-        These are a limited first run, so it'll take us a bit to get them made and shipped — we'll email you the second yours is on its way.
+        Yours is made to order, so it'll take a little longer than a normal shipment — we'll email you the second it's on its way.
       </p>
       <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
     `);
