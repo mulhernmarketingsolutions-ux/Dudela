@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { createAdminSession } from "../../../lib/db";
 import { setAdminSessionCookie } from "../../../lib/auth";
+import { redirectTo } from "../../../lib/http";
 
 export const prerender = false;
 
@@ -16,14 +17,14 @@ export async function POST({ request, locals, cookies }: APIContext) {
 
   if (!env.ADMIN_PASSWORD) {
     console.error("ADMIN_PASSWORD secret is not set");
-    return Response.redirect(`${url.origin}/admin/login?error=not-configured`, 302);
+    return redirectTo(url.origin, "/admin/login?error=not-configured");
   }
 
   if (password !== env.ADMIN_PASSWORD) {
-    return Response.redirect(`${url.origin}/admin/login?error=wrong-password`, 302);
+    return redirectTo(url.origin, "/admin/login?error=wrong-password");
   }
 
   const token = await createAdminSession(env);
   setAdminSessionCookie(cookies, token);
-  return Response.redirect(`${url.origin}/admin/womb-watch`, 302);
+  return redirectTo(url.origin, "/admin/womb-watch");
 }

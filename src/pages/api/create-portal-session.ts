@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { createPortalSession } from "../../lib/stripe";
 import { getAuthedMember } from "../../lib/auth";
+import { redirectTo } from "../../lib/http";
 
 export const prerender = false;
 
@@ -14,10 +15,10 @@ export async function GET({ request, locals, cookies }: APIContext) {
 
   const member = await getAuthedMember(cookies, env);
   if (!member) {
-    return Response.redirect(`${url.origin}/member/login`, 302);
+    return redirectTo(url.origin, "/member/login");
   }
   if (!member.stripe_customer_id) {
-    return Response.redirect(`${url.origin}/member/dashboard?error=no-billing-account`, 302);
+    return redirectTo(url.origin, "/member/dashboard?error=no-billing-account");
   }
 
   try {
@@ -25,9 +26,9 @@ export async function GET({ request, locals, cookies }: APIContext) {
       customerId: member.stripe_customer_id,
       returnUrl: `${url.origin}/member/dashboard`,
     });
-    return Response.redirect(session.url, 302);
+    return redirectTo(url.origin, session.url);
   } catch (err) {
     console.error("Stripe portal session failed:", err);
-    return Response.redirect(`${url.origin}/member/dashboard?error=portal`, 302);
+    return redirectTo(url.origin, "/member/dashboard?error=portal");
   }
 }

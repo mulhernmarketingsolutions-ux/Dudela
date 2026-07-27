@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { deleteSession } from "../../../lib/db";
 import { SESSION_COOKIE, clearSessionCookie } from "../../../lib/auth";
+import { redirectTo } from "../../../lib/http";
 
 export const prerender = false;
 
@@ -16,7 +17,7 @@ export async function POST({ request, locals, cookies }: APIContext) {
   }
   clearSessionCookie(cookies);
   const url = new URL(request.url);
-  return Response.redirect(`${url.origin}/member/login`, 302);
+  return redirectTo(url.origin, "/member/login");
 }
 
 // Also handle plain GET so a simple <a href="/api/auth/logout"> link works

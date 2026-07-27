@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { deleteAdminSession } from "../../../lib/db";
 import { ADMIN_SESSION_COOKIE, clearAdminSessionCookie } from "../../../lib/auth";
+import { redirectTo } from "../../../lib/http";
 
 export const prerender = false;
 
@@ -16,5 +17,5 @@ export async function GET({ request, locals, cookies }: APIContext) {
   }
   clearAdminSessionCookie(cookies);
   const url = new URL(request.url);
-  return Response.redirect(`${url.origin}/admin/login`, 302);
+  return redirectTo(url.origin, "/admin/login");
 }

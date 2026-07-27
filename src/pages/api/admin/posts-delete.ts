@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { deletePost } from "../../../lib/db";
 import { isAdminAuthed } from "../../../lib/auth";
+import { redirectTo } from "../../../lib/http";
 
 export const prerender = false;
 
@@ -12,7 +13,7 @@ export async function POST({ request, locals, cookies }: APIContext) {
 
   const authed = await isAdminAuthed(cookies, env);
   if (!authed) {
-    return new Response(null, { status: 302, headers: { Location: `${url.origin}/admin/login` } });
+    return redirectTo(url.origin, "/admin/login");
   }
 
   const form = await request.formData();
@@ -21,5 +22,5 @@ export async function POST({ request, locals, cookies }: APIContext) {
     await deletePost(env, id);
   }
 
-  return new Response(null, { status: 302, headers: { Location: `${url.origin}/admin/womb-watch?deleted=1` } });
+  return redirectTo(url.origin, "/admin/womb-watch?deleted=1");
 }

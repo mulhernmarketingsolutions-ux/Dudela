@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 import { createPost, listActiveMembers } from "../../../lib/db";
 import { isAdminAuthed } from "../../../lib/auth";
 import { sendMemberNotificationEvent } from "../../../lib/loops";
+import { redirectTo } from "../../../lib/http";
 
 export const prerender = false;
 
@@ -10,17 +11,13 @@ export const prerender = false;
 // matching Workflow to exist in Loops for members to actually receive
 // anything). A slow/failed notification never blocks the post itself from
 // saving.
-function redirectTo(url: URL, path: string) {
-  return new Response(null, { status: 302, headers: { Location: `${url.origin}${path}` } });
-}
-
 export async function POST({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
   const url = new URL(request.url);
 
   const authed = await isAdminAuthed(cookies, env);
   if (!authed) {
-    return redirectTo(url, "/admin/login");
+    return redirectTo(url.origin, "/admin/login");
   }
 
   const form = await request.formData();
@@ -32,7 +29,7 @@ export async function POST({ request, locals, cookies }: APIContext) {
   const weekLabel = (form.get("week_label") || "").toString().trim();
 
   if (!title || !body) {
-    return redirectTo(url, "/admin/womb-watch?error=missing-fields");
+    return redirectTo(url.origin, "/admin/womb-watch?error=missing-fields");
   }
 
   await createPost(env, { title, body, category, videoUrl, thumbnailUrl, weekLabel });
@@ -53,5 +50,5 @@ export async function POST({ request, locals, cookies }: APIContext) {
     console.error("Member notification fan-out failed:", err);
   }
 
-  return redirectTo(url, "/admin/womb-watch?posted=1");
+  return redirectTo(url.origin, "/admin/womb-watch?posted=1");
 }
