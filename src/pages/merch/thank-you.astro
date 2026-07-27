@@ -1,0 +1,112 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+---
+<BaseLayout title="You're in — Dudela Hat" description="Your Dudela hat presale order is confirmed.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Order confirmed</p>
+      <h1>You're one of the first 10.</h1>
+      <p class="hero-sub">
+        Thanks for grabbing a Dudela hat. A receipt is on its way to your inbox — since this is a
+        first, limited run, it'll take us a little while to get these made and shipped. We'll
+        email you the second yours is on its way.
+      </p>
+      <a href="/merch" class="btn btn-primary">Back to Merch</a>
+    </div>
+  </section>
+
+  <section class="next section-light">
+    <div class="container next-inner">
+      <p class="eyebrow">While you're here</p>
+      <h2>A couple things worth knowing about.</h2>
+      <div class="next-grid">
+        <div class="next-card">
+          <h3>The Spit-Up Society</h3>
+          <p>Twice-monthly live Q&amp;As, a private community of dads, and early access to everything we build next. $5/month.</p>
+          <a href="/join/spit-up-society" class="link-arrow">Join the Society →</a>
+        </div>
+        <div class="next-card">
+          <h3>The Dudela Podcast</h3>
+          <p>New episodes every other Tuesday. Real conversations, no polish, no scripts.</p>
+          <a href="/podcast" class="link-arrow">Listen in →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 5rem;
+    text-align: center;
+  }
+  .hero-inner {
+    max-width: 560px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 3.5rem);
+    margin: 0.5rem 0 1.25rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+    margin-bottom: 2rem;
+  }
+  .next {
+    padding: var(--space-6) 0;
+  }
+  .next-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .next h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+    margin: 0.5rem 0 2rem;
+  }
+  .next-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    text-align: left;
+  }
+  .next-card {
+    background: var(--cream-100, #f5efe3);
+    border-radius: var(--radius-sm);
+    padding: 1.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .next-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+  }
+  .next-card p {
+    color: var(--text-on-light-muted);
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+  }
+  .link-arrow {
+    font-family: var(--font-label);
+    font-weight: 600;
+    color: var(--amber-600, #c66815);
+    text-decoration: none;
+  }
+  @media (min-width: 700px) {
+    .next-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
