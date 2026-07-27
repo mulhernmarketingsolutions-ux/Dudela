@@ -1,3 +1,12 @@
+---
+// Single Feather-style "user" glyph, same stroke pattern used for icons
+// elsewhere on the site (Roadmap.astro, member/dashboard.astro) — just the
+// one-person icon since this is specifically the "log in / my account"
+// entry point, not the multi-person "Circle" icon used in the dashboard.
+const ICONS = {
+  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+};
+---
 <header class="nav" id="site-nav">
   <div class="nav-backdrop" aria-hidden="true"></div>
   <div class="announce-banner" id="announce-banner">
@@ -35,6 +44,12 @@
            to know the visitor's session (it's rendered on prerendered
            static pages too, where per-request cookies aren't available). -->
       <a href="/member/login" class="member-link">Member Login</a>
+      <!-- Same link as above, but a plain person icon sitting right next
+           to the hamburger on mobile so "I already have an account" is
+           visible at a glance instead of buried inside the menu. The text
+           link stays inside the mobile menu too — this doesn't replace it,
+           just gives it a visible entry point on small screens. -->
+      <a href="/member/login" class="mobile-member-icon" aria-label="Member Login" set:html={ICONS.user} />
       <a href="/join" class="btn btn-primary join-btn">Join</a>
       <button type="button" class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
         <span></span>
@@ -250,6 +265,19 @@
   .member-link:hover {
     opacity: 0.7;
   }
+  .mobile-member-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--cream-100);
+    flex-shrink: 0;
+  }
+  .mobile-member-icon svg {
+    width: 20px;
+    height: 20px;
+  }
   .mobile-member-link {
     font-family: var(--font-label) !important;
     font-size: 0.95rem !important;
@@ -294,7 +322,12 @@
     position: fixed;
     inset: 0;
     top: 0;
-    z-index: 5;
+    /* Was z-index:5 — higher than .nav-inner's z-index:2, so the open
+       overlay painted OVER the header row and hid the hamburger/X control
+       that's supposed to close it. Sitting below nav-inner (but still
+       above nav-backdrop's -1) keeps the logo + close control visible on
+       top of the open menu. */
+    z-index: 1;
     background: var(--forest-900);
     display: flex;
     flex-direction: column;
@@ -332,6 +365,9 @@
     }
     .member-link {
       display: inline-flex;
+    }
+    .mobile-member-icon {
+      display: none;
     }
     .hamburger {
       display: none;
