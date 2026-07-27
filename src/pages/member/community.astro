@@ -34,6 +34,21 @@ const stageLabel = (id: string | null) => STAGES.find((s) => s.id === id)?.label
 // rather than one flat color — same three brand accents used everywhere
 // else on the site (amber/rust/forest), just distributed across cards.
 const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
+
+// Hand-picked start positions (left%/top%) spread across the field so
+// bubbles don't clump in the middle — cycles if there are more notes than
+// slots. Values go slightly negative/past 100 on purpose: combined with
+// the container's overflow:hidden, that's what lets a bubble's drift
+// animation carry it partway off the edge before floating back in.
+const SLOTS: [number, number][] = [
+  [-2, 4], [22, -4], [48, 8], [72, -2], [92, 12],
+  [6, 30], [34, 22], [60, 32], [86, 24],
+  [-2, 54], [18, 60], [46, 50], [70, 58], [90, 48],
+  [10, 80], [38, 78], [62, 84], [84, 76],
+];
+// Four drift paths (see @keyframes below) so neighboring bubbles don't
+// all move in lockstep — cycling by index alongside the tint.
+const DRIFTS = ["drift-a", "drift-b", "drift-c", "drift-d"];
 ---
 <BaseLayout title="The Circle — Dudela" description="A snapshot of the dads in the Spit-Up Society.">
   <Nav />
@@ -57,15 +72,24 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
         <p class="empty-state">Nobody's added their bubble yet — be the first below.</p>
       ) : (
         <div class="bubble-field">
-          {notes.map((note, i) => (
-            <div class={`bubble ${TINTS[i % TINTS.length]}`} style={`animation-delay: ${(i % 7) * 0.6}s; animation-duration: ${7 + (i % 4)}s;`}>
-              {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
-              <p class="bubble-who">
-                {note.first_name}{note.city ? ` · ${note.city}` : ""}
-              </p>
-              <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
-            </div>
-          ))}
+          {notes.map((note, i) => {
+            const [left, top] = SLOTS[i % SLOTS.length];
+            const drift = DRIFTS[i % DRIFTS.length];
+            const duration = 16 + (i % 5) * 3; // 16–28s, slow enough to still read
+            const delay = -(i % 9) * 1.7; // negative delay starts mid-cycle so they don't all launch in sync
+            return (
+              <div
+                class={`bubble ${TINTS[i % TINTS.length]} ${drift}`}
+                style={`left: ${left}%; top: ${top}%; animation-duration: ${duration}s; animation-delay: ${delay}s;`}
+              >
+                {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
+                <p class="bubble-who">
+                  {note.first_name}{note.city ? ` · ${note.city}` : ""}
+                </p>
+                <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -167,19 +191,26 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     text-align: center;
   }
   .bubble-field {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.5rem 1.25rem;
+    position: relative;
+    height: 760px;
+    max-width: 100%;
+    overflow: hidden;
+    /* soft fade at the top/bottom edges so a bubble drifting toward the
+       edge disappears gently instead of getting a hard clipped cutoff */
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
   }
   .bubble {
+    position: absolute;
     width: 220px;
     padding: 1.4rem 1.5rem;
     border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%;
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
     text-align: center;
-    animation: bob ease-in-out infinite alternate;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    will-change: transform;
   }
   .tint-amber {
     background: rgba(226, 125, 37, 0.1);
@@ -193,12 +224,82 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     background: rgba(87, 104, 74, 0.12);
     border-color: rgba(87, 104, 74, 0.35);
   }
-  @keyframes bob {
-    from {
-      transform: translateY(0) rotate(-0.5deg);
+  /* Four different roaming paths, cycled across bubbles so the field reads
+     as a loose drifting cloud rather than everything bobbing in lockstep.
+     Ranges are big enough (combined with overflow:hidden + the mask above)
+     that a bubble genuinely drifts toward/past the edge before looping
+     back, instead of just gently bobbing in place. */
+  .drift-a {
+    animation-name: drift-a;
+  }
+  .drift-b {
+    animation-name: drift-b;
+  }
+  .drift-c {
+    animation-name: drift-c;
+  }
+  .drift-d {
+    animation-name: drift-d;
+  }
+  @keyframes drift-a {
+    0% { transform: translate(0, 0) rotate(-2deg); }
+    25% { transform: translate(90px, -60px) rotate(3deg); }
+    50% { transform: translate(30px, 40px) rotate(-1deg); }
+    75% { transform: translate(-80px, -20px) rotate(2deg); }
+    100% { transform: translate(0, 0) rotate(-2deg); }
+  }
+  @keyframes drift-b {
+    0% { transform: translate(0, 0) rotate(2deg); }
+    25% { transform: translate(-100px, 30px) rotate(-3deg); }
+    50% { transform: translate(-20px, -70px) rotate(1deg); }
+    75% { transform: translate(70px, 50px) rotate(-2deg); }
+    100% { transform: translate(0, 0) rotate(2deg); }
+  }
+  @keyframes drift-c {
+    0% { transform: translate(0, 0) rotate(-1deg); }
+    33% { transform: translate(60px, 70px) rotate(2deg); }
+    66% { transform: translate(-90px, 10px) rotate(-3deg); }
+    100% { transform: translate(0, 0) rotate(-1deg); }
+  }
+  @keyframes drift-d {
+    0% { transform: translate(0, 0) rotate(1deg); }
+    33% { transform: translate(-60px, -80px) rotate(-2deg); }
+    66% { transform: translate(100px, -10px) rotate(3deg); }
+    100% { transform: translate(0, 0) rotate(1deg); }
+  }
+  @media (max-width: 640px) {
+    .bubble-field {
+      height: 1100px;
     }
-    to {
-      transform: translateY(-10px) rotate(0.5deg);
+    .bubble {
+      width: 170px;
+      padding: 1.1rem 1.2rem;
+    }
+    @keyframes drift-a {
+      0% { transform: translate(0, 0) rotate(-2deg); }
+      25% { transform: translate(45px, -35px) rotate(3deg); }
+      50% { transform: translate(15px, 25px) rotate(-1deg); }
+      75% { transform: translate(-40px, -12px) rotate(2deg); }
+      100% { transform: translate(0, 0) rotate(-2deg); }
+    }
+    @keyframes drift-b {
+      0% { transform: translate(0, 0) rotate(2deg); }
+      25% { transform: translate(-50px, 18px) rotate(-3deg); }
+      50% { transform: translate(-10px, -35px) rotate(1deg); }
+      75% { transform: translate(35px, 25px) rotate(-2deg); }
+      100% { transform: translate(0, 0) rotate(2deg); }
+    }
+    @keyframes drift-c {
+      0% { transform: translate(0, 0) rotate(-1deg); }
+      33% { transform: translate(30px, 35px) rotate(2deg); }
+      66% { transform: translate(-45px, 6px) rotate(-3deg); }
+      100% { transform: translate(0, 0) rotate(-1deg); }
+    }
+    @keyframes drift-d {
+      0% { transform: translate(0, 0) rotate(1deg); }
+      33% { transform: translate(-30px, -40px) rotate(-2deg); }
+      66% { transform: translate(50px, -6px) rotate(3deg); }
+      100% { transform: translate(0, 0) rotate(1deg); }
     }
   }
   .bubble-stage {
