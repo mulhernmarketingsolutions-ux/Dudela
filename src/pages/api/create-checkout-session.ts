@@ -40,19 +40,20 @@ const PRODUCTS: Record<
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
   },
-  // The 7 buyable hats (Fist Bump x 3 colors, Upside Down x 4) — see
+  // The 8 buyable hats (Fist Bump x 4 colors, Upside Down x 4) — see
   // lib/printful.ts HAT_CATALOG for the design/color/thread config each of
-  // these slugs maps to. Cream/green-bill came back on Upside Down as the
-  // hero color once John fixed the mismatched thread (now rust orange, not
-  // green) — Fist Bump doesn't have an equivalent color back yet. All seven
-  // share one $38 Stripe price (same physical cost regardless of design/
-  // color), so they all point at the same price env var rather than needing
-  // separate Stripe Price objects.
+  // these slugs maps to. As of 2026-07-28 both designs have real matching
+  // mockups for the same 4 colors (White, Black, Cream/Black-bill,
+  // Cream/Green-bill) — hat-fistbump-green and hat-upsidedown-white are new.
+  // All eight share one $38 Stripe price (same physical cost regardless of
+  // design/color), so they all point at the same price env var rather than
+  // needing separate Stripe Price objects.
   ...Object.fromEntries(
     [
       "hat-fistbump-cream",
       "hat-fistbump-black",
       "hat-fistbump-white",
+      "hat-fistbump-green",
       "hat-upsidedown-cream",
       "hat-upsidedown-blackbill",
       "hat-upsidedown-black",

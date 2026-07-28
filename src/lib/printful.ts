@@ -100,20 +100,18 @@ async function findVariantId(env: PrintfulEnv, colorName: string): Promise<numbe
 // This is the single source of truth for "what hats can someone buy" — /merch reads
 // this list to render buy buttons, and the webhook reads it to build the Printful order.
 //
-// CONFIRMED LIST (per John, 2026-07-27/28) — Fist Bump has 3 colors, Upside
-// Down has 4, all embroidered. Cream/green-bill was dropped from Fist Bump
-// entirely (no matching mockup exists) but came back on Upside Down as the
-// hero color, re-shot with the wordmark in rust orange instead of green
-// (the original green-on-green combo didn't match). Every combo below is
-// backed by a real Printful mockup John generated and dropped into
-// public/images/ — thread colors aren't guessed, they're read straight off
-// those photos:
-//   Fist Bump:   Cream/Black-bill (black thread), Black (white thread), White (orange thread)
+// CONFIRMED LIST (per John, 2026-07-28) — both designs now have 4 colors
+// each, all embroidered, all backed by a real Printful mockup photo (see the
+// archive folders John dropped into public/images/ — thread colors aren't
+// guessed, they're read straight off those photos):
+//   Fist Bump:   Black (white thread), White (orange thread),
+//                Cream/Black-bill (black thread), Cream/Green-bill (orange thread)
 //   Upside Down: Cream/Green-bill (orange thread), Cream/Black-bill (black thread),
-//                Black (white thread), White (orange thread)
-// "Orange" is Dudela's rust brand color (#a3492b) — it's what showed up consistently
-// across John's later mockup batches once he moved past the original 2 colors, so
-// it's treated as his settled choice for the newer solid-color/cross combos.
+//                Black (white thread), White (black thread)
+// "Orange" is Dudela's rust brand color (#a3492b). John's asked for 6 colors per
+// design (12 hats total) — only 4 per design have real matching mockups on file
+// right now (White, Black, Cream/Black-bill, Cream/Green-bill for both designs).
+// Drop mockups for 2 more colors and they slot in here the same way.
 export interface HatConfig {
   slug: string; // matches the `product` value used in Stripe metadata / create-checkout-session.ts
   label: string;
@@ -179,10 +177,13 @@ function upsidedownVariant(
 }
 
 export const HAT_CATALOG: HatConfig[] = [
-  // Fist Bump — 3 colors
+  // Fist Bump — 4 colors
   fistbumpVariant("hat-fistbump-cream", "Cream Hat, Black Bill — Fist Bump", "Cream, Black Bill", "#ece3d1", "Black/Natural", THREAD_BLACK),
   fistbumpVariant("hat-fistbump-black", "Black Hat — Fist Bump", "Black", "#141414", "Black", THREAD_WHITE),
   fistbumpVariant("hat-fistbump-white", "White Hat — Fist Bump", "White", "#f5f5f0", "White", THREAD_ORANGE),
+  // New 2026-07-28 — real front+back mockups confirmed, same Dark Green/Natural
+  // catalog variant already used by hat-upsidedown-cream, orange thread to match.
+  fistbumpVariant("hat-fistbump-green", "Cream Hat, Green Bill — Fist Bump", "Cream, Green Bill", "#3a4a32", "Dark Green/Natural", THREAD_ORANGE),
 
   // Upside Down — 4 colors. Cream/Green-bill is the hero color — re-shot with
   // the wordmark re-stitched in rust orange instead of green (the original
@@ -190,7 +191,10 @@ export const HAT_CATALOG: HatConfig[] = [
   upsidedownVariant("hat-upsidedown-cream", "Cream Hat, Green Bill — Upside Down", "Cream, Green Bill", "#3a4a32", "Dark Green/Natural", THREAD_ORANGE),
   upsidedownVariant("hat-upsidedown-blackbill", "Cream Hat, Black Bill — Upside Down", "Cream, Black Bill", "#ece3d1", "Black/Natural", THREAD_BLACK),
   upsidedownVariant("hat-upsidedown-black", "Black Hat — Upside Down", "Black", "#141414", "Black", THREAD_WHITE),
-  upsidedownVariant("hat-upsidedown-white", "White Hat — Upside Down", "White", "#f5f5f0", "White", THREAD_ORANGE),
+  // Re-added 2026-07-28 — real front+side mockups confirmed (previously only a
+  // lifestyle/model shot existed). Wordmark reads black-on-white in the mockup,
+  // not orange like the other newer colors.
+  upsidedownVariant("hat-upsidedown-white", "White Hat — Upside Down", "White", "#f5f5f0", "White", THREAD_BLACK),
 ];
 
 export function getHatConfig(slug: string): HatConfig | undefined {

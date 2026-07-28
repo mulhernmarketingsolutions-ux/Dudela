@@ -32,47 +32,45 @@ const member = await getAuthedMember(Astro.cookies, env);
 // the hero color for The Classic now (shown by default) — Fist Bump doesn't
 // have an equivalent green colorway back yet, so it stays at 3 colors.
 //
-// missingLabel: each design has its own real-photo gap right now (see comment
-// on each color below for exactly what's missing) — shown as an honest
-// "coming soon" placeholder instead of a mismatched or low-quality photo.
+// Every color below is backed by two real Printful mockup photos (front +
+// a second angle), pre-merged at build time into one PNG per color
+// (hat-{design}-{color}-pair.png — see public/images) so the page only ever
+// shows a single <img>, not two side-by-side tags. That's what makes the
+// swatch click feel like "the photo changes color," not "a new image loads":
+// one element, one src swap, dimensions never move.
 const DESIGNS = [
   {
     key: "upsidedown",
     title: "The Classic",
     tagline: "The one that started it all — DUDELA, flipped and arched, reading right back at you.",
-    missingLabel: "Side view coming soon",
     colors: [
       {
         slug: "hat-upsidedown-cream",
         name: "Cream, Green Bill",
         swatch: "#3a4a32",
         description: "The hero color. Cream crown, dark green bill, wordmark stitched in rust orange.",
-        images: ["/images/hat-upsidedown-cream-front.png", "/images/hat-upsidedown-cream-side.png"],
+        image: "/images/hat-upsidedown-cream-pair.png",
       },
       {
         slug: "hat-upsidedown-blackbill",
         name: "Cream, Black Bill",
         swatch: "#ece3d1",
         description: "Where it began. The wordmark flipped and arched, stitched in black.",
-        images: ["/images/hat-upsidedown-blackbill-front.png"],
+        image: "/images/hat-upsidedown-blackbill-pair.png",
       },
       {
         slug: "hat-upsidedown-black",
         name: "Black",
         swatch: "#141414",
         description: "Blacked out, wordmark stitched in white.",
-        images: ["/images/hat-upsidedown-black-front.png"],
+        image: "/images/hat-upsidedown-black-pair.png",
       },
       {
-        // No usable photo yet — the only render on file is a lifestyle/model
-        // shot, not a flat product photo like every other color here, so it's
-        // left off rather than shown inconsistent. Swap in a flat front shot
-        // and this fills in automatically.
         slug: "hat-upsidedown-white",
         name: "White",
         swatch: "#f5f5f0",
-        description: "Clean and simple, wordmark stitched in rust orange.",
-        images: [],
+        description: "Clean white, wordmark stitched in black.",
+        image: "/images/hat-upsidedown-white-pair.png",
       },
     ],
   },
@@ -80,35 +78,34 @@ const DESIGNS = [
     key: "fistbump",
     title: "The Rookie",
     tagline: "The new one — a fist bump up front, DUDELA stitched across the back.",
-    missingLabel: "Detail shot coming soon",
-    // Per John: switching swatches shouldn't feel like a whole new photoshoot
-    // each time — "I just want to see the colors change." That means every
-    // color needs the SAME pose in the same slot. The close-up "product
-    // details" shot on Black (front + a tight embroidery close-up on the
-    // back) is the reference pose now — Cream and White are left at front-
-    // only until they have a matching close-up, rather than mixing that in
-    // with the old wide flat-back photos.
     colors: [
-      {
-        slug: "hat-fistbump-cream",
-        name: "Cream, Black Bill",
-        swatch: "#ece3d1",
-        description: "The new go-to. Fist bump up front, DUDELA on the back, stitched in black.",
-        images: ["/images/hat-fistbump-cream-front.png"],
-      },
       {
         slug: "hat-fistbump-black",
         name: "Black",
         swatch: "#141414",
         description: "Blacked out, stitched in white so it still throws a punch.",
-        images: ["/images/hat-fistbump-black-front.png", "/images/hat-fistbump-black-detail.png"],
+        image: "/images/hat-fistbump-black-pair.png",
       },
       {
         slug: "hat-fistbump-white",
         name: "White",
         swatch: "#f5f5f0",
         description: "Clean and simple, fist bump stitched in rust orange.",
-        images: ["/images/hat-fistbump-white-front.png"],
+        image: "/images/hat-fistbump-white-pair.png",
+      },
+      {
+        slug: "hat-fistbump-cream",
+        name: "Cream, Black Bill",
+        swatch: "#ece3d1",
+        description: "Fist bump up front, DUDELA on the back, stitched in black.",
+        image: "/images/hat-fistbump-cream-pair.png",
+      },
+      {
+        slug: "hat-fistbump-green",
+        name: "Cream, Green Bill",
+        swatch: "#3a4a32",
+        description: "Fist bump up front, DUDELA on the back, stitched in rust orange.",
+        image: "/images/hat-fistbump-green-pair.png",
       },
     ],
   },
@@ -157,31 +154,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     <div class="container colors-grid">
       {designs.map((d) => {
         const first = d.colors[0];
-        const [imgA, imgB] = first.images;
         return (
-          <div class="design-card" data-design={d.key} data-missing-label={d.missingLabel}>
+          <div class="design-card" data-design={d.key}>
             <div class="design-media" data-media>
-              {/* Always a fixed 2-up grid when there's at least a first photo — a
-                  placeholder tile fills the second slot instead of collapsing to one
-                  image, so card height never jumps as someone clicks between colors.
-                  If there's no real photo at all yet for this color, one full-width
-                  placeholder takes the whole media area instead of a lopsided pair. */}
-              {imgA ? (
-                <div class="photo-pair">
-                  <img src={imgA} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
-                  {imgB ? (
-                    <img src={imgB} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
-                  ) : (
-                    <div class="photo-placeholder" style="aspect-ratio: 1/1;">
-                      <span>{d.missingLabel}</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div class="photo-placeholder photo-placeholder-full">
-                  <span>Photos coming soon</span>
-                </div>
-              )}
+              <img class="pair-img" src={first.image} alt={`Dudela Hat — ${d.title}, ${first.name}`} data-photo />
             </div>
             <div class="design-body">
               <h3>{d.title}</h3>
@@ -199,7 +175,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
                     data-slug={c.slug}
                     data-name={c.name}
                     data-desc={c.description}
-                    data-images={JSON.stringify(c.images)}
+                    data-image={c.image}
                   />
                 ))}
               </div>
@@ -247,39 +223,48 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 <script>
   // Vanilla JS color-swatch picker — no framework, matches the rest of the site.
   // Each design card renders its first color server-side; clicking a swatch swaps
-  // the image(s), description, color name, and buy-now link to that color's data,
-  // which is embedded on each swatch button as data-* attributes at build time.
+  // the (single, pre-merged front+back/side) photo, description, color name, and
+  // buy-now link to that color's data, embedded on each swatch button as data-*
+  // attributes at build time.
+  //
+  // Every color's photo gets preloaded up front (new Image() below) so the swap
+  // on click is instant — no network fetch, no flash of a half-loaded image, no
+  // layout shift (same <img> element, same aspect-ratio box, only its src
+  // changes). That's what makes clicking a color feel like "the hat changes
+  // color" instead of "a new photo loads."
   document.querySelectorAll<HTMLElement>(".design-card").forEach((card) => {
-    const media = card.querySelector<HTMLElement>("[data-media]");
+    const photo = card.querySelector<HTMLImageElement>("[data-photo]");
     const desc = card.querySelector<HTMLElement>("[data-desc]");
     const colorName = card.querySelector<HTMLElement>("[data-colorname]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
     const swatches = card.querySelectorAll<HTMLButtonElement>(".swatch");
-    const missingLabel = card.dataset.missingLabel || "Photo coming soon";
-    if (!media || !desc || !colorName || !buyBtn) return;
+    if (!photo || !desc || !colorName || !buyBtn) return;
 
-    function renderMedia(images: string[], name: string) {
-      if (!media) return;
-      // Matches the server-rendered markup: a fixed 2-up grid when there's at
-      // least a first photo (placeholder fills an empty second slot), or one
-      // full-width placeholder when there's no real photo for this color yet.
-      const img0 = images[0];
-      const img1 = images[1];
-      if (!img0) {
-        media.innerHTML = `<div class="photo-placeholder photo-placeholder-full"><span>Photos coming soon</span></div>`;
-        return;
+    // Preload every color's photo for this design so none of them have to hit
+    // the network the moment a swatch is clicked.
+    swatches.forEach((btn) => {
+      if (btn.dataset.image) {
+        const preload = new Image();
+        preload.src = btn.dataset.image;
       }
-      const second = img1
-        ? `<img src="${img1}" alt="Dudela Hat — ${name}" loading="lazy" />`
-        : `<div class="photo-placeholder" style="aspect-ratio: 1/1;"><span>${missingLabel}</span></div>`;
-      media.innerHTML = `<div class="photo-pair"><img src="${img0}" alt="Dudela Hat — ${name}" loading="lazy" />${second}</div>`;
-    }
+    });
 
     swatches.forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (btn.classList.contains("active")) return;
         swatches.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
-        renderMedia(JSON.parse(btn.dataset.images || "[]"), btn.dataset.name || "");
+
+        // Quick crossfade instead of an instant pop — the src is already
+        // cached from the preload above, so this is purely a visual
+        // transition, not a loading state.
+        photo.classList.add("is-swapping");
+        window.setTimeout(() => {
+          photo.src = btn.dataset.image || "";
+          photo.alt = `Dudela Hat — ${btn.dataset.name || ""}`;
+          photo.classList.remove("is-swapping");
+        }, 120);
+
         desc.textContent = btn.dataset.desc || "";
         colorName.textContent = btn.dataset.name || "";
         buyBtn.href = `/api/create-checkout-session?product=${btn.dataset.slug}`;
@@ -375,62 +360,23 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-weight: 600;
     color: var(--text-on-light-muted);
   }
-  :global(.photo-placeholder) {
-    position: relative;
+  /* One <img> per card now — its src attribute is swapped in place on swatch
+     click (see the <script> above), it never gets removed/re-created, so
+     there's no Astro scoped-style gotcha to worry about here (that bug only
+     bit the old two-image innerHTML-rebuild approach). Each src points at a
+     pre-merged front+second-angle PNG (2:1) built at image-prep time, so the
+     box's aspect-ratio never changes between colors — nothing jumps. */
+  .pair-img {
     width: 100%;
-    display: flex;
-    align-items: flex-end;
-    padding: 1rem;
-    border-radius: var(--radius-sm);
-    background:
-      repeating-linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.04) 0px,
-        rgba(255, 255, 255, 0.04) 2px,
-        transparent 2px,
-        transparent 14px
-      ),
-      linear-gradient(155deg, #2a3322 0%, #1c2319 55%, #12180f 100%);
-    overflow: hidden;
-    aspect-ratio: 1 / 1;
-  }
-  :global(.photo-placeholder span) {
-    font-family: var(--font-label);
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(245, 239, 227, 0.55);
-    border: 1px dashed rgba(245, 239, 227, 0.25);
-    padding: 0.4rem 0.6rem;
-    border-radius: var(--radius-sm);
-  }
-  /* :global() on .photo-pair and its img — the swatch-click script rebuilds
-     this markup client-side via innerHTML (see the <script> below), and
-     Astro's scoped-style hashing only touches elements present in the
-     compiled template at build time. A plain (non-global) rule here would
-     style the server-rendered default color's pair correctly but silently
-     stop applying the instant someone clicked a different color, since that
-     new .photo-pair div never gets the scoped data-astro-cid attribute. That
-     was the "clicking a color goes to one big broken image" bug — the grid
-     and aspect-ratio just weren't being applied to the swapped-in markup. */
-  :global(.photo-pair) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  /* Used when a color has no real photo at all yet (rather than just a
-     missing second angle) — one full-width placeholder instead of a lopsided
-     pair, so the card doesn't look like something's broken. */
-  :global(.photo-placeholder-full) {
     aspect-ratio: 2 / 1;
-    align-items: center;
-    justify-content: center;
-  }
-  :global(.photo-pair img) {
-    width: 100%;
-    aspect-ratio: 1 / 1;
     object-fit: cover;
     display: block;
     background: var(--cream-100);
+    opacity: 1;
+    transition: opacity 0.12s ease;
+  }
+  .pair-img.is-swapping {
+    opacity: 0;
   }
   /* Was .color-body — leftover from before the swatch-picker rewrite, and no
      longer matched the actual markup (which uses .design-body), so this

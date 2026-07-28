@@ -93,7 +93,7 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
             <input type="text" name="first_name" maxlength="40" required value={myNote?.first_name || member.name?.split(" ")[0] || ""} />
           </label>
           <label>
-            City <span class="hint">(optional)</span>
+            <span>City <span class="hint">(optional)</span></span>
             <input type="text" name="city" maxlength="60" placeholder="Austin, TX" value={myNote?.city || ""} />
           </label>
         </div>
@@ -107,7 +107,7 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
           </select>
         </label>
         <label>
-          One thing you've learned as a dad <span class="hint">(160 characters, keep it tight)</span>
+          <span>One thing you've learned as a dad <span class="hint">(160 characters, keep it tight)</span></span>
           <textarea name="advice" rows="2" maxlength="160" required placeholder="Sleep when you can, but let the dishes wait.">{myNote?.advice || ""}</textarea>
         </label>
         <button type="submit" class="btn btn-primary">{myNote ? "Update My Bubble" : "Add My Bubble"}</button>
@@ -299,12 +299,20 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     transform: translateY(8px);
     transition: opacity 0.3s ease, transform 0.3s ease;
   }
-  /* Same chat/comment-card look as before (rounded card, squared-off
+  /* :global() on every .bubble* selector below — these elements are built
+     client-side via document.createElement/innerHTML (see the <script>
+     above), and Astro's scoped-style hashing only touches elements present
+     in the compiled template at build time. Without :global() here, none of
+     this card styling (background, border, shadow, avatar circle color)
+     applies to the rotating content at all — it was rendering as plain
+     unstyled text. Same root cause as the merch-page photo-pair bug fixed
+     earlier this session.
+     Same chat/comment-card look as before (rounded card, squared-off
      bottom-left corner, colored avatar initial, soft drop shadow). Slots
      crossfade their contents on rotation rather than the whole card
      disappearing/reappearing, so it reads as "settling into place" instead
      of a jarring cut. */
-  .bubble {
+  :global(.bubble) {
     width: 100%;
     padding: 1.5rem 1.6rem;
     border-radius: 18px 18px 18px 4px;
@@ -321,13 +329,13 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     opacity: 0;
     transform: translateY(-6px);
   }
-  .bubble-head {
+  :global(.bubble-head) {
     display: flex;
     align-items: center;
     gap: 0.7rem;
     margin-bottom: 0.75rem;
   }
-  .bubble-avatar {
+  :global(.bubble-avatar) {
     flex-shrink: 0;
     width: 40px;
     height: 40px;
@@ -340,19 +348,19 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     font-size: 1.05rem;
     color: var(--cream-100);
   }
-  .tint-amber .bubble-avatar {
+  :global(.tint-amber .bubble-avatar) {
     background: var(--amber-500);
   }
-  .tint-rust .bubble-avatar {
+  :global(.tint-rust .bubble-avatar) {
     background: var(--rust-600);
   }
-  .tint-forest .bubble-avatar {
+  :global(.tint-forest .bubble-avatar) {
     background: var(--forest-500);
   }
-  .bubble-headtext {
+  :global(.bubble-headtext) {
     min-width: 0;
   }
-  .bubble-who {
+  :global(.bubble-who) {
     font-family: var(--font-label);
     font-weight: 700;
     font-size: 0.95rem;
@@ -362,7 +370,7 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .bubble-stage {
+  :global(.bubble-stage) {
     display: inline-block;
     font-family: var(--font-label);
     font-size: 0.68rem;
@@ -371,7 +379,7 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     text-transform: uppercase;
     color: var(--text-on-light-muted);
   }
-  .bubble-advice {
+  :global(.bubble-advice) {
     font-size: 1.05rem;
     color: var(--text-on-light);
     margin: 0;

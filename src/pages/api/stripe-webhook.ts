@@ -50,9 +50,13 @@ const PRODUCTS: Record<
     price: "$38",
     isMerch: true,
   },
-  // Cream/Green Bill is back as Upside Down's hero color (re-stitched in rust
-  // orange) — see printful.ts HAT_CATALOG note. Fist Bump doesn't have this
-  // color back yet.
+  "hat-fistbump-green": {
+    name: "Dudela Hat — Cream/Green Bill, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
+  // Cream/Green Bill is Upside Down's hero color (re-stitched in rust
+  // orange) — see printful.ts HAT_CATALOG note.
   "hat-upsidedown-cream": {
     name: "Dudela Hat — Cream/Green Bill, Upside Down",
     price: "$38",

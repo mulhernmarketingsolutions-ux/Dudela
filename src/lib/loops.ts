@@ -31,18 +31,19 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
 export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
   "spit-up-society": { eventName: "member-spit-up-society", userGroup: "Member – Spit-Up Society" },
-  // Added when the merch presale shipped — these three were missing from this
+  // Added when the merch presale shipped — these were missing from this
   // map at launch, which meant hat buyers were silently never tagged in Loops
   // at all (sendLoopsPurchaseEvent logs an error and no-ops on an unmapped
   // product; the purchase itself, receipt email, and D1 order row all still
   // worked fine, so this went unnoticed). One shared "Customer – Hat" group
   // rather than one per colorway — for email segmentation, "bought a hat" is
   // the useful distinction, not which color.
-  // hat-fistbump-green dropped (no matching mockup) — hat-upsidedown-cream
-  // came back as Upside Down's hero color, re-stitched in rust orange.
+  // hat-fistbump-green and hat-upsidedown-white added 2026-07-28 once real
+  // matching mockups turned up for both.
   "hat-fistbump-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-green": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
