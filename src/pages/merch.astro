@@ -14,18 +14,65 @@ const env = (Astro.locals as any).runtime.env;
 // mirrors it, grouped by design so the page can show one card per design with a
 // color picker inside it, instead of one flat card per color (easier to compare,
 // and matches how John actually thinks about these: 2 designs, pick your color).
+//
+// Per John: The Classic (the arched, flipped wordmark) is the original design —
+// Fist Bump is the newer one. Dropped the cream/green-bill colorway from both
+// designs — the greens didn't match, and it's off his real Printful list — down
+// to 3 colors each.
+//
+// missingLabel: each design has its own real-photo gap right now (see comment
+// on each color below for exactly what's missing) — shown as an honest
+// "coming soon" placeholder instead of a mismatched or low-quality photo.
 const DESIGNS = [
   {
-    key: "fistbump",
+    key: "upsidedown",
     title: "The Classic",
-    tagline: "The one that started it all — a fist bump up front, DUDELA stitched across the back.",
+    tagline: "The one that started it all — DUDELA, flipped and arched, reading right back at you.",
+    missingLabel: "Side view coming soon",
     colors: [
       {
+        slug: "hat-upsidedown-blackbill",
+        name: "Cream, Black Bill",
+        swatch: "#ece3d1",
+        description: "Where it began. The wordmark flipped and arched, stitched in black.",
+        images: ["/images/hat-upsidedown-blackbill-front.png"],
+      },
+      {
+        slug: "hat-upsidedown-black",
+        name: "Black",
+        swatch: "#141414",
+        description: "Blacked out, wordmark stitched in white.",
+        images: ["/images/hat-upsidedown-black-front.png"],
+      },
+      {
+        // No usable photo yet — the only render on file is a lifestyle/model
+        // shot, not a flat product photo like every other color here, so it's
+        // left off rather than shown inconsistent. Swap in a flat front shot
+        // and this fills in automatically.
+        slug: "hat-upsidedown-white",
+        name: "White",
+        swatch: "#f5f5f0",
+        description: "Clean and simple, wordmark stitched in rust orange.",
+        images: [],
+      },
+    ],
+  },
+  {
+    key: "fistbump",
+    title: "The Rookie",
+    tagline: "The new one — a fist bump up front, DUDELA stitched across the back.",
+    missingLabel: "Back view coming soon",
+    colors: [
+      {
+        // Front photo's good; the back render on file is an extreme close-up
+        // crop (not a full-hat shot like its siblings), so it's left off
+        // rather than shown broken. Swap in a proper flat back shot and this
+        // fills in automatically.
         slug: "hat-fistbump-cream",
         name: "Cream, Black Bill",
         swatch: "#ece3d1",
-        description: "Where it began. Fist bump up front, DUDELA on the back, stitched in black.",
-        images: ["/images/hat-fistbump-cream-front.png", "/images/hat-fistbump-cream-back.png"],
+        description: "The new go-to. Fist bump up front, DUDELA on the back, stitched in black.",
+        images: ["/images/hat-fistbump-cream-front.png"],
       },
       {
         slug: "hat-fistbump-black",
@@ -40,48 +87,6 @@ const DESIGNS = [
         swatch: "#f5f5f0",
         description: "Clean and simple, fist bump stitched in rust orange.",
         images: ["/images/hat-fistbump-white-front.png", "/images/hat-fistbump-white-back.png"],
-      },
-      {
-        slug: "hat-fistbump-green",
-        name: "Cream, Green Bill",
-        swatch: "#57684a",
-        description: "Cream crown, forest green bill, fist bump in rust orange.",
-        images: ["/images/hat-fistbump-green-front.png", "/images/hat-fistbump-green-back.png"],
-      },
-    ],
-  },
-  {
-    key: "upsidedown",
-    title: "The Flip",
-    tagline: "DUDELA, flipped and arched — reads right back at you.",
-    colors: [
-      {
-        slug: "hat-upsidedown-cream",
-        name: "Cream, Green Bill",
-        swatch: "#57684a",
-        description: "The original Flip. Forest green bill, wordmark stitched to match.",
-        images: ["/images/hat-upsidedown-cream-front.png"],
-      },
-      {
-        slug: "hat-upsidedown-black",
-        name: "Black",
-        swatch: "#141414",
-        description: "Blacked out, wordmark stitched in white.",
-        images: ["/images/hat-upsidedown-black-front.png"],
-      },
-      {
-        slug: "hat-upsidedown-white",
-        name: "White",
-        swatch: "#f5f5f0",
-        description: "Clean and simple, wordmark stitched in rust orange.",
-        images: ["/images/hat-upsidedown-white-front.png"],
-      },
-      {
-        slug: "hat-upsidedown-blackbill",
-        name: "Cream, Black Bill",
-        swatch: "#ece3d1",
-        description: "Cream crown, black bill, wordmark stitched in black.",
-        images: ["/images/hat-upsidedown-blackbill-front.png"],
       },
     ],
   },
@@ -101,7 +106,7 @@ const designs = await Promise.all(
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Two designs, four colors each, $38, free shipping. Made to order and shipped straight to your door.">
+<BaseLayout title="Dudela Hats — Merch" description="Two designs, three colors each, $38, free shipping. Made to order and shipped straight to your door.">
   <Nav />
 
   <section class="hero section-dark">
@@ -109,7 +114,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <p class="eyebrow">Merch</p>
       <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Two designs, four colors each, $38, free shipping. Every hat is made to order and
+        Two designs, three colors each, $38, free shipping. Every hat is made to order and
         shipped straight to your door — no waiting on a batch.
       </p>
 
@@ -125,22 +130,29 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         const first = d.colors[0];
         const [imgA, imgB] = first.images;
         return (
-          <div class="design-card" data-design={d.key}>
+          <div class="design-card" data-design={d.key} data-missing-label={d.missingLabel}>
             <div class="design-media" data-media>
-              {/* Always a fixed 2-up grid, even for designs (like The Flip) that only
-                  have a front placement — a placeholder tile fills the second slot
-                  instead of collapsing to one image, so card height never jumps as
-                  someone clicks between colors. */}
-              <div class="photo-pair">
-                <img src={imgA} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
-                {imgB ? (
-                  <img src={imgB} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
-                ) : (
-                  <div class="photo-placeholder" style="aspect-ratio: 1/1;">
-                    <span>Front only</span>
-                  </div>
-                )}
-              </div>
+              {/* Always a fixed 2-up grid when there's at least a first photo — a
+                  placeholder tile fills the second slot instead of collapsing to one
+                  image, so card height never jumps as someone clicks between colors.
+                  If there's no real photo at all yet for this color, one full-width
+                  placeholder takes the whole media area instead of a lopsided pair. */}
+              {imgA ? (
+                <div class="photo-pair">
+                  <img src={imgA} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
+                  {imgB ? (
+                    <img src={imgB} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
+                  ) : (
+                    <div class="photo-placeholder" style="aspect-ratio: 1/1;">
+                      <span>{d.missingLabel}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div class="photo-placeholder photo-placeholder-full">
+                  <span>Photos coming soon</span>
+                </div>
+              )}
             </div>
             <div class="design-body">
               <h3>{d.title}</h3>
@@ -214,18 +226,23 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const colorName = card.querySelector<HTMLElement>("[data-colorname]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
     const swatches = card.querySelectorAll<HTMLButtonElement>(".swatch");
+    const missingLabel = card.dataset.missingLabel || "Photo coming soon";
     if (!media || !desc || !colorName || !buyBtn) return;
 
     function renderMedia(images: string[], name: string) {
       if (!media) return;
-      // Always a fixed 2-up grid — a "Front only" placeholder fills the second
-      // slot for designs with no back placement, so card height never jumps
-      // as someone clicks between colors (matches the server-rendered markup).
+      // Matches the server-rendered markup: a fixed 2-up grid when there's at
+      // least a first photo (placeholder fills an empty second slot), or one
+      // full-width placeholder when there's no real photo for this color yet.
       const img0 = images[0];
       const img1 = images[1];
+      if (!img0) {
+        media.innerHTML = `<div class="photo-placeholder photo-placeholder-full"><span>Photos coming soon</span></div>`;
+        return;
+      }
       const second = img1
         ? `<img src="${img1}" alt="Dudela Hat — ${name}" loading="lazy" />`
-        : `<div class="photo-placeholder" style="aspect-ratio: 1/1;"><span>Front only</span></div>`;
+        : `<div class="photo-placeholder" style="aspect-ratio: 1/1;"><span>${missingLabel}</span></div>`;
       media.innerHTML = `<div class="photo-pair"><img src="${img0}" alt="Dudela Hat — ${name}" loading="lazy" />${second}</div>`;
     }
 
@@ -351,6 +368,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .photo-pair {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+  /* Used when a color has no real photo at all yet (rather than just a
+     missing second angle) — one full-width placeholder instead of a lopsided
+     pair, so the card doesn't look like something's broken. */
+  :global(.photo-placeholder-full) {
+    aspect-ratio: 2 / 1;
+    align-items: center;
+    justify-content: center;
   }
   .photo-pair img {
     width: 100%;

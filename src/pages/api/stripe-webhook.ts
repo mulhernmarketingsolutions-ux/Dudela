@@ -50,16 +50,7 @@ const PRODUCTS: Record<
     price: "$38",
     isMerch: true,
   },
-  "hat-fistbump-green": {
-    name: "Dudela Hat — Cream/Green Bill, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-cream": {
-    name: "Dudela Hat — Cream/Green Bill, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
+  // Cream/Green Bill dropped from both designs — see printful.ts HAT_CATALOG note.
   "hat-upsidedown-black": {
     name: "Dudela Hat — Black, Upside Down",
     price: "$38",

@@ -38,11 +38,12 @@ export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: str
   // worked fine, so this went unnoticed). One shared "Customer – Hat" group
   // rather than one per colorway — for email segmentation, "bought a hat" is
   // the useful distinction, not which color.
+  // Dropped hat-fistbump-green and hat-upsidedown-cream (the cream/green-bill
+  // colorway on both designs) per John: the greens on that combo don't match,
+  // and it's off his real Printful product list — down to 3 colors per design.
   "hat-fistbump-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-fistbump-green": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-blackbill": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
