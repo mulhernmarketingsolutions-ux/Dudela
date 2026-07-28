@@ -50,16 +50,6 @@ const PRODUCTS: Record<
     price: "$38",
     isMerch: true,
   },
-  "hat-fistbump-navy": {
-    name: "Dudela Hat — Navy, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-fistbump-khaki": {
-    name: "Dudela Hat — Khaki, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
   "hat-fistbump-green": {
     name: "Dudela Hat — Cream/Green Bill, Fist Bump",
     price: "$38",
@@ -77,16 +67,6 @@ const PRODUCTS: Record<
   },
   "hat-upsidedown-white": {
     name: "Dudela Hat — White, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-navy": {
-    name: "Dudela Hat — Navy, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-khaki": {
-    name: "Dudela Hat — Khaki, Upside Down",
     price: "$38",
     isMerch: true,
   },

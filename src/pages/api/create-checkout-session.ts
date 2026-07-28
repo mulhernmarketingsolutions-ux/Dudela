@@ -39,23 +39,19 @@ const PRODUCTS: Record<
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
   },
-  // The 12 buyable hats (2 designs x 6 colors) — see lib/printful.ts HAT_CATALOG for
-  // the design/color/thread config each of these slugs maps to. All twelve share one
+  // The 8 buyable hats (2 designs x 4 colors) — see lib/printful.ts HAT_CATALOG for
+  // the design/color/thread config each of these slugs maps to. All eight share one
   // $38 Stripe price (same physical cost regardless of design/color), so they all
-  // point at the same price env var rather than needing 12 separate Stripe Price objects.
+  // point at the same price env var rather than needing 8 separate Stripe Price objects.
   ...Object.fromEntries(
     [
       "hat-fistbump-cream",
       "hat-fistbump-black",
       "hat-fistbump-white",
-      "hat-fistbump-navy",
-      "hat-fistbump-khaki",
       "hat-fistbump-green",
       "hat-upsidedown-cream",
       "hat-upsidedown-black",
       "hat-upsidedown-white",
-      "hat-upsidedown-navy",
-      "hat-upsidedown-khaki",
       "hat-upsidedown-blackbill",
     ].map((slug) => [
       slug,

@@ -100,14 +100,18 @@ async function findVariantId(env: PrintfulEnv, colorName: string): Promise<numbe
 // This is the single source of truth for "what hats can someone buy" — /merch reads
 // this list to render buy buttons, and the webhook reads it to build the Printful order.
 //
-// CONFIRMED LIST (per John, 2026-07-27) — 2 designs, 6 colors each, all embroidered.
-// John wanted "2 hats but lots of options for each" — 2 colors ("Black/Natural",
-// "Dark Green/Natural") are confirmed against real templates John built in the
-// Printful dashboard; the other 4 (Black, White, Navy, Khaki) are Otto 31-069's
-// standard solid catalog colors (verified against Printful's own product listing,
-// not guessed) but haven't been built as dashboard templates or test-ordered — if
-// a color name is slightly off, findVariantId() throws a clear error listing the
-// real available colors instead of silently shipping the wrong one.
+// CONFIRMED LIST (per John, 2026-07-27) — 2 designs, 4 colors each, all embroidered.
+// Every combo below is backed by a real Printful mockup John generated and dropped
+// into public/images/ — thread colors aren't guessed, they're read straight off
+// those photos (dropped the earlier Navy/Khaki guesses — no real templates existed
+// for those, and John's actual dashboard only ever produced these 4 cap colors):
+//   Fist Bump:   Cream/Black-bill (black thread), Black (white thread),
+//                White (orange thread), Cream/Green-bill (orange thread)
+//   Upside Down: Cream/Green-bill (green thread), Black (white thread),
+//                White (orange thread), Cream/Black-bill (black thread)
+// "Orange" is Dudela's rust brand color (#a3492b) — it's what showed up consistently
+// across John's later mockup batches once he moved past the original 2 colors, so
+// it's treated as his settled choice for the newer solid-color/cross combos.
 export interface HatConfig {
   slug: string; // matches the `product` value used in Stripe metadata / create-checkout-session.ts
   label: string;
@@ -123,12 +127,11 @@ export interface HatConfig {
   backFileUrl?: string;
 }
 
-// Shared thread-color logic for the 4 solid catalog colors so it's not repeated below:
-// black thread on light bodies, white thread on dark bodies, so the stitching always
-// shows up against the cap.
+// Thread colors, read directly off the real Printful mockups (not guessed).
 const THREAD_BLACK = "#000000";
 const THREAD_WHITE = "#FFFFFF";
-const THREAD_GREEN = "#3A4A32"; // brand green — closest embroidery thread match confirmed earlier
+const THREAD_GREEN = "#3A4A32"; // brand green — used only on the original cream/green-bill Upside Down
+const THREAD_ORANGE = "#a3492b"; // Dudela rust — used on the newer solid/cross-combo colors
 
 function fistbumpVariant(
   slug: string,
@@ -175,21 +178,17 @@ function upsidedownVariant(
 }
 
 export const HAT_CATALOG: HatConfig[] = [
-  // Fist Bump — 6 colors
-  fistbumpVariant("hat-fistbump-cream", "Cream Hat, Black Bill — Fist Bump", "Cream", "#ece3d1", "Black/Natural", THREAD_BLACK),
+  // Fist Bump — 4 colors
+  fistbumpVariant("hat-fistbump-cream", "Cream Hat, Black Bill — Fist Bump", "Cream, Black Bill", "#ece3d1", "Black/Natural", THREAD_BLACK),
   fistbumpVariant("hat-fistbump-black", "Black Hat — Fist Bump", "Black", "#141414", "Black", THREAD_WHITE),
-  fistbumpVariant("hat-fistbump-white", "White Hat — Fist Bump", "White", "#f5f5f0", "White", THREAD_BLACK),
-  fistbumpVariant("hat-fistbump-navy", "Navy Hat — Fist Bump", "Navy", "#1c2740", "Navy", THREAD_WHITE),
-  fistbumpVariant("hat-fistbump-khaki", "Khaki Hat — Fist Bump", "Khaki", "#c3b091", "Khaki", THREAD_BLACK),
-  fistbumpVariant("hat-fistbump-green", "Cream Hat, Green Bill — Fist Bump", "Cream/Green", "#57684a", "Dark Green/Natural", THREAD_GREEN),
+  fistbumpVariant("hat-fistbump-white", "White Hat — Fist Bump", "White", "#f5f5f0", "White", THREAD_ORANGE),
+  fistbumpVariant("hat-fistbump-green", "Cream Hat, Green Bill — Fist Bump", "Cream, Green Bill", "#57684a", "Dark Green/Natural", THREAD_ORANGE),
 
-  // Upside Down — 6 colors
-  upsidedownVariant("hat-upsidedown-cream", "Cream Hat, Green Bill — Upside Down", "Cream/Green", "#57684a", "Dark Green/Natural", THREAD_GREEN),
+  // Upside Down — 4 colors
+  upsidedownVariant("hat-upsidedown-cream", "Cream Hat, Green Bill — Upside Down", "Cream, Green Bill", "#57684a", "Dark Green/Natural", THREAD_GREEN),
   upsidedownVariant("hat-upsidedown-black", "Black Hat — Upside Down", "Black", "#141414", "Black", THREAD_WHITE),
-  upsidedownVariant("hat-upsidedown-white", "White Hat — Upside Down", "White", "#f5f5f0", "White", THREAD_BLACK),
-  upsidedownVariant("hat-upsidedown-navy", "Navy Hat — Upside Down", "Navy", "#1c2740", "Navy", THREAD_WHITE),
-  upsidedownVariant("hat-upsidedown-khaki", "Khaki Hat — Upside Down", "Khaki", "#c3b091", "Khaki", THREAD_BLACK),
-  upsidedownVariant("hat-upsidedown-blackbill", "Cream Hat, Black Bill — Upside Down", "Cream/Black", "#ece3d1", "Black/Natural", THREAD_BLACK),
+  upsidedownVariant("hat-upsidedown-white", "White Hat — Upside Down", "White", "#f5f5f0", "White", THREAD_ORANGE),
+  upsidedownVariant("hat-upsidedown-blackbill", "Cream Hat, Black Bill — Upside Down", "Cream, Black Bill", "#ece3d1", "Black/Natural", THREAD_BLACK),
 ];
 
 export function getHatConfig(slug: string): HatConfig | undefined {

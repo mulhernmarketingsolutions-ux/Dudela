@@ -33,35 +33,21 @@ const DESIGNS = [
         name: "Black",
         swatch: "#141414",
         description: "Same fist bump, blacked out, stitched in white so it still shows up.",
-        images: [],
+        images: ["/images/hat-fistbump-black-front.png", "/images/hat-fistbump-black-back.png"],
       },
       {
         slug: "hat-fistbump-white",
         name: "White",
         swatch: "#f5f5f0",
-        description: "Clean and bright, fist bump stitched in black.",
-        images: [],
-      },
-      {
-        slug: "hat-fistbump-navy",
-        name: "Navy",
-        swatch: "#1c2740",
-        description: "Deep navy, stitched in white so it pops.",
-        images: [],
-      },
-      {
-        slug: "hat-fistbump-khaki",
-        name: "Khaki",
-        swatch: "#c3b091",
-        description: "Neutral khaki, stitched in black.",
-        images: [],
+        description: "Clean and bright, fist bump stitched in rust orange.",
+        images: ["/images/hat-fistbump-white-front.png", "/images/hat-fistbump-white-back.png"],
       },
       {
         slug: "hat-fistbump-green",
         name: "Cream, Green Bill",
         swatch: "#57684a",
-        description: "Cream crown, forest green bill, stitched to match.",
-        images: [],
+        description: "Cream crown, forest green bill, fist bump stitched in rust orange.",
+        images: ["/images/hat-fistbump-green-front.png", "/images/hat-fistbump-green-back.png"],
       },
     ],
   },
@@ -82,35 +68,21 @@ const DESIGNS = [
         name: "Black",
         swatch: "#141414",
         description: "Same upside-down wordmark, blacked out, stitched in white.",
-        images: [],
+        images: ["/images/hat-upsidedown-black-front.png"],
       },
       {
         slug: "hat-upsidedown-white",
         name: "White",
         swatch: "#f5f5f0",
-        description: "Clean and bright, wordmark stitched in black.",
-        images: [],
-      },
-      {
-        slug: "hat-upsidedown-navy",
-        name: "Navy",
-        swatch: "#1c2740",
-        description: "Deep navy, stitched in white.",
-        images: [],
-      },
-      {
-        slug: "hat-upsidedown-khaki",
-        name: "Khaki",
-        swatch: "#c3b091",
-        description: "Neutral khaki, stitched in black.",
-        images: [],
+        description: "Clean and bright, wordmark stitched in rust orange.",
+        images: ["/images/hat-upsidedown-white-front.png"],
       },
       {
         slug: "hat-upsidedown-blackbill",
         name: "Cream, Black Bill",
         swatch: "#ece3d1",
         description: "Cream crown, black bill, wordmark stitched in black.",
-        images: [],
+        images: ["/images/hat-upsidedown-blackbill-front.png"],
       },
     ],
   },
@@ -130,7 +102,7 @@ const designs = await Promise.all(
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Two designs, six colors each, $38, free shipping. Made to order and shipped straight to your door.">
+<BaseLayout title="Dudela Hats — Merch" description="Two designs, four colors each, $38, free shipping. Made to order and shipped straight to your door.">
   <Nav />
 
   <section class="hero section-dark">
@@ -138,7 +110,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <p class="eyebrow">Merch</p>
       <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Two designs, six colors each, $38, free shipping. Every hat is made to order and
+        Two designs, four colors each, $38, free shipping. Every hat is made to order and
         shipped straight to your door — no waiting on a batch.
       </p>
 
