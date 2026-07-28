@@ -21,16 +21,31 @@ const errorMessages: Record<string, string> = {
 };
 const errorMessage = error ? errorMessages[error] || "" : "";
 
-// Next live Q&A details. Update these two lines each time a new call is
+// Next live Q&A details. Update these lines each time a new call is
 // scheduled (matches the info sent in the calendar invite) — there's no
-// admin UI for this yet since it's just one recurring field.
+// admin UI for this yet since it's just one recurring field. `date` drives
+// the live countdown chip on the calendar badge below — keep it in sync with
+// dateLabel/timeLabel (ISO, in the call's actual timezone).
 const nextCall = {
   dateLabel: "Tuesday, August 4",
   timeLabel: "7:00 – 8:00pm MT",
+  date: "2026-08-04T19:00:00-06:00",
   meetUrl: "https://meet.google.com/qrv-ceif-caf",
   phone: "+1 475-444-3646",
   pin: "741 991 265#",
 };
+
+// Countdown text for the badge — computed per request since this page is
+// already SSR (not prerendered), so it's always accurate without any client
+// JS or a tick interval. Compares calendar dates (not raw ms) so "Today"/
+// "Tomorrow" are right regardless of what time of day someone loads this.
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const callDay = new Date(nextCall.date);
+callDay.setHours(0, 0, 0, 0);
+const daysUntilCall = Math.round((callDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+const countdownLabel =
+  daysUntilCall <= 0 ? "Today" : daysUntilCall === 1 ? "Tomorrow" : `In ${daysUntilCall} days`;
 
 // Welcome video from Mike & John, thanking new members for joining. Paste
 // the real link in once it's filmed/uploaded (YouTube unlisted is easiest)
@@ -117,10 +132,13 @@ const ICONS = {
           <!-- A real calendar badge instead of the generic video icon — gives
                the card an actual visual anchor so the join button doesn't
                read as the only thing in a very wide, mostly-empty box. -->
-          <div class="date-badge" aria-hidden="true">
-            <span class="date-month">{nextCall.dateLabel.split(", ")[1]?.split(" ")[0] || "TBD"}</span>
-            <span class="date-day">{nextCall.dateLabel.match(/\d+/)?.[0] || "?"}</span>
-            <span class="date-weekday">{nextCall.dateLabel.split(",")[0]}</span>
+          <div class="date-badge-wrap" aria-hidden="true">
+            <span class="countdown-chip">{countdownLabel}</span>
+            <div class="date-badge">
+              <span class="date-month">{nextCall.dateLabel.split(", ")[1]?.split(" ")[0] || "TBD"}</span>
+              <span class="date-day">{nextCall.dateLabel.match(/\d+/)?.[0] || "?"}</span>
+              <span class="date-weekday">{nextCall.dateLabel.split(",")[0]}</span>
+            </div>
           </div>
           <div class="featured-content">
             <p class="featured-eyebrow">
@@ -381,8 +399,11 @@ const ICONS = {
   /* A small torn-calendar-page badge — real visual content instead of a
      generic icon, so the wide featured card reads as "a scheduled event"
      rather than just a big empty box around a button. */
-  .date-badge {
+  .date-badge-wrap {
+    position: relative;
     flex-shrink: 0;
+  }
+  .date-badge {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -391,6 +412,27 @@ const ICONS = {
     overflow: hidden;
     background: var(--cream-100);
     box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.4);
+  }
+  /* Little "pinned note" countdown, tilted like it was stuck on top of the
+     calendar page — ties the featured card back to "how soon is this,
+     actually" without a separate tick-tock timer or a whole new card. */
+  .countdown-chip {
+    position: absolute;
+    top: -0.6rem;
+    right: -0.55rem;
+    z-index: 1;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    font-family: var(--font-label);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 0.28rem 0.5rem;
+    border-radius: 999px;
+    box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.5);
+    transform: rotate(6deg);
   }
   .date-month {
     display: block;
