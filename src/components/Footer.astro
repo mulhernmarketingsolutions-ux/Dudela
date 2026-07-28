@@ -80,7 +80,17 @@
   .footer-inner {
     display: flex;
     flex-direction: column;
-    gap: 3rem;
+    gap: 2.5rem;
+  }
+  /* Raised card treatment so the newsletter block actually pops against the
+     dark footer background instead of reading as plain text that blends
+     into everything below it — same raised-panel language used for
+     .bg-dark-raised cards elsewhere on the site. */
+  .footer-newsletter {
+    background: var(--bg-dark-raised);
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius-md);
+    padding: 2rem 2.25rem;
   }
   .footer-newsletter h3 {
     font-family: var(--font-display);
@@ -172,5 +182,27 @@
     font-size: 0.85rem;
     margin-top: 0.75rem;
     min-height: 1.2em;
+  }
+
+  /* Wide screens: sit the newsletter card and the three link columns side by
+     side, spread across the full container width with space-between —
+     rather than everything stacked in one left-hugging column with a big
+     empty void on the right (the complaint that started this). */
+  @media (min-width: 900px) {
+    .footer-inner {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 3rem;
+    }
+    .footer-newsletter {
+      flex: 0 0 400px;
+    }
+    .footer-links {
+      flex: 1;
+      justify-content: space-between;
+      gap: 2rem;
+      padding-top: 0.25rem;
+    }
   }
 </style>

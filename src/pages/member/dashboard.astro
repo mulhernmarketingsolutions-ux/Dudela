@@ -126,7 +126,7 @@ const ICONS = {
   </section>
 
   <section class="grid section-light">
-    <div class="container card-grid">
+    <div class="container featured-row">
       <div class="card card-featured">
         <div class="featured-inner">
           <!-- A real calendar badge instead of the generic video icon — gives
@@ -151,7 +151,9 @@ const ICONS = {
           </div>
         </div>
       </div>
+    </div>
 
+    <div class="container card-grid">
       <a href="/member/womb-watch" class="card">
         <div class="card-icon" set:html={ICONS.mic} />
         <h3>Womb Watch</h3>
@@ -330,6 +332,17 @@ const ICONS = {
   }
   .grid {
     padding: var(--space-5) 0 var(--space-6);
+  }
+  /* Centers the featured Q&A card at the same width as a single card in
+     the grid below it, instead of stretching it across both columns —
+     a card-grid-width card in a flex row centers itself for free. */
+  .featured-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+  .card-featured {
+    width: 100%;
   }
   .card-grid {
     display: grid;
@@ -534,8 +547,11 @@ const ICONS = {
     .card-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+    /* Same width as one grid column — matches a single card (e.g. Womb
+       Watch) exactly, since both live inside an identical .container and
+       the grid's gap math works out the same either way. */
     .card-featured {
-      grid-column: span 2;
+      width: calc(50% - 0.625rem);
     }
   }
 </style>

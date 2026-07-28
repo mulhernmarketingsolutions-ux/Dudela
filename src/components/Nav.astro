@@ -19,7 +19,7 @@ const { isAuthed = false } = Astro.props;
 const accountHref = isAuthed ? "/api/auth/logout" : "/member/login";
 const accountLabel = isAuthed ? "Logout" : "Member Login";
 ---
-<header class="nav" id="site-nav">
+<header class="nav" id="site-nav" data-server-authed={isAuthed ? "1" : "0"}>
   <div class="nav-backdrop" aria-hidden="true"></div>
   <div class="announce-banner" id="announce-banner">
     <a href="/join/spit-up-society" class="announce-link">
@@ -428,6 +428,18 @@ const accountLabel = isAuthed ? "Logout" : "Member Login";
     .mobile-menu {
       display: none;
     }
+    /* When a visitor is actually logged in (confirmed either server-side on
+       the /member/* pages, or client-side via the session check below on
+       everywhere else), swap the "Member Login" text link for the same
+       plain icon used on mobile — at desktop width too, not just small
+       screens. Nested inside this same breakpoint so it only overrides the
+       two rules right above it, rather than needing !important. */
+    .nav.is-authed .member-link {
+      display: none;
+    }
+    .nav.is-authed .mobile-member-icon {
+      display: flex;
+    }
   }
 </style>
 
@@ -475,4 +487,40 @@ const accountLabel = isAuthed ? "Logout" : "Member Login";
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeMenu();
   });
+
+  // Marketing pages (prerendered/static) render with isAuthed defaulted to
+  // false — they have no per-request cookie access at build time (see the
+  // comment on the isAuthed prop above), so they can't know a visitor is
+  // actually logged in. This is the fix: a cheap client-side check against
+  // the same session cookie, so "Member Login" turns into the logged-in
+  // icon (and stops asking someone who's already signed in to log in again)
+  // no matter which page they land on. Skipped entirely when the page
+  // already resolved this server-side (/member/* pages pass isAuthed
+  // directly) — no need to double-check what's already known.
+  if (nav?.dataset.serverAuthed === "0") {
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.authed) return;
+        nav.classList.add("is-authed");
+        const logoutHref = "/api/auth/logout";
+        document.querySelectorAll<HTMLAnchorElement>(".member-link, .mobile-member-icon").forEach((el) => {
+          el.setAttribute("href", logoutHref);
+          el.setAttribute("aria-label", "Logout");
+        });
+        const memberLink = document.querySelector(".member-link");
+        if (memberLink) memberLink.textContent = "Logout";
+        const mobileBtn = document.querySelector<HTMLAnchorElement>(".mobile-member-btn");
+        if (mobileBtn) {
+          mobileBtn.setAttribute("href", logoutHref);
+          const label = mobileBtn.querySelector("svg")?.outerHTML || "";
+          mobileBtn.innerHTML = `${label} Logout`;
+        }
+      })
+      .catch(() => {
+        // Session check failing (offline, cold Worker, etc.) just leaves the
+        // page showing "Member Login" — the same safe default it already
+        // rendered with, not a broken state.
+      });
+  }
 </script>

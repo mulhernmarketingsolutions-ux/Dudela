@@ -61,19 +61,21 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
             A few dads at a time
             <span class="wall-count">{notes.length} in the Circle</span>
           </p>
-          <div
-            class="wall-grid"
-            id="circle-wall"
-            data-notes={JSON.stringify(
-              notes.map((n, i) => ({
-                first: n.first_name,
-                city: n.city || "",
-                stage: n.dad_stage ? stageLabel(n.dad_stage) : "",
-                advice: n.advice,
-                tint: TINTS[i % TINTS.length],
-              }))
-            )}
-          />
+          <div class="wall-viewport">
+            <div
+              class="wall-track"
+              id="circle-wall"
+              data-notes={JSON.stringify(
+                notes.map((n, i) => ({
+                  first: n.first_name,
+                  city: n.city || "",
+                  stage: n.dad_stage ? stageLabel(n.dad_stage) : "",
+                  advice: n.advice,
+                  tint: TINTS[i % TINTS.length],
+                }))
+              )}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -117,38 +119,25 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
   </section>
 
   <script>
-    // "A few dads at a time" wall — replaces both earlier versions. The
-    // original ambient field showed 15+ bubbles at once, overlapping and
-    // fading too fast to actually read. The one-at-a-time spotlight that
-    // followed fixed readability but made 29 notes feel like a slow
-    // single-file crawl (~3 minutes to see a handful).
+    // "A few dads at a time" carousel — replaces the earlier ambient field
+    // (15+ bubbles at once, too fast to read), the one-at-a-time spotlight
+    // (readable, but a slow single-file crawl through 29 notes), and the
+    // staggered-slot version (readable, but static/grid-like — John wanted
+    // continuous motion, like a carousel spinning by, with cards fading in
+    // and out at the edges rather than popping in place).
     //
-    // This is a middle ground: a fixed number of card SLOTS (never more —
-    // so cards can never overlap each other, regardless of screen size),
-    // each independently rotating through a shuffled order of all the
-    // notes. Slots are offset in both content (slot k starts SLOT_COUNT
-    // notes ahead of slot k-1) and timing (each slot's rotation timer
-    // starts at a staggered delay), so it never feels like everything
-    // changes at once — just one card settling into place every few
-    // seconds — while any single card stays up a full DURATION so there's
-    // always time to actually read it.
+    // This is a continuous horizontal marquee: the note list is rendered
+    // twice back-to-back into one flex track, which is animated from
+    // translateX(0) to translateX(-50%) — since the second copy is an exact
+    // duplicate of the first, the moment it scrolls fully into the first
+    // copy's starting position the loop is seamless (no jump, no reset).
+    // The viewport masks its left/right edges to transparent, so cards fade
+    // in/out smoothly as they cross rather than clipping abruptly.
     const wall = document.getElementById("circle-wall");
     if (wall) {
       type WallNote = { first: string; city: string; stage: string; advice: string; tint: string };
       const notes: WallNote[] = JSON.parse(wall.dataset.notes || "[]");
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const SLOT_COUNT = Math.max(1, Math.min(3, notes.length));
-      const DURATION_MS = 9000; // how long a card sits before rotating out — plenty for a one-sentence quote
-
-      function shuffledIndices(n: number): number[] {
-        const arr = Array.from({ length: n }, (_, i) => i);
-        for (let i = arr.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-      }
-      const order = shuffledIndices(notes.length);
 
       function renderBubble(note: WallNote): string {
         const initial = (note.first.charAt(0) || "?").toUpperCase();
@@ -166,44 +155,23 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
         </div>`;
       }
 
-      const slots: HTMLDivElement[] = [];
-      for (let s = 0; s < SLOT_COUNT; s++) {
-        const el = document.createElement("div");
-        el.className = "wall-slot";
-        wall.appendChild(el);
-        slots.push(el);
-      }
-      const cursors = slots.map((_, s) => s % order.length);
+      const cardsHtml = notes.map(renderBubble).join("");
 
-      function paintSlot(s: number, animate: boolean) {
-        const note = notes[order[cursors[s] % order.length]];
-        const html = renderBubble(note);
-        const slot = slots[s];
-        if (animate && !prefersReducedMotion) {
-          slot.classList.remove("is-in");
-          slot.classList.add("is-out");
-          setTimeout(() => {
-            slot.innerHTML = html;
-            slot.classList.remove("is-out");
-            void slot.offsetWidth; // force reflow so the fade-in transition actually plays
-            slot.classList.add("is-in");
-          }, 260);
-        } else {
-          slot.innerHTML = html;
-          slot.classList.add("is-in");
-        }
-      }
-
-      slots.forEach((_, s) => paintSlot(s, false));
-
-      if (notes.length > SLOT_COUNT && !prefersReducedMotion) {
-        slots.forEach((_, s) => {
-          window.setTimeout(() => {
-            window.setInterval(() => {
-              cursors[s] += SLOT_COUNT;
-              paintSlot(s, true);
-            }, DURATION_MS);
-          }, s * (DURATION_MS / SLOT_COUNT));
+      if (prefersReducedMotion || notes.length < 2) {
+        // No motion — just lay every card out in a wrapping row so nothing
+        // is lost for people who've asked for reduced motion (or the rare
+        // one-note case, where a scrolling loop of one card would be silly).
+        wall.innerHTML = cardsHtml;
+        wall.classList.add("is-static");
+      } else {
+        // Two back-to-back copies is what makes the loop seamless.
+        wall.innerHTML = cardsHtml + cardsHtml;
+        requestAnimationFrame(() => {
+          const singleSetWidth = wall.scrollWidth / 2;
+          const PX_PER_SECOND = 40; // constant visual speed regardless of note count
+          const duration = Math.max(18, singleSetWidth / PX_PER_SECOND);
+          wall.style.setProperty("--wall-duration", `${duration}s`);
+          wall.classList.add("is-animating");
         });
       }
     }
@@ -265,14 +233,14 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     color: var(--text-on-light-muted);
     text-align: center;
   }
-  /* "A few dads at a time" — a fixed number of card slots (never more, so
-     nothing can ever overlap) each independently rotating through all the
-     notes on a staggered timer. Replaces both the old ambient overlapping
-     field (lively, but 15+ cards fading too fast to read) and the one-at-
-     a-time spotlight that followed it (readable, but a slow single-file
-     crawl through 29 notes). */
+  /* "A few dads at a time" — a continuous horizontal carousel (see the
+     <script> above for how the seamless loop works) instead of the earlier
+     ambient overlapping field (lively, but 15+ cards fading too fast to
+     read), one-at-a-time spotlight (readable, but a slow single-file crawl
+     through 29 notes), or staggered-slot grid (readable, but static — no
+     motion at all). */
   .circle-wall {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
   }
   .wall-label {
@@ -287,17 +255,36 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     color: var(--text-on-light-muted);
     margin-bottom: 1rem;
   }
-  .wall-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-    align-items: start;
+  /* Masks the left/right edges of the carousel to transparent, so cards
+     fade in and out smoothly as they cross the boundary instead of being
+     abruptly clipped by overflow:hidden. */
+  .wall-viewport {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
   }
-  .wall-slot {
-    min-height: 210px;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+  .wall-track {
+    display: flex;
+    gap: 1.25rem;
+    width: max-content;
+  }
+  .wall-track.is-animating {
+    animation: wall-scroll var(--wall-duration, 30s) linear infinite;
+  }
+  /* Pausing on hover/focus so a card can actually be read mid-scroll if
+     someone wants to stop and look — the loop resumes exactly where it
+     left off since this only pauses the animation, it doesn't reset it. */
+  .wall-track.is-animating:hover,
+  .wall-track.is-animating:focus-within {
+    animation-play-state: paused;
+  }
+  @keyframes wall-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
   /* :global() on every .bubble* selector below — these elements are built
      client-side via document.createElement/innerHTML (see the <script>
@@ -306,28 +293,16 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
      this card styling (background, border, shadow, avatar circle color)
      applies to the rotating content at all — it was rendering as plain
      unstyled text. Same root cause as the merch-page photo-pair bug fixed
-     earlier this session.
-     Same chat/comment-card look as before (rounded card, squared-off
-     bottom-left corner, colored avatar initial, soft drop shadow). Slots
-     crossfade their contents on rotation rather than the whole card
-     disappearing/reappearing, so it reads as "settling into place" instead
-     of a jarring cut. */
+     earlier this session. */
   :global(.bubble) {
-    width: 100%;
+    flex: 0 0 320px;
+    width: 320px;
     padding: 1.5rem 1.6rem;
     border-radius: 18px 18px 18px 4px;
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
     box-shadow: 0 10px 28px -10px rgba(28, 35, 25, 0.28);
     text-align: left;
-  }
-  .wall-slot.is-in {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .wall-slot.is-out {
-    opacity: 0;
-    transform: translateY(-6px);
   }
   :global(.bubble-head) {
     display: flex;
@@ -390,27 +365,24 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     font-weight: 400;
     opacity: 0.75;
   }
-  @media (max-width: 860px) {
-    .wall-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
   @media (max-width: 640px) {
     .circle-wall {
       max-width: 100%;
     }
-    .wall-grid {
-      grid-template-columns: 1fr;
-    }
-    .wall-slot {
-      min-height: 0;
-    }
-    .bubble {
+    :global(.bubble) {
+      flex-basis: 260px;
+      width: 260px;
       padding: 1.25rem 1.35rem;
     }
-    .bubble-advice {
+    :global(.bubble-advice) {
       font-size: 1rem;
     }
+  }
+  /* Static (reduced-motion / single-note) fallback lays cards out in a
+     wrapping row instead of one continuous unscrollable line. */
+  .wall-track.is-static {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .form-section {
