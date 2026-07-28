@@ -46,11 +46,14 @@ export function slugify(title) {
 }
 
 export const episodes = [
-  // Apple link intentionally left unset — not live on Apple Podcasts yet as of
-  // 2026-07-28 (scheduled 3am, still pending their feed crawl hours later).
-  // Falls back to the show-level APPLE_URL automatically until the real
-  // per-episode link exists — add it in as soon as it's up.
-  { title: "Every Dad Has Strengths and Weaknesses", date: "2026-07-28", downloads: 30, link: "https://thedudelapodcast.podbean.com/e/every-dad-has-strengths-and-weaknesses/", apple: null, img: "/images/podcast/ep-every-dad-strengths-weaknesses.jpg" },
+  // Apple link intentionally left unset — checked Apple's public iTunes
+  // Lookup API on 2026-07-28 and this episode still isn't in the public
+  // catalog yet (only shows through the 7/14 episode). The Podcasts Connect
+  // link John has is his own private creator-dashboard view — it requires
+  // his Apple ID to open and isn't a working listener link, so it can't be
+  // used here. Falls back to the show-level APPLE_URL until the real public
+  // per-episode link exists once Apple's crawl catches up.
+  { title: "Every Dad Has Strengths and Weaknesses", date: "2026-07-28", downloads: 30, link: "https://thedudelapodcast.podbean.com/e/every-dad-has-strengths-and-weaknesses/", apple: null, youtube: "https://www.youtube.com/watch?v=hMB9RWB08xs", img: "/images/podcast/ep-every-dad-strengths-weaknesses.jpg" },
   { title: "Why Every Parent Needs Time Away Together", date: "2026-07-14", downloads: 198, link: "https://thedudelapodcast.podbean.com/e/why-every-parent-needs-time-away-together/", apple: "https://podcasts.apple.com/us/podcast/why-every-parent-needs-time-away-together/id1807603921?i=1000776812301", img: "/images/podcast/ep-why-every-parent.jpg" },
   { title: "How Much is This Baby Really Going to Cost Me?", date: "2026-07-01", downloads: 371, link: "https://thedudelapodcast.podbean.com/e/how-much-is-this-baby-really-going-to-cost-me/", apple: "https://podcasts.apple.com/us/podcast/how-much-is-this-baby-really-going-to-cost-me/id1807603921?i=1000775004576" },
   { title: "The Emotional Side of Fatherhood Nobody Talks About", date: "2026-06-16", downloads: 442, link: "https://thedudelapodcast.podbean.com/e/the-emotional-side-of-fatherhood-nobody-talks-about/", apple: "https://podcasts.apple.com/us/podcast/the-emotional-side-of-fatherhood-nobody-talks-about/id1807603921?i=1000772931930" },
