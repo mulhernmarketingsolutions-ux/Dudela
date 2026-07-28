@@ -6,6 +6,18 @@
 const ICONS = {
   user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
 };
+
+// Optional — only pages that already resolved the visitor's session via
+// getAuthedMember (the SSR /member/* pages) can pass this in. Marketing
+// pages are prerendered statically and have no per-request cookie access,
+// so they can't know auth state at build time — they fall back to the
+// always-safe "Member Login" default, same as before.
+export interface Props {
+  isAuthed?: boolean;
+}
+const { isAuthed = false } = Astro.props;
+const accountHref = isAuthed ? "/api/auth/logout" : "/member/login";
+const accountLabel = isAuthed ? "Logout" : "Member Login";
 ---
 <header class="nav" id="site-nav">
   <div class="nav-backdrop" aria-hidden="true"></div>
@@ -53,13 +65,13 @@ const ICONS = {
            log in" and "take me to my account" without Nav.astro needing
            to know the visitor's session (it's rendered on prerendered
            static pages too, where per-request cookies aren't available). -->
-      <a href="/member/login" class="member-link">Member Login</a>
+      <a href={accountHref} class="member-link">{accountLabel}</a>
       <!-- Same link as above, but a plain person icon sitting right next
            to the hamburger on mobile so "I already have an account" is
            visible at a glance instead of buried inside the menu. The text
            link stays inside the mobile menu too — this doesn't replace it,
            just gives it a visible entry point on small screens. -->
-      <a href="/member/login" class="mobile-member-icon" aria-label="Member Login" set:html={ICONS.user} />
+      <a href={accountHref} class="mobile-member-icon" aria-label={accountLabel} set:html={ICONS.user} />
       <!-- Points straight at the $5/mo Spit-Up Society signup, not the
            full pricing ladder — "Join" sitting next to "Member Login"
            reads as "become a member," and the Society is the membership
@@ -86,7 +98,7 @@ const ICONS = {
          visible the whole time the menu is open — no need to duplicate it
          down here. Member Login is the one thing worth surfacing as its
          own button, with the same person icon used outside for continuity. -->
-    <a href="/member/login" class="mobile-member-btn" set:html={`${ICONS.user} Member Login`} />
+    <a href={accountHref} class="mobile-member-btn" set:html={`${ICONS.user} ${accountLabel}`} />
   </div>
 </header>
 

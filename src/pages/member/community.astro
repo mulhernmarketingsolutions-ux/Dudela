@@ -36,7 +36,7 @@ const stageLabel = (id: string | null) => STAGES.find((s) => s.id === id)?.label
 const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
 ---
 <BaseLayout title="The Circle — Dudela" description="A snapshot of the dads in the Spit-Up Society.">
-  <Nav />
+  <Nav isAuthed />
 
   <section class="hero section-dark">
     <div class="container hero-inner">

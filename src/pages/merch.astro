@@ -6,7 +6,6 @@ export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import PhotoPlaceholder from "../components/PhotoPlaceholder.astro";
 import { countMerchOrders } from "../lib/db";
 
 const env = (Astro.locals as any).runtime.env;
@@ -18,63 +17,63 @@ const env = (Astro.locals as any).runtime.env;
 const DESIGNS = [
   {
     key: "fistbump",
-    title: "Fist Bump",
-    tagline: "Small logo up front, DUDELA stitched across the back.",
+    title: "The Classic",
+    tagline: "The one that started it all — a fist bump up front, DUDELA stitched across the back.",
     colors: [
       {
         slug: "hat-fistbump-cream",
         name: "Cream, Black Bill",
         swatch: "#ece3d1",
-        description: "The original. A small fist bump up front, DUDELA stitched across the back — for when a high-five feels like too much.",
+        description: "Where it began. Fist bump up front, DUDELA on the back, stitched in black.",
         images: ["/images/hat-fistbump-cream-front.png", "/images/hat-fistbump-cream-back.png"],
       },
       {
         slug: "hat-fistbump-black",
         name: "Black",
         swatch: "#141414",
-        description: "Same fist bump, blacked out, stitched in white so it still shows up.",
+        description: "Blacked out, stitched in white so it still throws a punch.",
         images: ["/images/hat-fistbump-black-front.png", "/images/hat-fistbump-black-back.png"],
       },
       {
         slug: "hat-fistbump-white",
         name: "White",
         swatch: "#f5f5f0",
-        description: "Clean and bright, fist bump stitched in rust orange.",
+        description: "Clean and simple, fist bump stitched in rust orange.",
         images: ["/images/hat-fistbump-white-front.png", "/images/hat-fistbump-white-back.png"],
       },
       {
         slug: "hat-fistbump-green",
         name: "Cream, Green Bill",
         swatch: "#57684a",
-        description: "Cream crown, forest green bill, fist bump stitched in rust orange.",
+        description: "Cream crown, forest green bill, fist bump in rust orange.",
         images: ["/images/hat-fistbump-green-front.png", "/images/hat-fistbump-green-back.png"],
       },
     ],
   },
   {
     key: "upsidedown",
-    title: "Upside Down",
-    tagline: "The DUDELA wordmark, flipped and arched, front and center.",
+    title: "The Flip",
+    tagline: "DUDELA, flipped and arched — reads right back at you.",
     colors: [
       {
         slug: "hat-upsidedown-cream",
         name: "Cream, Green Bill",
         swatch: "#57684a",
-        description: "DUDELA, flipped upside down and arched like a varsity letter. Forest green bill — the original.",
+        description: "The original Flip. Forest green bill, wordmark stitched to match.",
         images: ["/images/hat-upsidedown-cream-front.png"],
       },
       {
         slug: "hat-upsidedown-black",
         name: "Black",
         swatch: "#141414",
-        description: "Same upside-down wordmark, blacked out, stitched in white.",
+        description: "Blacked out, wordmark stitched in white.",
         images: ["/images/hat-upsidedown-black-front.png"],
       },
       {
         slug: "hat-upsidedown-white",
         name: "White",
         swatch: "#f5f5f0",
-        description: "Clean and bright, wordmark stitched in rust orange.",
+        description: "Clean and simple, wordmark stitched in rust orange.",
         images: ["/images/hat-upsidedown-white-front.png"],
       },
       {
@@ -124,20 +123,24 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     <div class="container colors-grid">
       {designs.map((d) => {
         const first = d.colors[0];
+        const [imgA, imgB] = first.images;
         return (
           <div class="design-card" data-design={d.key}>
             <div class="design-media" data-media>
-              {first.images.length > 1 ? (
-                <div class="photo-pair">
-                  {first.images.map((src) => (
-                    <img src={src} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
-                  ))}
-                </div>
-              ) : first.images.length === 1 ? (
-                <img class="single-photo" src={first.images[0]} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
-              ) : (
-                <PhotoPlaceholder label="Image coming soon" ratio="1/1" />
-              )}
+              {/* Always a fixed 2-up grid, even for designs (like The Flip) that only
+                  have a front placement — a placeholder tile fills the second slot
+                  instead of collapsing to one image, so card height never jumps as
+                  someone clicks between colors. */}
+              <div class="photo-pair">
+                <img src={imgA} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
+                {imgB ? (
+                  <img src={imgB} alt={`Dudela Hat — ${d.title}, ${first.name}`} loading="lazy" />
+                ) : (
+                  <div class="photo-placeholder" style="aspect-ratio: 1/1;">
+                    <span>Front only</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div class="design-body">
               <h3>{d.title}</h3>
@@ -215,15 +218,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
     function renderMedia(images: string[], name: string) {
       if (!media) return;
-      if (images.length > 1) {
-        media.innerHTML = `<div class="photo-pair">${images
-          .map((src) => `<img src="${src}" alt="Dudela Hat — ${name}" loading="lazy" />`)
-          .join("")}</div>`;
-      } else if (images.length === 1) {
-        media.innerHTML = `<img class="single-photo" src="${images[0]}" alt="Dudela Hat — ${name}" loading="lazy" />`;
-      } else {
-        media.innerHTML = `<div class="photo-placeholder" style="aspect-ratio: 1/1;"><span>Image coming soon</span></div>`;
-      }
+      // Always a fixed 2-up grid — a "Front only" placeholder fills the second
+      // slot for designs with no back placement, so card height never jumps
+      // as someone clicks between colors (matches the server-rendered markup).
+      const img0 = images[0];
+      const img1 = images[1];
+      const second = img1
+        ? `<img src="${img1}" alt="Dudela Hat — ${name}" loading="lazy" />`
+        : `<div class="photo-placeholder" style="aspect-ratio: 1/1;"><span>Front only</span></div>`;
+      media.innerHTML = `<div class="photo-pair"><img src="${img0}" alt="Dudela Hat — ${name}" loading="lazy" />${second}</div>`;
     }
 
     swatches.forEach((btn) => {
@@ -349,18 +352,24 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
-  .photo-pair img,
-  .single-photo {
+  .photo-pair img {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     display: block;
     background: var(--cream-100);
   }
-  .color-body {
-    padding: 1.5rem 1.5rem 1.75rem;
+  /* Was .color-body — leftover from before the swatch-picker rewrite, and no
+     longer matched the actual markup (which uses .design-body), so this
+     entire padding/spacing block was silently not applying at all. That's
+     why the card content looked jammed against the edges. */
+  .design-body {
+    padding: 2rem 2.1rem 2.35rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
-  .color-body h3 {
+  .design-body h3 {
     font-family: var(--font-display);
     font-size: 1.3rem;
     margin: 0 0 0.4rem;
@@ -392,9 +401,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .stock-out {
     color: var(--text-on-light-muted);
   }
-  .color-body .btn {
+  .design-body .btn {
     width: 100%;
     text-align: center;
+    /* Pins the buy button to the bottom of the card regardless of how long
+       the description runs — .design-card cards in the same grid row stretch
+       to equal height, and without this the shorter card's button floated
+       right under its text with a big dead gap below it. */
+    margin-top: auto;
   }
   .btn-outline-light {
     background: transparent;
