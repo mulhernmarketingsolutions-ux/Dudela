@@ -113,13 +113,27 @@ const ICONS = {
   <section class="grid section-light">
     <div class="container card-grid">
       <div class="card card-featured">
-        <div class="card-icon" set:html={ICONS.video} />
-        <h3>Next Live Q&amp;A</h3>
-        <p class="call-when">{nextCall.dateLabel} · {nextCall.timeLabel}</p>
-        <a href={nextCall.meetUrl} target="_blank" rel="noopener" class="btn btn-primary join-btn">Join with Google Meet →</a>
-        <p class="call-dial">
-          <span set:html={ICONS.phone} /> Or dial in: {nextCall.phone} <span class="pin">PIN {nextCall.pin}</span>
-        </p>
+        <div class="featured-inner">
+          <!-- A real calendar badge instead of the generic video icon — gives
+               the card an actual visual anchor so the join button doesn't
+               read as the only thing in a very wide, mostly-empty box. -->
+          <div class="date-badge" aria-hidden="true">
+            <span class="date-month">{nextCall.dateLabel.split(", ")[1]?.split(" ")[0] || "TBD"}</span>
+            <span class="date-day">{nextCall.dateLabel.match(/\d+/)?.[0] || "?"}</span>
+            <span class="date-weekday">{nextCall.dateLabel.split(",")[0]}</span>
+          </div>
+          <div class="featured-content">
+            <p class="featured-eyebrow">
+              <span set:html={ICONS.video} /> Next Live Q&amp;A
+            </p>
+            <h3>{nextCall.dateLabel}</h3>
+            <p class="call-when">{nextCall.timeLabel}</p>
+            <a href={nextCall.meetUrl} target="_blank" rel="noopener" class="btn btn-primary join-btn">Join with Google Meet →</a>
+            <p class="call-dial">
+              <span set:html={ICONS.phone} /> Or dial in: {nextCall.phone} <span class="pin">PIN {nextCall.pin}</span>
+            </p>
+          </div>
+        </div>
       </div>
 
       <a href="/member/womb-watch" class="card">
@@ -356,9 +370,80 @@ const ICONS = {
   }
   .card-featured h3 {
     color: var(--cream-100);
+    font-size: 1.15rem;
+    margin: 0 0 0.25rem;
   }
-  .card-featured .card-icon {
-    background: rgba(245, 239, 227, 0.12);
+  .featured-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.75rem;
+  }
+  /* A small torn-calendar-page badge — real visual content instead of a
+     generic icon, so the wide featured card reads as "a scheduled event"
+     rather than just a big empty box around a button. */
+  .date-badge {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 84px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--cream-100);
+    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.4);
+  }
+  .date-month {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: var(--rust-600);
+    color: var(--cream-100);
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.3rem 0;
+  }
+  .date-day {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    line-height: 1.3;
+    color: var(--forest-900);
+  }
+  .date-weekday {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-label);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-on-light-muted);
+    padding-bottom: 0.45rem;
+  }
+  .featured-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 420px;
+  }
+  .featured-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--amber-500);
+    margin: 0 0 0.5rem;
+  }
+  .featured-eyebrow :global(svg) {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
   }
   .call-when {
     color: var(--text-on-dark-muted);
@@ -367,8 +452,21 @@ const ICONS = {
   }
   .join-btn {
     width: 100%;
+    max-width: 320px;
     justify-content: center;
     margin-bottom: 1.1rem;
+  }
+  @media (max-width: 560px) {
+    .featured-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .date-badge {
+      width: 72px;
+    }
+    .join-btn {
+      max-width: none;
+    }
   }
   .call-dial {
     display: flex;

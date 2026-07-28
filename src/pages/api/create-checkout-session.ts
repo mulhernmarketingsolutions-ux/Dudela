@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
 import { countMerchOrders } from "../../lib/db";
+import { getAuthedMember } from "../../lib/auth";
 
 export const prerender = false;
 
@@ -67,11 +68,21 @@ const PRODUCTS: Record<
   ),
 };
 
-export async function GET({ request, locals }: APIContext) {
+export async function GET({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
   const url = new URL(request.url);
   const product = url.searchParams.get("product") || "prep-kit";
   const email = url.searchParams.get("email") || undefined;
+
+  // If the buyer is already logged in as a Spit-Up Society member (e.g.
+  // browsing /merch while signed in), attach this purchase to their existing
+  // Stripe customer instead of letting Stripe spin up a brand-new, unrelated
+  // guest customer. That's what makes a hat purchase show up in the same
+  // Billing Portal as their membership — a guest checkout (not logged in)
+  // still creates a separate customer, since Stripe collects the email on
+  // its own hosted page, after this route has already run.
+  const member = await getAuthedMember(cookies, env);
+  const existingCustomerId = member?.stripe_customer_id || undefined;
 
   const productConfig = PRODUCTS[product];
   if (!productConfig) {
@@ -108,9 +119,15 @@ export async function GET({ request, locals }: APIContext) {
       mode: productConfig.mode,
       successUrl: `${origin}${productConfig.thankYouPath}`,
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
-      customerEmail: email,
+      customerId: existingCustomerId,
+      customerEmail: existingCustomerId ? undefined : email,
       metadata: productConfig.merchColor ? { product, color: productConfig.merchColor } : { product },
       collectShipping: productConfig.shipping,
+      // Only relevant for one-time purchases (subscriptions already invoice
+      // automatically) — generates a real Stripe Invoice for the purchase so
+      // it actually shows up in the Billing Portal's invoice history instead
+      // of being an invisible PaymentIntent the portal has nothing to display.
+      invoiceCreation: productConfig.mode === "payment",
     });
 
     return new Response(null, {

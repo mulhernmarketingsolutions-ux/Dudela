@@ -29,8 +29,15 @@ export async function createCheckoutSession(
     successUrl: string;
     cancelUrl: string;
     customerEmail?: string;
+    // If the buyer is already a known Stripe customer (e.g. an existing
+    // Spit-Up Society member buying a hat while logged in), pass their
+    // customer id here instead of customerEmail — Stripe only accepts one or
+    // the other. This is what makes a one-time purchase show up in the same
+    // Billing Portal as their membership, instead of creating a brand-new
+    // disconnected guest customer for every purchase.
+    customerId?: string;
     metadata?: Record<string, string>;
-    // "payment" for one-time purchases (Prep Kit), "subscription" for recurring
+    // "payment" for one-time purchases (Prep Kit, hats), "subscription" for recurring
     // membership billing (Spit-Up Society). Defaults to "payment" to match existing callers.
     mode?: "payment" | "subscription";
     // Physical goods (the merch hats) need a shipping address — digital
@@ -40,6 +47,12 @@ export async function createCheckoutSession(
     // ISO country codes Stripe will accept for shipping_address_collection.
     // Defaults to US-only, which is all the presale supports for now.
     shippingCountries?: string[];
+    // One-time ("payment" mode) Checkout Sessions don't generate a Stripe
+    // Invoice by default — without this, even a purchase attached to the
+    // right customer won't show up in their Billing Portal invoice history.
+    // Subscriptions already generate invoices automatically, so this only
+    // matters (and is only passed) for one-time purchases.
+    invoiceCreation?: boolean;
   }
 ) {
   const mode = opts.mode || "payment";
@@ -50,7 +63,17 @@ export async function createCheckoutSession(
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
-  if (opts.customerEmail) params.customer_email = opts.customerEmail;
+  // Stripe rejects a session that sets both `customer` and `customer_email` —
+  // prefer the known customer id so the purchase attaches to their existing
+  // record instead of spinning up a new disconnected guest customer.
+  if (opts.customerId) {
+    params.customer = opts.customerId;
+  } else if (opts.customerEmail) {
+    params.customer_email = opts.customerEmail;
+  }
+  if (opts.invoiceCreation && mode === "payment") {
+    params["invoice_creation[enabled]"] = "true";
+  }
   if (opts.metadata) {
     for (const [k, v] of Object.entries(opts.metadata)) {
       params[`metadata[${k}]`] = v;
