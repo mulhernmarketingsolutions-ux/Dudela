@@ -1,5 +1,5 @@
 ---
-import { episodes as allEpisodes, slugify } from "../data/episodes.js";
+import { episodes as allEpisodes, slugify, TOTAL_EPISODES } from "../data/episodes.js";
 
 // Most recent 8 episodes for the homepage row. Full archive lives on /podcast.
 const episodes = allEpisodes.slice(0, 8);
@@ -16,7 +16,12 @@ const episodes = allEpisodes.slice(0, 8);
     <div class="episode-row">
       {episodes.map((ep, i) => (
         <a href={`/podcast#${slugify(ep.title)}`} class="episode-card">
-          <span class="episode-ghost" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+          <!-- Counts DOWN from the real episode number (30, 29, 28...) to
+               match Apple Podcasts' actual numbering, instead of counting
+               UP from 01 based on this row's own position — that made the
+               newest episode always read "01" regardless of how many
+               episodes had actually aired. -->
+          <span class="episode-ghost" aria-hidden="true">{String(TOTAL_EPISODES - i).padStart(2, "0")}</span>
           <span class="episode-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </span>
