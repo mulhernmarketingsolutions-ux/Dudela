@@ -43,8 +43,8 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
       <p class="eyebrow">Spit-Up Society</p>
       <h1>The Circle</h1>
       <p class="hero-sub">
-        Not a group chat, not another feed to check. Read one thing a few real dads in the
-        Society have learned — one at a time, so it's actually easy to sit with — then add
+        Not a group chat, not another feed to check. Real dads in the Society, sharing one
+        thing they've learned — a few at a time, so it's actually easy to sit with — then add
         your own below for the next dad to read.
       </p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
@@ -56,43 +56,24 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
       {notes.length === 0 ? (
         <p class="empty-state">Nobody's added their bubble yet — be the first below.</p>
       ) : (
-        <div class="spotlight">
-          <p class="spotlight-label">
-            One dad at a time
-            <span class="spotlight-counter"><span id="spotlight-current">1</span> of {notes.length}</span>
+        <div class="circle-wall">
+          <p class="wall-label">
+            A few dads at a time
+            <span class="wall-count">{notes.length} in the Circle</span>
           </p>
-          <div class="spotlight-viewport" id="spotlight-viewport">
-            {notes.map((note, i) => {
-              const initial = note.first_name.charAt(0).toUpperCase();
-              return (
-                <div class={`bubble ${TINTS[i % TINTS.length]}`} data-index={i}>
-                  <div class="bubble-head">
-                    <span class="bubble-avatar">{initial}</span>
-                    <div class="bubble-headtext">
-                      <p class="bubble-who">
-                        {note.first_name}{note.city ? ` · ${note.city}` : ""}
-                      </p>
-                      {note.dad_stage && <span class="bubble-stage">{stageLabel(note.dad_stage)}</span>}
-                    </div>
-                  </div>
-                  <p class="bubble-advice">&ldquo;{note.advice}&rdquo;</p>
-                </div>
-              );
-            })}
-          </div>
-          {notes.length > 1 && (
-            <div class="spotlight-controls">
-              <button type="button" class="spotlight-btn" id="spotlight-prev" aria-label="Previous dad">&larr;</button>
-              {notes.length <= 8 && (
-                <div class="spotlight-dots" id="spotlight-dots">
-                  {notes.map((_, i) => (
-                    <button type="button" class="spotlight-dot" data-index={i} aria-label={`Go to dad ${i + 1}`}></button>
-                  ))}
-                </div>
-              )}
-              <button type="button" class="spotlight-btn" id="spotlight-next" aria-label="Next dad">&rarr;</button>
-            </div>
-          )}
+          <div
+            class="wall-grid"
+            id="circle-wall"
+            data-notes={JSON.stringify(
+              notes.map((n, i) => ({
+                first: n.first_name,
+                city: n.city || "",
+                stage: n.dad_stage ? stageLabel(n.dad_stage) : "",
+                advice: n.advice,
+                tint: TINTS[i % TINTS.length],
+              }))
+            )}
+          />
         </div>
       )}
     </div>
@@ -136,76 +117,96 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
   </section>
 
   <script>
-    // One-card-at-a-time spotlight — replaces the old ambient overlapping
-    // field. That version looked lively but crammed 15+ animated cards
-    // into one viewport, which on a phone-width screen meant nothing was
-    // actually readable. The whole point of this section is "read one
-    // thing a few dads have learned," so only ever show one, with
-    // prev/next, dots, swipe, and a slow auto-advance.
-    const cards = Array.from(document.querySelectorAll<HTMLElement>("#spotlight-viewport .bubble"));
-    const dots = Array.from(document.querySelectorAll<HTMLButtonElement>(".spotlight-dot"));
-    const counterEl = document.getElementById("spotlight-current");
-    const prevBtn = document.getElementById("spotlight-prev");
-    const nextBtn = document.getElementById("spotlight-next");
-    const viewport = document.getElementById("spotlight-viewport");
+    // "A few dads at a time" wall — replaces both earlier versions. The
+    // original ambient field showed 15+ bubbles at once, overlapping and
+    // fading too fast to actually read. The one-at-a-time spotlight that
+    // followed fixed readability but made 29 notes feel like a slow
+    // single-file crawl (~3 minutes to see a handful).
+    //
+    // This is a middle ground: a fixed number of card SLOTS (never more —
+    // so cards can never overlap each other, regardless of screen size),
+    // each independently rotating through a shuffled order of all the
+    // notes. Slots are offset in both content (slot k starts SLOT_COUNT
+    // notes ahead of slot k-1) and timing (each slot's rotation timer
+    // starts at a staggered delay), so it never feels like everything
+    // changes at once — just one card settling into place every few
+    // seconds — while any single card stays up a full DURATION so there's
+    // always time to actually read it.
+    const wall = document.getElementById("circle-wall");
+    if (wall) {
+      type WallNote = { first: string; city: string; stage: string; advice: string; tint: string };
+      const notes: WallNote[] = JSON.parse(wall.dataset.notes || "[]");
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const SLOT_COUNT = Math.max(1, Math.min(3, notes.length));
+      const DURATION_MS = 9000; // how long a card sits before rotating out — plenty for a one-sentence quote
 
-    let current = 0;
-    let timer: ReturnType<typeof setInterval> | undefined;
+      function shuffledIndices(n: number): number[] {
+        const arr = Array.from({ length: n }, (_, i) => i);
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+      const order = shuffledIndices(notes.length);
 
-    function show(i: number) {
-      if (!cards.length) return;
-      current = ((i % cards.length) + cards.length) % cards.length;
-      cards.forEach((c, idx) => c.classList.toggle("is-current", idx === current));
-      dots.forEach((d, idx) => d.classList.toggle("is-current", idx === current));
-      if (counterEl) counterEl.textContent = String(current + 1);
-    }
+      function renderBubble(note: WallNote): string {
+        const initial = (note.first.charAt(0) || "?").toUpperCase();
+        const cityPart = note.city ? ` &middot; ${note.city}` : "";
+        const stagePart = note.stage ? `<span class="bubble-stage">${note.stage}</span>` : "";
+        return `<div class="bubble ${note.tint}">
+          <div class="bubble-head">
+            <span class="bubble-avatar">${initial}</span>
+            <div class="bubble-headtext">
+              <p class="bubble-who">${note.first}${cityPart}</p>
+              ${stagePart}
+            </div>
+          </div>
+          <p class="bubble-advice">&ldquo;${note.advice}&rdquo;</p>
+        </div>`;
+      }
 
-    function restartAutoAdvance() {
-      if (timer) clearInterval(timer);
-      if (cards.length > 1) {
-        timer = setInterval(() => show(current + 1), 6000);
+      const slots: HTMLDivElement[] = [];
+      for (let s = 0; s < SLOT_COUNT; s++) {
+        const el = document.createElement("div");
+        el.className = "wall-slot";
+        wall.appendChild(el);
+        slots.push(el);
+      }
+      const cursors = slots.map((_, s) => s % order.length);
+
+      function paintSlot(s: number, animate: boolean) {
+        const note = notes[order[cursors[s] % order.length]];
+        const html = renderBubble(note);
+        const slot = slots[s];
+        if (animate && !prefersReducedMotion) {
+          slot.classList.remove("is-in");
+          slot.classList.add("is-out");
+          setTimeout(() => {
+            slot.innerHTML = html;
+            slot.classList.remove("is-out");
+            void slot.offsetWidth; // force reflow so the fade-in transition actually plays
+            slot.classList.add("is-in");
+          }, 260);
+        } else {
+          slot.innerHTML = html;
+          slot.classList.add("is-in");
+        }
+      }
+
+      slots.forEach((_, s) => paintSlot(s, false));
+
+      if (notes.length > SLOT_COUNT && !prefersReducedMotion) {
+        slots.forEach((_, s) => {
+          window.setTimeout(() => {
+            window.setInterval(() => {
+              cursors[s] += SLOT_COUNT;
+              paintSlot(s, true);
+            }, DURATION_MS);
+          }, s * (DURATION_MS / SLOT_COUNT));
+        });
       }
     }
-
-    if (cards.length) {
-      show(0);
-      restartAutoAdvance();
-    }
-
-    prevBtn?.addEventListener("click", () => {
-      show(current - 1);
-      restartAutoAdvance();
-    });
-    nextBtn?.addEventListener("click", () => {
-      show(current + 1);
-      restartAutoAdvance();
-    });
-    dots.forEach((d) => {
-      d.addEventListener("click", () => {
-        show(Number(d.dataset.index || 0));
-        restartAutoAdvance();
-      });
-    });
-
-    let touchStartX = 0;
-    viewport?.addEventListener(
-      "touchstart",
-      (e) => {
-        touchStartX = e.touches[0].clientX;
-      },
-      { passive: true }
-    );
-    viewport?.addEventListener(
-      "touchend",
-      (e) => {
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        if (Math.abs(dx) > 40) {
-          show(current + (dx < 0 ? 1 : -1));
-          restartAutoAdvance();
-        }
-      },
-      { passive: true }
-    );
 
     const form = document.getElementById("note-form") as HTMLFormElement | null;
     const status = document.getElementById("note-form-status") as HTMLParagraphElement | null;
@@ -264,17 +265,17 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     color: var(--text-on-light-muted);
     text-align: center;
   }
-  /* One card at a time — the whole point of this section is "read one
-     thing a few dads have learned," not an ambient wall of chat bubbles.
-     The old overlapping animated field looked lively but on a phone-width
-     screen it crammed 15+ cards on top of each other and nothing was
-     readable. This is deliberately boring and clear instead: a single
-     card, prev/next + dots + swipe, slow auto-advance. */
-  .spotlight {
-    max-width: 460px;
+  /* "A few dads at a time" — a fixed number of card slots (never more, so
+     nothing can ever overlap) each independently rotating through all the
+     notes on a staggered timer. Replaces both the old ambient overlapping
+     field (lively, but 15+ cards fading too fast to read) and the one-at-
+     a-time spotlight that followed it (readable, but a slow single-file
+     crawl through 29 notes). */
+  .circle-wall {
+    max-width: 900px;
     margin: 0 auto;
   }
-  .spotlight-label {
+  .wall-label {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -286,18 +287,24 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     color: var(--text-on-light-muted);
     margin-bottom: 1rem;
   }
-  .spotlight-counter {
-    font-variant-numeric: tabular-nums;
+  .wall-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    align-items: start;
   }
-  .spotlight-viewport {
-    position: relative;
-    min-height: 190px;
+  .wall-slot {
+    min-height: 210px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
   /* Same chat/comment-card look as before (rounded card, squared-off
-     bottom-left corner, colored avatar initial, soft drop shadow) — just
-     shown one at a time instead of scattered and animated. */
+     bottom-left corner, colored avatar initial, soft drop shadow). Slots
+     crossfade their contents on rotation rather than the whole card
+     disappearing/reappearing, so it reads as "settling into place" instead
+     of a jarring cut. */
   .bubble {
-    display: none;
     width: 100%;
     padding: 1.5rem 1.6rem;
     border-radius: 18px 18px 18px 4px;
@@ -306,19 +313,13 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     box-shadow: 0 10px 28px -10px rgba(28, 35, 25, 0.28);
     text-align: left;
   }
-  .bubble.is-current {
-    display: block;
-    animation: card-in 0.35s ease;
+  .wall-slot.is-in {
+    opacity: 1;
+    transform: translateY(0);
   }
-  @keyframes card-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .wall-slot.is-out {
+    opacity: 0;
+    transform: translateY(-6px);
   }
   .bubble-head {
     display: flex;
@@ -376,54 +377,25 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     margin: 0;
     line-height: 1.55;
   }
-  .spotlight-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.25rem;
-    margin-top: 1.5rem;
+  .wall-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+    opacity: 0.75;
   }
-  .spotlight-btn {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid var(--border-light);
-    background: var(--bg-light-raised);
-    color: var(--text-on-light);
-    font-size: 1.1rem;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease;
-  }
-  .spotlight-btn:hover {
-    background: var(--border-light);
-  }
-  .spotlight-dots {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-    max-width: 220px;
-  }
-  .spotlight-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    border: none;
-    background: var(--border-light);
-    cursor: pointer;
-    padding: 0;
-  }
-  .spotlight-dot.is-current {
-    background: var(--forest-500);
+  @media (max-width: 860px) {
+    .wall-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
   @media (max-width: 640px) {
-    .spotlight {
+    .circle-wall {
       max-width: 100%;
+    }
+    .wall-grid {
+      grid-template-columns: 1fr;
+    }
+    .wall-slot {
+      min-height: 0;
     }
     .bubble {
       padding: 1.25rem 1.35rem;
