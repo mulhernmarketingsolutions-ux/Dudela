@@ -1,38 +1,40 @@
 <footer class="footer section-dark">
   <div class="container footer-inner">
-    <div class="footer-newsletter">
-      <p class="eyebrow">The Dudela Newsletter</p>
-      <h3>Get one email a week. No fluff.</h3>
-      <form class="newsletter-form" id="newsletter-form">
-        <input type="hidden" name="magnet" value="newsletter" />
-        <input type="hidden" name="source" value="footer" />
-        <input type="email" name="email" placeholder="you@email.com" required />
-        <button type="submit" class="btn btn-primary">Sign Up</button>
-      </form>
-      <p id="newsletter-status" class="form-status"></p>
-    </div>
-    <div class="footer-links">
-      <div>
-        <p class="footer-heading">Dudela</p>
-        <a href="/about">About</a>
-        <a href="/podcast">Podcast</a>
-        <a href="/resources">Resources</a>
-        <a href="/kit">Prep Kit</a>
-        <a href="/workshop">Workshop</a>
-        <a href="/merch">Merch</a>
+    <div class="footer-top">
+      <div class="footer-newsletter">
+        <p class="eyebrow">The Dudela Newsletter</p>
+        <h3>Get one email a week. No fluff.</h3>
+        <form class="newsletter-form" id="newsletter-form">
+          <input type="hidden" name="magnet" value="newsletter" />
+          <input type="hidden" name="source" value="footer" />
+          <input type="email" name="email" placeholder="you@email.com" required />
+          <button type="submit" class="btn btn-primary">Sign Up</button>
+        </form>
+        <p id="newsletter-status" class="form-status"></p>
       </div>
-      <div>
-        <p class="footer-heading">Connect</p>
-        <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">Instagram</a>
-        <a href="https://www.tiktok.com/@the_dudela_official" target="_blank" rel="noopener">TikTok</a>
-        <a href="https://www.youtube.com/@TheDudela-Official/videos" target="_blank" rel="noopener">YouTube</a>
-        <a href="/voicemail">Ask Another Dad</a>
-      </div>
-      <div>
-        <p class="footer-heading">Spit-Up Society</p>
-        <a href="/join/spit-up-society" class="footer-highlight">Join for $5/mo &rarr;</a>
-        <a href="/member/login">Member Login</a>
-        <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a>
+      <div class="footer-links">
+        <div>
+          <p class="footer-heading">Dudela</p>
+          <a href="/about">About</a>
+          <a href="/podcast">Podcast</a>
+          <a href="/resources">Resources</a>
+          <a href="/kit">Prep Kit</a>
+          <a href="/workshop">Workshop</a>
+          <a href="/merch">Merch</a>
+        </div>
+        <div>
+          <p class="footer-heading">Connect</p>
+          <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://www.tiktok.com/@the_dudela_official" target="_blank" rel="noopener">TikTok</a>
+          <a href="https://www.youtube.com/@TheDudela-Official/videos" target="_blank" rel="noopener">YouTube</a>
+          <a href="/voicemail">Ask Another Dad</a>
+        </div>
+        <div>
+          <p class="footer-heading">Spit-Up Society</p>
+          <a href="/join/spit-up-society" class="footer-highlight">Join for $5/mo &rarr;</a>
+          <a href="/member/login">Member Login</a>
+          <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a>
+        </div>
       </div>
     </div>
     <p class="footer-legal">
@@ -78,6 +80,16 @@
     padding: var(--space-6) 0 var(--space-4);
   }
   .footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  /* Newsletter card + link columns, as one block — this is what switches to
+     a side-by-side row at the wider breakpoint below. footer-legal (the
+     copyright/terms/credit line) is a separate sibling of this, NOT part of
+     it, so its border-top divider always spans the full footer width and
+     never gets pulled into the row alongside it. */
+  .footer-top {
     display: flex;
     flex-direction: column;
     gap: 2.5rem;
@@ -187,9 +199,11 @@
   /* Wide screens: sit the newsletter card and the three link columns side by
      side, spread across the full container width with space-between —
      rather than everything stacked in one left-hugging column with a big
-     empty void on the right (the complaint that started this). */
+     empty void on the right (the complaint that started this). Only
+     .footer-top switches to a row here — .footer-legal below it stays a
+     plain full-width block regardless of breakpoint. */
   @media (min-width: 900px) {
-    .footer-inner {
+    .footer-top {
       flex-direction: row;
       align-items: flex-start;
       justify-content: space-between;

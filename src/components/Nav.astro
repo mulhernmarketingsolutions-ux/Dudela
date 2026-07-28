@@ -12,12 +12,20 @@ const ICONS = {
 // pages are prerendered statically and have no per-request cookie access,
 // so they can't know auth state at build time — they fall back to the
 // always-safe "Member Login" default, same as before.
+//
+// When authed, this points at the dashboard, not logout — an earlier
+// version pointed the icon straight at /api/auth/logout, so clicking the
+// "I'm logged in" icon from anywhere on the site silently signed the
+// visitor out and dropped them back on the login screen, which is the
+// opposite of what a person expects from tapping their own account icon.
+// Logging out stays a deliberate, separate action (the "Log out" link on
+// the dashboard itself) rather than the single click target of the icon.
 export interface Props {
   isAuthed?: boolean;
 }
 const { isAuthed = false } = Astro.props;
-const accountHref = isAuthed ? "/api/auth/logout" : "/member/login";
-const accountLabel = isAuthed ? "Logout" : "Member Login";
+const accountHref = isAuthed ? "/member/dashboard" : "/member/login";
+const accountLabel = isAuthed ? "My Account" : "Member Login";
 ---
 <header class="nav" id="site-nav" data-server-authed={isAuthed ? "1" : "0"}>
   <div class="nav-backdrop" aria-hidden="true"></div>
@@ -503,18 +511,20 @@ const accountLabel = isAuthed ? "Logout" : "Member Login";
       .then((data) => {
         if (!data?.authed) return;
         nav.classList.add("is-authed");
-        const logoutHref = "/api/auth/logout";
+        // Dashboard, not logout — clicking your own account icon should take
+        // you into the member area, not silently sign you out.
+        const dashboardHref = "/member/dashboard";
         document.querySelectorAll<HTMLAnchorElement>(".member-link, .mobile-member-icon").forEach((el) => {
-          el.setAttribute("href", logoutHref);
-          el.setAttribute("aria-label", "Logout");
+          el.setAttribute("href", dashboardHref);
+          el.setAttribute("aria-label", "My Account");
         });
         const memberLink = document.querySelector(".member-link");
-        if (memberLink) memberLink.textContent = "Logout";
+        if (memberLink) memberLink.textContent = "My Account";
         const mobileBtn = document.querySelector<HTMLAnchorElement>(".mobile-member-btn");
         if (mobileBtn) {
-          mobileBtn.setAttribute("href", logoutHref);
+          mobileBtn.setAttribute("href", dashboardHref);
           const label = mobileBtn.querySelector("svg")?.outerHTML || "";
-          mobileBtn.innerHTML = `${label} Logout`;
+          mobileBtn.innerHTML = `${label} My Account`;
         }
       })
       .catch(() => {
