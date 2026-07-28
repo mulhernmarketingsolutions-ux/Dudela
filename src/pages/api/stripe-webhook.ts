@@ -45,8 +45,18 @@ const PRODUCTS: Record<
     price: "$38",
     isMerch: true,
   },
+  "hat-fistbump-blackorange": {
+    name: "Dudela Hat — Black/Orange Stitch, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
   "hat-fistbump-white": {
     name: "Dudela Hat — White, Fist Bump",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-fistbump-whiteblack": {
+    name: "Dudela Hat — White/Black Stitch, Fist Bump",
     price: "$38",
     isMerch: true,
   },
@@ -67,8 +77,18 @@ const PRODUCTS: Record<
     price: "$38",
     isMerch: true,
   },
+  "hat-upsidedown-blackorange": {
+    name: "Dudela Hat — Black/Orange Stitch, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
   "hat-upsidedown-white": {
     name: "Dudela Hat — White, Upside Down",
+    price: "$38",
+    isMerch: true,
+  },
+  "hat-upsidedown-whiteorange": {
+    name: "Dudela Hat — White/Orange Stitch, Upside Down",
     price: "$38",
     isMerch: true,
   },

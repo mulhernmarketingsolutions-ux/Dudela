@@ -42,11 +42,15 @@ export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: str
   // matching mockups turned up for both.
   "hat-fistbump-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-blackorange": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-fistbump-whiteblack": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-fistbump-green": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-blackorange": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  "hat-upsidedown-whiteorange": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
   "hat-upsidedown-blackbill": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
 };
 

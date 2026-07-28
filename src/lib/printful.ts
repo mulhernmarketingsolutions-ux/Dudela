@@ -100,18 +100,16 @@ async function findVariantId(env: PrintfulEnv, colorName: string): Promise<numbe
 // This is the single source of truth for "what hats can someone buy" — /merch reads
 // this list to render buy buttons, and the webhook reads it to build the Printful order.
 //
-// CONFIRMED LIST (per John, 2026-07-28) — both designs now have 4 colors
-// each, all embroidered, all backed by a real Printful mockup photo (see the
-// archive folders John dropped into public/images/ — thread colors aren't
-// guessed, they're read straight off those photos):
-//   Fist Bump:   Black (white thread), White (orange thread),
-//                Cream/Black-bill (black thread), Cream/Green-bill (orange thread)
-//   Upside Down: Cream/Green-bill (orange thread), Cream/Black-bill (black thread),
-//                Black (white thread), White (black thread)
-// "Orange" is Dudela's rust brand color (#a3492b). John's asked for 6 colors per
-// design (12 hats total) — only 4 per design have real matching mockups on file
-// right now (White, Black, Cream/Black-bill, Cream/Green-bill for both designs).
-// Drop mockups for 2 more colors and they slot in here the same way.
+// CONFIRMED LIST (per John, 2026-07-28) — both designs now have all 6 colors
+// John asked for (12 hats total), all embroidery, all backed by a real
+// Printful mockup photo. White and Black caps each come in two thread-color
+// variants; Cream only comes in one thread color per bill color (so it's
+// really "6 thread/cap combos," not 6 distinct cap colors):
+//   Fist Bump:   White/orange, White/black, Black/white, Black/orange,
+//                Cream+Black-bill/black, Cream+Green-bill/orange
+//   Upside Down: White/black, White/orange, Black/white, Black/orange,
+//                Cream+Black-bill/black, Cream+Green-bill/orange
+// "Orange" is Dudela's rust brand color (#a3492b).
 export interface HatConfig {
   slug: string; // matches the `product` value used in Stripe metadata / create-checkout-session.ts
   label: string;
@@ -177,24 +175,23 @@ function upsidedownVariant(
 }
 
 export const HAT_CATALOG: HatConfig[] = [
-  // Fist Bump — 4 colors
+  // Fist Bump — 6 colors/thread combos
   fistbumpVariant("hat-fistbump-cream", "Cream Hat, Black Bill — Fist Bump", "Cream, Black Bill", "#ece3d1", "Black/Natural", THREAD_BLACK),
   fistbumpVariant("hat-fistbump-black", "Black Hat — Fist Bump", "Black", "#141414", "Black", THREAD_WHITE),
+  fistbumpVariant("hat-fistbump-blackorange", "Black Hat, Orange Stitch — Fist Bump", "Black, Orange Stitch", "#141414", "Black", THREAD_ORANGE),
   fistbumpVariant("hat-fistbump-white", "White Hat — Fist Bump", "White", "#f5f5f0", "White", THREAD_ORANGE),
-  // New 2026-07-28 — real front+back mockups confirmed, same Dark Green/Natural
-  // catalog variant already used by hat-upsidedown-cream, orange thread to match.
+  fistbumpVariant("hat-fistbump-whiteblack", "White Hat, Black Stitch — Fist Bump", "White, Black Stitch", "#f5f5f0", "White", THREAD_BLACK),
   fistbumpVariant("hat-fistbump-green", "Cream Hat, Green Bill — Fist Bump", "Cream, Green Bill", "#3a4a32", "Dark Green/Natural", THREAD_ORANGE),
 
-  // Upside Down — 4 colors. Cream/Green-bill is the hero color — re-shot with
-  // the wordmark re-stitched in rust orange instead of green (the original
-  // green-on-green thread/bill combo didn't match), per John 2026-07-28.
+  // Upside Down — 6 colors/thread combos. Cream/Green-bill is the hero color —
+  // re-shot with the wordmark re-stitched in rust orange instead of green (the
+  // original green-on-green thread/bill combo didn't match), per John 2026-07-28.
   upsidedownVariant("hat-upsidedown-cream", "Cream Hat, Green Bill — Upside Down", "Cream, Green Bill", "#3a4a32", "Dark Green/Natural", THREAD_ORANGE),
   upsidedownVariant("hat-upsidedown-blackbill", "Cream Hat, Black Bill — Upside Down", "Cream, Black Bill", "#ece3d1", "Black/Natural", THREAD_BLACK),
   upsidedownVariant("hat-upsidedown-black", "Black Hat — Upside Down", "Black", "#141414", "Black", THREAD_WHITE),
-  // Re-added 2026-07-28 — real front+side mockups confirmed (previously only a
-  // lifestyle/model shot existed). Wordmark reads black-on-white in the mockup,
-  // not orange like the other newer colors.
+  upsidedownVariant("hat-upsidedown-blackorange", "Black Hat, Orange Stitch — Upside Down", "Black, Orange Stitch", "#141414", "Black", THREAD_ORANGE),
   upsidedownVariant("hat-upsidedown-white", "White Hat — Upside Down", "White", "#f5f5f0", "White", THREAD_BLACK),
+  upsidedownVariant("hat-upsidedown-whiteorange", "White Hat, Orange Stitch — Upside Down", "White, Orange Stitch", "#f5f5f0", "White", THREAD_ORANGE),
 ];
 
 export function getHatConfig(slug: string): HatConfig | undefined {
