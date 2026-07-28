@@ -132,17 +132,15 @@ const ICONS = {
           <!-- A real calendar badge instead of the generic video icon — gives
                the card an actual visual anchor so the join button doesn't
                read as the only thing in a very wide, mostly-empty box. -->
-          <div class="date-badge-wrap" aria-hidden="true">
-            <span class="countdown-chip">{countdownLabel}</span>
-            <div class="date-badge">
-              <span class="date-month">{nextCall.dateLabel.split(", ")[1]?.split(" ")[0] || "TBD"}</span>
-              <span class="date-day">{nextCall.dateLabel.match(/\d+/)?.[0] || "?"}</span>
-              <span class="date-weekday">{nextCall.dateLabel.split(",")[0]}</span>
-            </div>
+          <div class="date-badge" aria-hidden="true">
+            <span class="date-month">{nextCall.dateLabel.split(", ")[1]?.split(" ")[0] || "TBD"}</span>
+            <span class="date-day">{nextCall.dateLabel.match(/\d+/)?.[0] || "?"}</span>
+            <span class="date-weekday">{nextCall.dateLabel.split(",")[0]}</span>
           </div>
           <div class="featured-content">
             <p class="featured-eyebrow">
               <span set:html={ICONS.video} /> Next Live Q&amp;A
+              <span class="countdown-inline">{countdownLabel}</span>
             </p>
             <h3>{nextCall.dateLabel}</h3>
             <p class="call-when">{nextCall.timeLabel}</p>
@@ -157,8 +155,8 @@ const ICONS = {
       <a href="/member/womb-watch" class="card">
         <div class="card-icon" set:html={ICONS.mic} />
         <h3>Womb Watch</h3>
-        <p>Short video check-ins with Mike, week by week — what's actually going on with him, Abigail, and the pregnancy.</p>
-        <span class="card-cta">Watch the latest →</span>
+        <p>Coming soon — one of our own community dads gives us a behind-the-scenes look at his pregnancy journey, week by week.</p>
+        <span class="card-cta">Take a look →</span>
       </a>
 
       <a href="/member/community" class="card">
@@ -399,11 +397,8 @@ const ICONS = {
   /* A small torn-calendar-page badge — real visual content instead of a
      generic icon, so the wide featured card reads as "a scheduled event"
      rather than just a big empty box around a button. */
-  .date-badge-wrap {
-    position: relative;
-    flex-shrink: 0;
-  }
   .date-badge {
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -413,26 +408,21 @@ const ICONS = {
     background: var(--cream-100);
     box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.4);
   }
-  /* Little "pinned note" countdown, tilted like it was stuck on top of the
-     calendar page — ties the featured card back to "how soon is this,
-     actually" without a separate tick-tock timer or a whole new card. */
-  .countdown-chip {
-    position: absolute;
-    top: -0.6rem;
-    right: -0.55rem;
-    z-index: 1;
+  /* Countdown as plain inline text next to the eyebrow, not a pinned/rotated
+     chip — a previous version absolutely-positioned it on the badge corner
+     and it ended up overlapping the "AUGUST" label instead of sitting
+     cleanly next to it. Inline flow can't overlap anything and reflows fine
+     on mobile regardless of how long the label text is ("Today" vs
+     "In 23 days"). */
+  .countdown-inline {
     background: var(--amber-500);
     color: var(--forest-900);
-    font-family: var(--font-label);
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     font-weight: 800;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    padding: 0.28rem 0.5rem;
+    letter-spacing: 0.02em;
+    padding: 0.18rem 0.5rem;
     border-radius: 999px;
-    box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.5);
-    transform: rotate(6deg);
+    white-space: nowrap;
   }
   .date-month {
     display: block;

@@ -7,8 +7,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import { countMerchOrders } from "../lib/db";
+import { getAuthedMember } from "../lib/auth";
 
 const env = (Astro.locals as any).runtime.env;
+
+// Nudge (not a requirement) for Spit-Up Society members to log in before
+// buying — that's what makes create-checkout-session.ts attach the purchase
+// to their existing Stripe customer so it shows up in their billing portal.
+// Checkout stays open to everyone logged out or not; requiring login would
+// lock out anyone who isn't already a paying member, which is the opposite
+// of what a merch drop is for.
+const member = await getAuthedMember(Astro.cookies, env);
 
 // Source of truth for what's buyable lives in lib/printful.ts (HAT_CATALOG) — this
 // mirrors it, grouped by design so the page can show one card per design with a
@@ -16,9 +25,12 @@ const env = (Astro.locals as any).runtime.env;
 // and matches how John actually thinks about these: 2 designs, pick your color).
 //
 // Per John: The Classic (the arched, flipped wordmark) is the original design —
-// Fist Bump is the newer one. Dropped the cream/green-bill colorway from both
-// designs — the greens didn't match, and it's off his real Printful list — down
-// to 3 colors each.
+// Fist Bump is the newer one. The original cream/green-bill Classic mockup
+// had its wordmark stitched in green thread, which clashed against the green
+// bill — John fixed it by re-stitching in rust orange (same accent used on
+// White/Cream-Black-bill) and re-shot it front + a 3/4 angle side view. It's
+// the hero color for The Classic now (shown by default) — Fist Bump doesn't
+// have an equivalent green colorway back yet, so it stays at 3 colors.
 //
 // missingLabel: each design has its own real-photo gap right now (see comment
 // on each color below for exactly what's missing) — shown as an honest
@@ -30,6 +42,13 @@ const DESIGNS = [
     tagline: "The one that started it all — DUDELA, flipped and arched, reading right back at you.",
     missingLabel: "Side view coming soon",
     colors: [
+      {
+        slug: "hat-upsidedown-cream",
+        name: "Cream, Green Bill",
+        swatch: "#3a4a32",
+        description: "The hero color. Cream crown, dark green bill, wordmark stitched in rust orange.",
+        images: ["/images/hat-upsidedown-cream-front.png", "/images/hat-upsidedown-cream-side.png"],
+      },
       {
         slug: "hat-upsidedown-blackbill",
         name: "Cream, Black Bill",
@@ -61,13 +80,16 @@ const DESIGNS = [
     key: "fistbump",
     title: "The Rookie",
     tagline: "The new one — a fist bump up front, DUDELA stitched across the back.",
-    missingLabel: "Back view coming soon",
+    missingLabel: "Detail shot coming soon",
+    // Per John: switching swatches shouldn't feel like a whole new photoshoot
+    // each time — "I just want to see the colors change." That means every
+    // color needs the SAME pose in the same slot. The close-up "product
+    // details" shot on Black (front + a tight embroidery close-up on the
+    // back) is the reference pose now — Cream and White are left at front-
+    // only until they have a matching close-up, rather than mixing that in
+    // with the old wide flat-back photos.
     colors: [
       {
-        // Front photo's good; the back render on file is an extreme close-up
-        // crop (not a full-hat shot like its siblings), so it's left off
-        // rather than shown broken. Swap in a proper flat back shot and this
-        // fills in automatically.
         slug: "hat-fistbump-cream",
         name: "Cream, Black Bill",
         swatch: "#ece3d1",
@@ -79,14 +101,14 @@ const DESIGNS = [
         name: "Black",
         swatch: "#141414",
         description: "Blacked out, stitched in white so it still throws a punch.",
-        images: ["/images/hat-fistbump-black-front.png", "/images/hat-fistbump-black-back.png"],
+        images: ["/images/hat-fistbump-black-front.png", "/images/hat-fistbump-black-detail.png"],
       },
       {
         slug: "hat-fistbump-white",
         name: "White",
         swatch: "#f5f5f0",
         description: "Clean and simple, fist bump stitched in rust orange.",
-        images: ["/images/hat-fistbump-white-front.png", "/images/hat-fistbump-white-back.png"],
+        images: ["/images/hat-fistbump-white-front.png"],
       },
     ],
   },
@@ -106,17 +128,24 @@ const designs = await Promise.all(
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Two designs, three colors each, $38, free shipping. Made to order and shipped straight to your door.">
-  <Nav />
+<BaseLayout title="Dudela Hats — Merch" description="Two designs, $38, free shipping. Made to order and shipped straight to your door.">
+  <Nav isAuthed={!!member} />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Merch</p>
       <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Two designs, three colors each, $38, free shipping. Every hat is made to order and
+        Two designs, several colors each, $38, free shipping. Every hat is made to order and
         shipped straight to your door — no waiting on a batch.
       </p>
+
+      {!member && (
+        <p class="login-nudge">
+          Already a Spit-Up Society member? <a href="/member/login">Log in first</a> so this
+          purchase shows up in your billing portal too.
+        </p>
+      )}
 
       {canceled && (
         <p class="notice">Checkout was canceled — nothing was charged. Pick a color below whenever you're ready.</p>
@@ -285,6 +314,16 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-size: 0.9rem;
     max-width: 52ch;
   }
+  .login-nudge {
+    margin-top: 1.25rem;
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+    max-width: 52ch;
+  }
+  .login-nudge a {
+    color: var(--amber-500);
+    font-weight: 600;
+  }
 
   .colors {
     padding: var(--space-6) 0;
@@ -365,7 +404,16 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     padding: 0.4rem 0.6rem;
     border-radius: var(--radius-sm);
   }
-  .photo-pair {
+  /* :global() on .photo-pair and its img — the swatch-click script rebuilds
+     this markup client-side via innerHTML (see the <script> below), and
+     Astro's scoped-style hashing only touches elements present in the
+     compiled template at build time. A plain (non-global) rule here would
+     style the server-rendered default color's pair correctly but silently
+     stop applying the instant someone clicked a different color, since that
+     new .photo-pair div never gets the scoped data-astro-cid attribute. That
+     was the "clicking a color goes to one big broken image" bug — the grid
+     and aspect-ratio just weren't being applied to the swapped-in markup. */
+  :global(.photo-pair) {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
@@ -377,7 +425,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     align-items: center;
     justify-content: center;
   }
-  .photo-pair img {
+  :global(.photo-pair img) {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;

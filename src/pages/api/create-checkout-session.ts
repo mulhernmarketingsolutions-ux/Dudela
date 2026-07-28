@@ -40,20 +40,23 @@ const PRODUCTS: Record<
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
   },
-  // The 6 buyable hats (2 designs x 3 colors) — see lib/printful.ts HAT_CATALOG for
-  // the design/color/thread config each of these slugs maps to. Dropped the
-  // cream/green-bill colorway from both designs per John (greens didn't match,
-  // and it's off his real Printful list) — down from 8 to 6. All six share one
-  // $38 Stripe price (same physical cost regardless of design/color), so they all
-  // point at the same price env var rather than needing separate Stripe Price objects.
+  // The 7 buyable hats (Fist Bump x 3 colors, Upside Down x 4) — see
+  // lib/printful.ts HAT_CATALOG for the design/color/thread config each of
+  // these slugs maps to. Cream/green-bill came back on Upside Down as the
+  // hero color once John fixed the mismatched thread (now rust orange, not
+  // green) — Fist Bump doesn't have an equivalent color back yet. All seven
+  // share one $38 Stripe price (same physical cost regardless of design/
+  // color), so they all point at the same price env var rather than needing
+  // separate Stripe Price objects.
   ...Object.fromEntries(
     [
       "hat-fistbump-cream",
       "hat-fistbump-black",
       "hat-fistbump-white",
+      "hat-upsidedown-cream",
+      "hat-upsidedown-blackbill",
       "hat-upsidedown-black",
       "hat-upsidedown-white",
-      "hat-upsidedown-blackbill",
     ].map((slug) => [
       slug,
       {
