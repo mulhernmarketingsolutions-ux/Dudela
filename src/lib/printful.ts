@@ -236,7 +236,9 @@ function buildFiles(hat: HatConfig) {
     files.push({
       type: "embroidery_front_large",
       url: hat.frontFileUrl,
-      options: [{ id: "thread_colors_front", value: [hat.frontColor] }],
+      // Option id must match the placement type exactly (embroidery_front_large ->
+      // thread_colors_front_large) — "thread_colors_front" was rejected as missing.
+      options: [{ id: "thread_colors_front_large", value: [hat.frontColor] }],
     });
     if (hat.backFileUrl) {
       files.push({
