@@ -128,7 +128,16 @@ export interface HatConfig {
 // Thread colors, read directly off the real Printful mockups (not guessed).
 const THREAD_BLACK = "#000000";
 const THREAD_WHITE = "#FFFFFF";
-const THREAD_ORANGE = "#a3492b"; // Dudela rust — used on the newer solid/cross-combo colors
+// Dudela rust — used on the newer solid/cross-combo colors.
+// NOTE: was "#a3492b" (Dudela's exact brand rust) but Printful's embroidery thread
+// palette for the Otto 31-069 doesn't carry that hex — confirmed via a live 400
+// response from the Orders API (2026-07-31): "thread_colors_back option is missing
+// or incorrect! Allowed values: #FFFFFF, #000000, #96A1A8, #A67843, #FFCC00,
+// #E25C27, #CC3366, #CC3333, #660000, #333366, #005397, #3399FF, #6B5294,
+// #01784E, #7BA35A". #E25C27 is the closest allowed thread color and is nearly
+// identical to Dudela's actual brand amber (#E27D25) — swapped to that. Worth a
+// quick visual check against a real Printful mockup before this goes live.
+const THREAD_ORANGE = "#E25C27";
 
 function fistbumpVariant(
   slug: string,
@@ -210,24 +219,30 @@ export interface PrintfulRecipient {
 }
 
 // Builds the `files` array for one order item, keyed off the hat's technique.
-// Embroidery placements use "embroidery_front"/"embroidery_back" placement keys and
-// carry a thread-color option; DTF/print placements use plain "front" and have no
-// thread option (ink color is baked into the artwork file itself, so frontColor above
-// is informational/for reference — DTF designs should already be pre-colored PNGs).
+// Embroidery placements use "embroidery_front_large"/"embroidery_back" placement keys
+// (confirmed against the live Otto 31-069 product — plain "embroidery_front" is
+// rejected with "Incorrect file type... Allowed file types for this product:
+// front_dtf_hat, embroidery_front_large, embroidery_back, embroidery_left,
+// embroidery_right, mockup") and carry a placement-specific thread-color option
+// ("thread_colors_front"/"thread_colors_back" — a shared generic "thread_colors" id
+// is rejected as missing/incorrect per placement). DTF/print placements use plain
+// "front" and have no thread option (ink color is baked into the artwork file
+// itself, so frontColor above is informational/for reference — DTF designs should
+// already be pre-colored PNGs).
 function buildFiles(hat: HatConfig) {
   const files: Array<Record<string, unknown>> = [];
 
   if (hat.technique === "embroidery") {
     files.push({
-      type: "embroidery_front",
+      type: "embroidery_front_large",
       url: hat.frontFileUrl,
-      options: [{ id: "thread_colors", value: [hat.frontColor] }],
+      options: [{ id: "thread_colors_front", value: [hat.frontColor] }],
     });
     if (hat.backFileUrl) {
       files.push({
         type: "embroidery_back",
         url: hat.backFileUrl,
-        options: [{ id: "thread_colors", value: [hat.backColor || hat.frontColor] }],
+        options: [{ id: "thread_colors_back", value: [hat.backColor || hat.frontColor] }],
       });
     }
   } else {
@@ -241,11 +256,13 @@ function buildFiles(hat: HatConfig) {
 // checkout.session.completed for merch products — this is what makes the whole thing
 // "Printful does everything": no manual packing/shipping on John's end.
 //
-// NOTE: the exact shape of the embroidery `options` / thread_colors field should be
-// confirmed against a real (or Printful's sandbox/confirmation-mode) order before this
-// goes fully live — Printful's docs describe the field but this hasn't been test-fired
-// against the live API yet. Recommend placing one real test order per hat and checking
-// the resulting mockup/thread color before turning off manual review.
+// NOTE: test-fired against the live Orders API on 2026-07-31 via John's first real
+// hat purchase (Fist Bump, Cream/Green Bill) — it failed with a 400 (wrong embroidery
+// placement type + wrong thread-color option ids + an out-of-palette thread hex, all
+// fixed in buildFiles/THREAD_ORANGE above). Still recommend placing one real test
+// order per remaining color/design combo and checking the resulting mockup/thread
+// color before turning off manual review — this fix has only been verified for the
+// Fist Bump embroidery_front_large + embroidery_back combination.
 export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: { hatSlug: string; recipient: PrintfulRecipient; externalId: string }
