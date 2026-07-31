@@ -351,23 +351,56 @@ export async function createPrintfulOrder(
     },
     body: JSON.stringify(body),
   });
-  if (!createRes.ok) {
-    throw new Error(`Printful order create failed: ${createRes.status} ${await createRes.text()}`);
-  }
-  const created = (await createRes.json()) as { data: { id: number; status: string } };
 
-  const confirmRes = await fetch(`${PRINTFUL_API}/v2/orders/${created.data.id}/confirmation`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
-  });
-  if (!confirmRes.ok) {
-    // The order does exist at this point (just stuck in draft) — surface its id in the
-    // error so it's easy to find and confirm manually in Printful's dashboard instead
-    // of it silently sitting there unfulfilled.
-    throw new Error(
-      `Printful order ${created.data.id} was created but confirmation failed: ${confirmRes.status} ${await confirmRes.text()}`
-    );
+  let orderId: number;
+  if (createRes.ok) {
+    const created = (await createRes.json()) as { data: { id: number; status: string } };
+    orderId = created.data.id;
+  } else {
+    const errText = await createRes.text();
+    // A retried webhook (Stripe resend, or us retrying after a previous attempt that
+    // created the order but then failed to confirm it — see the retry loop below)
+    // reuses the same externalId, so the same shortExternalId hash. Printful rejects
+    // a second create with that external_id as a duplicate; look the existing draft
+    // order up instead of erroring out and leaving it orphaned and unconfirmed.
+    if (createRes.status === 400 && /external_id/i.test(errText)) {
+      const shortId = body.external_id;
+      const lookupRes = await fetch(`${PRINTFUL_API}/v2/orders/@${shortId}`, {
+        headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+      });
+      if (!lookupRes.ok) {
+        throw new Error(
+          `Printful order create failed (${createRes.status}: ${errText}) and the existing-order lookup also failed: ${lookupRes.status} ${await lookupRes.text()}`
+        );
+      }
+      const existing = (await lookupRes.json()) as { data: { id: number; status: string } };
+      orderId = existing.data.id;
+    } else {
+      throw new Error(`Printful order create failed: ${createRes.status} ${errText}`);
+    }
   }
-  const confirmed = (await confirmRes.json()) as { data: { id: number; status: string } };
-  return confirmed.data;
+
+  // Printful calculates shipping/costs asynchronously right after an order is
+  // created; confirming before that finishes is rejected with "Cost calculations
+  // still running, try again after costs have been calculated." (confirmed live,
+  // 2026-07-31, on real order 169501228). Retry with backoff instead of failing —
+  // this is normally quick, but give it a few tries before giving up.
+  let lastErr = "";
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 750 * attempt));
+    const confirmRes = await fetch(`${PRINTFUL_API}/v2/orders/${orderId}/confirmation`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+    });
+    if (confirmRes.ok) {
+      const confirmed = (await confirmRes.json()) as { data: { id: number; status: string } };
+      return confirmed.data;
+    }
+    lastErr = `${confirmRes.status} ${await confirmRes.text()}`;
+    if (!/cost calculations/i.test(lastErr)) break; // a different error — don't keep retrying blindly
+  }
+  // The order does exist at this point (just stuck in draft) — surface its id in the
+  // error so it's easy to find and confirm manually in Printful's dashboard instead of
+  // it silently sitting there unfulfilled.
+  throw new Error(`Printful order ${orderId} was created but confirmation failed after retries: ${lastErr}`);
 }
