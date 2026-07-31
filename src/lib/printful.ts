@@ -224,11 +224,23 @@ export interface PrintfulRecipient {
 // rejected with "Incorrect file type... Allowed file types for this product:
 // front_dtf_hat, embroidery_front_large, embroidery_back, embroidery_left,
 // embroidery_right, mockup") and carry a placement-specific thread-color option
-// ("thread_colors_front"/"thread_colors_back" — a shared generic "thread_colors" id
-// is rejected as missing/incorrect per placement). DTF/print placements use plain
-// "front" and have no thread option (ink color is baked into the artwork file
-// itself, so frontColor above is informational/for reference — DTF designs should
-// already be pre-colored PNGs).
+// ("thread_colors_front_large"/"thread_colors_back" — a shared generic "thread_colors"
+// id is rejected as missing/incorrect per placement).
+//
+// Root cause of the "thread_colors_front_large, thread_colors_back missing or
+// incorrect" 400 (found 2026-07-31 by reading this exact product's live option
+// schema off printful.com's own product page, via its Apollo GraphQL cache —
+// CatalogProduct id 952): the front placement's thread_colors_front_large option
+// is only valid/required when the file ALSO carries an explicit
+// "embroidery_type": "flat" option (Printful's schema: thread_colors_front_large's
+// `required` condition is `{fileTypes:[embroidery_front_large], options:
+// {embroidery_type:[flat]}}`) — the catalog page shows "flat" as embroidery_type's
+// default, but the Orders API does not appear to apply that default on its own, so
+// omitting it entirely made Printful treat the front (and, in the same validation
+// pass, the back) thread-color option as unsatisfied. Adding it explicitly is the
+// fix. DTF/print placements use plain "front" and have no thread option (ink color
+// is baked into the artwork file itself, so frontColor above is informational/for
+// reference — DTF designs should already be pre-colored PNGs).
 function buildFiles(hat: HatConfig) {
   const files: Array<Record<string, unknown>> = [];
 
@@ -236,9 +248,10 @@ function buildFiles(hat: HatConfig) {
     files.push({
       type: "embroidery_front_large",
       url: hat.frontFileUrl,
-      // Option id must match the placement type exactly (embroidery_front_large ->
-      // thread_colors_front_large) — "thread_colors_front" was rejected as missing.
-      options: [{ id: "thread_colors_front_large", value: [hat.frontColor] }],
+      options: [
+        { id: "embroidery_type", value: "flat" },
+        { id: "thread_colors_front_large", value: [hat.frontColor] },
+      ],
     });
     if (hat.backFileUrl) {
       files.push({
@@ -259,9 +272,10 @@ function buildFiles(hat: HatConfig) {
 // "Printful does everything": no manual packing/shipping on John's end.
 //
 // NOTE: test-fired against the live Orders API on 2026-07-31 via John's first real
-// hat purchase (Fist Bump, Cream/Green Bill) — it failed with a 400 (wrong embroidery
-// placement type + wrong thread-color option ids + an out-of-palette thread hex, all
-// fixed in buildFiles/THREAD_ORANGE above). Still recommend placing one real test
+// hat purchase (Fist Bump, Cream/Green Bill) — it took 3 rounds to get a clean 400-free
+// request: wrong embroidery placement type, wrong thread-color option ids, an
+// out-of-palette thread hex, and finally a missing required "embroidery_type" option
+// (all fixed in buildFiles/THREAD_ORANGE above). Still recommend placing one real test
 // order per remaining color/design combo and checking the resulting mockup/thread
 // color before turning off manual review — this fix has only been verified for the
 // Fist Bump embroidery_front_large + embroidery_back combination.
