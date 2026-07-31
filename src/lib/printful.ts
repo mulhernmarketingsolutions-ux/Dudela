@@ -1,4 +1,4 @@
-// Thin wrapper around Printful's REST API (v1) — same lightweight fetch pattern as
+// Thin wrapper around Printful's REST API — same lightweight fetch pattern as
 // lib/stripe.ts / lib/loops.ts / lib/google.ts. No SDK.
 //
 // Required Cloudflare secret: PRINTFUL_API_KEY (private token, scoped to the
@@ -12,6 +12,12 @@
 // via the Orders API with the right design file + thread color for that variant.
 // No dashboard product duplication needed — HAT_CATALOG below is the only place new
 // colors/designs get added.
+//
+// Catalog reads (product id / variant lookup) use v1 endpoints — those are public,
+// unauthenticated-for-reads, and still perfectly fine. Order creation uses v2
+// (/v2/orders + /v2/orders/{id}/confirmation), not v1 (/orders). This split is
+// deliberate, not an oversight: see the note above createPrintfulOrder for why v1
+// order creation was abandoned entirely after burning 4 rounds of live 400s against it.
 
 export interface PrintfulEnv {
   PRINTFUL_API_KEY: string;
@@ -218,77 +224,91 @@ export interface PrintfulRecipient {
   email?: string;
 }
 
-// Builds the `files` array for one order item, keyed off the hat's technique.
-// Embroidery placements use "embroidery_front_large"/"embroidery_back" placement keys
-// (confirmed against the live Otto 31-069 product — plain "embroidery_front" is
-// rejected with "Incorrect file type... Allowed file types for this product:
-// front_dtf_hat, embroidery_front_large, embroidery_back, embroidery_left,
-// embroidery_right, mockup") and carry a placement-specific thread-color option
-// ("thread_colors_front_large"/"thread_colors_back" — a shared generic "thread_colors"
-// id is rejected as missing/incorrect per placement).
+// Builds the v2 `placements` array for one order item, keyed off the hat's technique.
 //
-// Root cause of the "thread_colors_front_large, thread_colors_back missing or
-// incorrect" 400 (found 2026-07-31 by reading this exact product's live option
-// schema off printful.com's own product page, via its Apollo GraphQL cache —
-// CatalogProduct id 952): the front placement's thread_colors_front_large option
-// is only valid/required when the file ALSO carries an explicit
-// "embroidery_type": "flat" option (Printful's schema: thread_colors_front_large's
-// `required` condition is `{fileTypes:[embroidery_front_large], options:
-// {embroidery_type:[flat]}}`) — the catalog page shows "flat" as embroidery_type's
-// default, but the Orders API does not appear to apply that default on its own, so
-// omitting it entirely made Printful treat the front (and, in the same validation
-// pass, the back) thread-color option as unsatisfied. Adding it explicitly is the
-// fix. DTF/print placements use plain "front" and have no thread option (ink color
-// is baked into the artwork file itself, so frontColor above is informational/for
-// reference — DTF designs should already be pre-colored PNGs).
-function buildFiles(hat: HatConfig) {
-  const files: Array<Record<string, unknown>> = [];
-
-  if (hat.technique === "embroidery") {
-    files.push({
-      type: "embroidery_front_large",
-      url: hat.frontFileUrl,
-      options: [{ id: "thread_colors_front_large", value: [hat.frontColor] }],
-    });
-    if (hat.backFileUrl) {
-      files.push({
-        type: "embroidery_back",
-        url: hat.backFileUrl,
-        options: [{ id: "thread_colors_back", value: [hat.backColor || hat.frontColor] }],
-      });
-    }
-  } else {
-    files.push({ type: "front", url: hat.frontFileUrl });
+// This is v2 shape, not v1 — that distinction is the whole story here. v1's Orders API
+// (POST /orders) takes a flat `files: [{type, url, options: [{id, value}]}]` array, and
+// its own error responses reported placement-specific option ids like
+// "thread_colors_front_large" / "thread_colors_back" as what it wanted. Every fix
+// attempt on 2026-07-31 supplied exactly those ids, in every structurally plausible
+// location (nested in the file, nested in a sibling item-level `options` array) — all
+// four attempts got back the identical "Following options are missing or incorrect:
+// thread_colors_front_large, thread_colors_back!" 400, unchanged. The ids were never
+// the problem: v1's validator for this catalog product (Otto 31-069, id 952) simply
+// doesn't work, full stop, regardless of what's sent — confirmed by testing the
+// deployed source per request via Cloudflare's scriptVersion field in the logs, so
+// this wasn't a stale-deploy illusion either.
+//
+// Printful's real, current API is v2, which uses an entirely different design model:
+// each `placement` (e.g. "embroidery_front_large") carries its own `layers`, and each
+// file layer's thread-color option is just "thread_colors" (no placement suffix — the
+// placement is already scoped one level up, unlike v1's flat namespace where every
+// option id had to encode its own placement). Confirmed against Printful's own
+// published v2 API docs (developers.printful.com/docs/v2-preview), which show this
+// exact shape — `layers: [{ type: "file", url, layer_options: [{ name: "thread_colors",
+// value: [...] }] }]` — in their embroidery example. Placement names
+// ("embroidery_front_large" / "embroidery_back") carry over unchanged from v1/the
+// catalog schema. DTF/print placements use a plain "front" placement with no
+// layer_options (ink color is baked into the artwork file itself, so frontColor above
+// is informational/for reference — DTF designs should already be pre-colored PNGs).
+function buildPlacements(hat: HatConfig) {
+  if (hat.technique !== "embroidery") {
+    return [
+      {
+        placement: "front",
+        technique: "dtf",
+        layers: [{ type: "file", url: hat.frontFileUrl }],
+      },
+    ];
   }
 
-  return files;
-}
+  const placements: Array<Record<string, unknown>> = [
+    {
+      placement: "embroidery_front_large",
+      technique: "embroidery",
+      layers: [
+        {
+          type: "file",
+          url: hat.frontFileUrl,
+          layer_options: [{ name: "thread_colors", value: [hat.frontColor] }],
+        },
+      ],
+    },
+  ];
 
-// "embroidery_type" (flat / 3D puff / partial 3D puff) is a technique choice for the
-// whole item, not a per-placement one — it lives in the item's own top-level `options`
-// array, as a sibling to `files`, not nested inside one file's options. Confirmed off
-// this exact product's live option schema (Otto 31-069, catalog id 952, read via
-// printful.com's own product-page GraphQL cache): thread_colors_front_large's
-// `required` condition needs embroidery_type="flat" to be set, and "flat" (no upcharge)
-// matches every hat in HAT_CATALOG since none opt into the paid 3D puff options.
-function buildItemOptions(hat: HatConfig) {
-  return hat.technique === "embroidery" ? [{ id: "embroidery_type", value: "flat" }] : [];
+  if (hat.backFileUrl) {
+    placements.push({
+      placement: "embroidery_back",
+      technique: "embroidery",
+      layers: [
+        {
+          type: "file",
+          url: hat.backFileUrl,
+          layer_options: [{ name: "thread_colors", value: [hat.backColor || hat.frontColor] }],
+        },
+      ],
+    });
+  }
+
+  return placements;
 }
 
 // Places a real order with Printful for one hat. Called from the Stripe webhook on
 // checkout.session.completed for merch products — this is what makes the whole thing
 // "Printful does everything": no manual packing/shipping on John's end.
 //
-// NOTE: test-fired against the live Orders API on 2026-07-31 via John's first real
-// hat purchase (Fist Bump, Cream/Green Bill) — took several rounds to get a clean
-// 400-free request: wrong embroidery placement type, wrong thread-color option ids, an
-// out-of-palette thread hex, and a missing required "embroidery_type" option that
-// turned out to need to live at the item level (buildItemOptions), not nested inside
-// the front file's own options like the thread-color ones (all fixed in
-// buildFiles/buildItemOptions/THREAD_ORANGE above). Still recommend placing one real
-// test order per remaining color/design combo and checking the resulting
-// mockup/thread color before turning off manual review — this fix has only been
-// verified for the Fist Bump embroidery_front_large + embroidery_back combination.
+// NOTE: test-fired against the live Orders API on 2026-07-31 via John's first real hat
+// purchase (Fist Bump, Cream/Green Bill). Rounds 1-4 (all against v1's POST /orders)
+// never got past a 400 — see the comment above buildPlacements for the full story on
+// why v1 was abandoned. Round 5 switched to v2 (POST /v2/orders, then POST
+// /v2/orders/{id}/confirmation), matching the request shape straight off Printful's
+// own published v2 docs. Unlike v1, a v2 order is always created in "draft" status —
+// it does NOT start production on its own — so this now does a second call to confirm
+// it immediately after creating it, which is what actually kicks off fulfillment.
+// Still recommend placing one real test order per remaining color/design combo and
+// checking the resulting mockup/thread color before turning off manual review — this
+// has only been verified end-to-end for the Fist Bump embroidery_front_large +
+// embroidery_back combination.
 export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: { hatSlug: string; recipient: PrintfulRecipient; externalId: string }
@@ -301,17 +321,17 @@ export async function createPrintfulOrder(
   const body = {
     external_id: opts.externalId, // Stripe checkout session id — keeps this idempotent-ish and traceable
     recipient: opts.recipient,
-    items: [
+    order_items: [
       {
-        variant_id: variantId,
+        source: "catalog",
+        catalog_variant_id: variantId,
         quantity: 1,
-        files: buildFiles(hat),
-        options: buildItemOptions(hat),
+        placements: buildPlacements(hat),
       },
     ],
   };
 
-  const res = await fetch(`${PRINTFUL_API}/orders`, {
+  const createRes = await fetch(`${PRINTFUL_API}/v2/orders`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.PRINTFUL_API_KEY}`,
@@ -319,10 +339,23 @@ export async function createPrintfulOrder(
     },
     body: JSON.stringify(body),
   });
-
-  if (!res.ok) {
-    throw new Error(`Printful order create failed: ${res.status} ${await res.text()}`);
+  if (!createRes.ok) {
+    throw new Error(`Printful order create failed: ${createRes.status} ${await createRes.text()}`);
   }
-  const data = (await res.json()) as { result: { id: number; status: string } };
-  return data.result;
+  const created = (await createRes.json()) as { data: { id: number; status: string } };
+
+  const confirmRes = await fetch(`${PRINTFUL_API}/v2/orders/${created.data.id}/confirmation`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+  });
+  if (!confirmRes.ok) {
+    // The order does exist at this point (just stuck in draft) — surface its id in the
+    // error so it's easy to find and confirm manually in Printful's dashboard instead
+    // of it silently sitting there unfulfilled.
+    throw new Error(
+      `Printful order ${created.data.id} was created but confirmation failed: ${confirmRes.status} ${await confirmRes.text()}`
+    );
+  }
+  const confirmed = (await confirmRes.json()) as { data: { id: number; status: string } };
+  return confirmed.data;
 }
