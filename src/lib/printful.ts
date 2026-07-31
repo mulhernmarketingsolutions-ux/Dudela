@@ -309,6 +309,18 @@ function buildPlacements(hat: HatConfig) {
 // checking the resulting mockup/thread color before turning off manual review — this
 // has only been verified end-to-end for the Fist Bump embroidery_front_large +
 // embroidery_back combination.
+// v2 caps external_id at 32 characters — Stripe checkout session ids ("cs_live_...")
+// run to 66+, which v2 rejects outright ("External ID validation error. Maximum
+// external_id string length is 32, provided external_id has 66 characters"; v1 had
+// no such limit, which is why this wasn't needed before the v2 migration). Hashing
+// down to a fixed 32-char hex digest keeps it deterministic per session id (so this
+// stays idempotent-ish/traceable, same intent as before) without truncating into a
+// shared prefix that could theoretically collide.
+async function shortExternalId(raw: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
+
 export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: { hatSlug: string; recipient: PrintfulRecipient; externalId: string }
@@ -319,7 +331,7 @@ export async function createPrintfulOrder(
   const variantId = await findVariantId(env, hat.printfulColor);
 
   const body = {
-    external_id: opts.externalId, // Stripe checkout session id — keeps this idempotent-ish and traceable
+    external_id: await shortExternalId(opts.externalId), // see shortExternalId — v2 caps this at 32 chars
     recipient: opts.recipient,
     order_items: [
       {
