@@ -248,10 +248,7 @@ function buildFiles(hat: HatConfig) {
     files.push({
       type: "embroidery_front_large",
       url: hat.frontFileUrl,
-      options: [
-        { id: "embroidery_type", value: "flat" },
-        { id: "thread_colors_front_large", value: [hat.frontColor] },
-      ],
+      options: [{ id: "thread_colors_front_large", value: [hat.frontColor] }],
     });
     if (hat.backFileUrl) {
       files.push({
@@ -267,18 +264,31 @@ function buildFiles(hat: HatConfig) {
   return files;
 }
 
+// "embroidery_type" (flat / 3D puff / partial 3D puff) is a technique choice for the
+// whole item, not a per-placement one — it lives in the item's own top-level `options`
+// array, as a sibling to `files`, not nested inside one file's options. Confirmed off
+// this exact product's live option schema (Otto 31-069, catalog id 952, read via
+// printful.com's own product-page GraphQL cache): thread_colors_front_large's
+// `required` condition needs embroidery_type="flat" to be set, and "flat" (no upcharge)
+// matches every hat in HAT_CATALOG since none opt into the paid 3D puff options.
+function buildItemOptions(hat: HatConfig) {
+  return hat.technique === "embroidery" ? [{ id: "embroidery_type", value: "flat" }] : [];
+}
+
 // Places a real order with Printful for one hat. Called from the Stripe webhook on
 // checkout.session.completed for merch products — this is what makes the whole thing
 // "Printful does everything": no manual packing/shipping on John's end.
 //
 // NOTE: test-fired against the live Orders API on 2026-07-31 via John's first real
-// hat purchase (Fist Bump, Cream/Green Bill) — it took 3 rounds to get a clean 400-free
-// request: wrong embroidery placement type, wrong thread-color option ids, an
-// out-of-palette thread hex, and finally a missing required "embroidery_type" option
-// (all fixed in buildFiles/THREAD_ORANGE above). Still recommend placing one real test
-// order per remaining color/design combo and checking the resulting mockup/thread
-// color before turning off manual review — this fix has only been verified for the
-// Fist Bump embroidery_front_large + embroidery_back combination.
+// hat purchase (Fist Bump, Cream/Green Bill) — took several rounds to get a clean
+// 400-free request: wrong embroidery placement type, wrong thread-color option ids, an
+// out-of-palette thread hex, and a missing required "embroidery_type" option that
+// turned out to need to live at the item level (buildItemOptions), not nested inside
+// the front file's own options like the thread-color ones (all fixed in
+// buildFiles/buildItemOptions/THREAD_ORANGE above). Still recommend placing one real
+// test order per remaining color/design combo and checking the resulting
+// mockup/thread color before turning off manual review — this fix has only been
+// verified for the Fist Bump embroidery_front_large + embroidery_back combination.
 export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: { hatSlug: string; recipient: PrintfulRecipient; externalId: string }
@@ -296,6 +306,7 @@ export async function createPrintfulOrder(
         variant_id: variantId,
         quantity: 1,
         files: buildFiles(hat),
+        options: buildItemOptions(hat),
       },
     ],
   };
