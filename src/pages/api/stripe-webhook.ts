@@ -162,7 +162,7 @@ function receiptEmailHtml(
     return emailShell(`
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-        You're in — thanks for grabbing a <strong>${product.name}</strong> (${product.price}). This is your presale receipt.
+        You're in — thanks for grabbing a <strong>${product.name}</strong> (${product.price}). Here's your receipt.
       </p>
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
         Yours is made to order, so it'll take a little longer than a normal shipment — we'll email you the second it's on its way.
@@ -301,7 +301,14 @@ export async function POST({ request, locals }: APIContext) {
               externalId: session.id,
             });
           } catch (err) {
-            console.error("Printful order creation failed:", err);
+            // Logged as separate fields (not just the Error object) because the
+            // default console.error(prefix, err) formatting was showing up with an
+            // empty message in Workers Logs — this guarantees the real reason is
+            // visible next time this fires.
+            const name = err instanceof Error ? err.name : typeof err;
+            const message = err instanceof Error ? err.message : String(err);
+            const stack = err instanceof Error ? err.stack : undefined;
+            console.error(`Printful order creation failed [${name}]: ${message || "(empty message)"}`, { stack });
           }
         } else {
           console.error(`Skipped Printful order for session ${session.id}: hatConfig=${!!hatConfig} recipient=${!!recipient}`);
