@@ -29,16 +29,6 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
 ---
 <header class="nav" id="site-nav" data-server-authed={isAuthed ? "1" : "0"}>
   <div class="nav-backdrop" aria-hidden="true"></div>
-  <div class="announce-banner" id="announce-banner">
-    <a href="/join/spit-up-society" class="announce-link">
-      <span class="announce-text">
-        <strong>The Spit-Up Society is open.</strong>
-        <span class="announce-detail">First live Q&amp;A — Aug 4 @ 7pm.</span>
-      </span>
-      <span class="announce-cta">Join now &rarr;</span>
-    </a>
-    <button type="button" class="announce-close" id="announce-close" aria-label="Dismiss announcement">&times;</button>
-  </div>
 
   <div class="container nav-inner">
     <a href="/" class="wordmark" aria-label="Dudela — home">
@@ -130,13 +120,11 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
      rather than a pseudo-element with a hand-tuned negative inset. Putting
      backdrop-filter directly on .nav (or sizing a pseudo-element with a
      fixed negative inset that doesn't track the header's real content
-     height) creates two problems: (1) filter on .nav creates a new
-     containing block for its `position: fixed` children — .mobile-menu is
-     one of those — breaking the mobile menu's full-screen overlay the
-     instant it opens; (2) a fixed inset can bleed into the announce banner
-     above it once scrolled padding shrinks, "scrunching" the banner. Sizing
-     this backdrop to inset:0 of the header avoids both — it always matches
-     the header's real box (banner + nav row) exactly. */
+     height) creates a problem: filter on .nav creates a new containing
+     block for its `position: fixed` children — .mobile-menu is one of
+     those — breaking the mobile menu's full-screen overlay the instant it
+     opens. Sizing this backdrop to inset:0 of the header avoids that — it
+     always matches the header's real box exactly. */
   .nav-backdrop {
     position: absolute;
     inset: 0;
@@ -149,81 +137,6 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
     background: rgba(42, 51, 34, 0.94);
     backdrop-filter: blur(10px);
     border-bottom-color: rgba(245, 239, 227, 0.08);
-  }
-  .announce-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    background: var(--amber-500);
-    padding: 0.5rem 2.25rem 0.5rem 1rem;
-    position: relative;
-    text-align: center;
-  }
-  .nav.announce-hidden .announce-banner {
-    display: none;
-  }
-  .announce-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    text-decoration: none;
-    color: var(--forest-900);
-    font-family: var(--font-label);
-    font-size: 0.82rem;
-    max-width: 100%;
-    overflow: hidden;
-  }
-  .announce-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .announce-text strong {
-    font-weight: 800;
-  }
-  .announce-detail {
-    margin-left: 0.4rem;
-  }
-  .announce-cta {
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  @media (max-width: 560px) {
-    .announce-banner {
-      padding: 0.45rem 2.1rem 0.45rem 0.75rem;
-    }
-    .announce-link {
-      font-size: 0.72rem;
-      gap: 0.4rem;
-    }
-    .announce-detail {
-      display: none;
-    }
-    .announce-cta {
-      font-size: 0.72rem;
-    }
-  }
-  .announce-close {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--forest-900);
-    font-size: 1.2rem;
-    line-height: 1;
-    cursor: pointer;
-    opacity: 0.7;
-    padding: 0.25rem;
-  }
-  .announce-close:hover {
-    opacity: 1;
   }
   .nav-inner {
     display: flex;
@@ -455,21 +368,6 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
   const nav = document.getElementById("site-nav");
   const hamburger = document.getElementById("hamburger-btn");
   const mobileMenu = document.getElementById("mobile-menu");
-  const announceClose = document.getElementById("announce-close");
-
-  const ANNOUNCE_KEY = "dudela-announce-dismissed-spit-up-society-aug4";
-  try {
-    if (localStorage.getItem(ANNOUNCE_KEY)) {
-      nav?.classList.add("announce-hidden");
-    }
-  } catch {}
-
-  announceClose?.addEventListener("click", () => {
-    nav?.classList.add("announce-hidden");
-    try {
-      localStorage.setItem(ANNOUNCE_KEY, "1");
-    } catch {}
-  });
 
   const onScroll = () => {
     if (!nav) return;

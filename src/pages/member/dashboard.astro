@@ -6,6 +6,7 @@ import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import { getAuthedMember } from "../../lib/auth";
 import { getEmbed } from "../../lib/embed";
+import { NEXT_CALL } from "../../lib/next-call";
 
 const env = (Astro.locals as any).runtime.env;
 const member = await getAuthedMember(Astro.cookies, env);
@@ -21,19 +22,10 @@ const errorMessages: Record<string, string> = {
 };
 const errorMessage = error ? errorMessages[error] || "" : "";
 
-// Next live Q&A details. Update these lines each time a new call is
-// scheduled (matches the info sent in the calendar invite) — there's no
-// admin UI for this yet since it's just one recurring field. `date` drives
-// the live countdown chip on the calendar badge below — keep it in sync with
-// dateLabel/timeLabel (ISO, in the call's actual timezone).
-const nextCall = {
-  dateLabel: "Tuesday, August 4",
-  timeLabel: "7:00 – 8:00pm MT",
-  date: "2026-08-04T19:00:00-06:00",
-  meetUrl: "https://meet.google.com/qrv-ceif-caf",
-  phone: "+1 475-444-3646",
-  pin: "741 991 265#",
-};
+// Next live Q&A details now live in one shared file (lib/next-call.ts),
+// reused by the join confirmation email and the join thank-you page too —
+// update that one file, not this one, when a new call gets scheduled.
+const nextCall = NEXT_CALL;
 
 // Countdown text for the badge — computed per request since this page is
 // already SSR (not prerendered), so it's always accurate without any client

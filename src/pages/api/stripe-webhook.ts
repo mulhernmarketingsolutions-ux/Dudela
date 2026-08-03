@@ -2,9 +2,15 @@ import type { APIContext } from "astro";
 import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
-import { upsertMemberFromStripe, markMemberCanceledByStripeCustomerId, createMerchOrder } from "../../lib/db";
+import {
+  upsertMemberFromStripe,
+  markMemberCanceledByStripeCustomerId,
+  createMerchOrder,
+  claimWebhookEvent,
+} from "../../lib/db";
 import { getGoogleAccessToken, appendSheetRow, GOOGLE_SCOPES } from "../../lib/google";
 import { createPrintfulOrder, getHatConfig } from "../../lib/printful";
+import { NEXT_CALL } from "../../lib/next-call";
 
 export const prerender = false;
 
@@ -178,7 +184,8 @@ function receiptEmailHtml(
         You're in — welcome to <strong>${product.name}</strong> (${product.price}). This confirms your membership is active.
       </p>
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-        Keep an eye on your inbox for the details on our first live Q&amp;A and how to join the community.
+        Our next live Q&amp;A is <strong>${NEXT_CALL.dateLabel}</strong> — we'll email you the link
+        beforehand, and you can always find the join info on your <a href="https://thedudelaco.com/member/dashboard" style="color:#c66815;">dashboard</a>.
       </p>
       <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
     `);
@@ -234,6 +241,19 @@ export async function POST({ request, locals }: APIContext) {
     return new Response("Invalid payload", { status: 400 });
   }
 
+  // Stripe redelivers the SAME event id on automatic retries, and clicking
+  // "Resend" in the Stripe dashboard also redelivers the identical event id
+  // (not a new charge, not a new event) — but every one-shot side effect
+  // below (customer receipt email, internal admin notification email, Loops
+  // event, sheet row) used to fire unconditionally on every delivery. First
+  // delivery of any event claims it here; every redelivery after that skips
+  // those specifically. Printful order creation and the merch_orders insert
+  // are deliberately NOT gated by this — they're separately idempotent
+  // (external_id dedup / INSERT OR IGNORE) and need to keep retrying on
+  // redelivery so a previously-failed Printful confirmation can still be
+  // recovered by resending the event.
+  const isFirstDelivery = await claimWebhookEvent(env, event.id);
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const email: string = session.customer_details?.email || session.customer_email || "";
@@ -242,10 +262,12 @@ export async function POST({ request, locals }: APIContext) {
     const amountTotal = typeof session.amount_total === "number" ? `$${(session.amount_total / 100).toFixed(2)}` : "";
 
     if (email) {
-      try {
-        await sendLoopsPurchaseEvent(env, { email, name, product });
-      } catch (err) {
-        console.error("Loops purchase event failed:", err);
+      if (isFirstDelivery) {
+        try {
+          await sendLoopsPurchaseEvent(env, { email, name, product });
+        } catch (err) {
+          console.error("Loops purchase event failed:", err);
+        }
       }
 
       const productInfo = PRODUCTS[product] || { name: product, price: amountTotal };
@@ -317,48 +339,53 @@ export async function POST({ request, locals }: APIContext) {
         // Also logged to the shared Sheet's "Merch Orders" tab as a human-readable
         // backup record — Printful is now the source of truth for fulfillment, but
         // having a scannable list of name/color/address here is still useful for
-        // spot-checking that orders actually went through.
-        try {
-          const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
-          await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:G", [
-            new Date().toISOString(),
-            name,
-            email,
-            color,
-            shippingName || "",
-            shippingAddress || "",
-            amountTotal,
-          ]);
-        } catch (err) {
-          console.error("Merch order sheet log failed:", err);
+        // spot-checking that orders actually went through. Gated by isFirstDelivery
+        // so a redelivered event doesn't append a duplicate row every retry.
+        if (isFirstDelivery) {
+          try {
+            const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
+            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:G", [
+              new Date().toISOString(),
+              name,
+              email,
+              color,
+              shippingName || "",
+              shippingAddress || "",
+              amountTotal,
+            ]);
+          } catch (err) {
+            console.error("Merch order sheet log failed:", err);
+          }
         }
       }
 
-      try {
-        await sendEmail(env, {
-          to: email,
-          subject: `You're in — ${productInfo.name} receipt`,
-          html: receiptEmailHtml(name, productInfo),
-        });
-      } catch (err) {
-        console.error("Purchase receipt email failed:", err);
-      }
+      if (isFirstDelivery) {
+        try {
+          await sendEmail(env, {
+            to: email,
+            subject: `You're in — ${productInfo.name} receipt`,
+            html: receiptEmailHtml(name, productInfo),
+          });
+        } catch (err) {
+          console.error("Purchase receipt email failed:", err);
+        }
 
-      try {
-        await sendEmail(env, {
-          to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
-          subject: `New ${productInfo.isSubscription ? "member" : "purchase"} — ${product} — ${email}`,
-          html: notifyEmailHtml({
-            email,
-            name,
-            product,
-            amount: amountTotal,
-            event: productInfo.isSubscription ? "New subscriber" : "New purchase",
-          }),
-          replyTo: email,
-        });
-      } catch (err) {
-        console.error("Purchase internal notification failed:", err);
+        try {
+          await sendEmail(env, {
+            to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
+            subject: `New ${productInfo.isSubscription ? "member" : "purchase"} — ${product} — ${email}`,
+            html: notifyEmailHtml({
+              email,
+              name,
+              product,
+              amount: amountTotal,
+              event: productInfo.isSubscription ? "New subscriber" : "New purchase",
+            }),
+            replyTo: email,
+          });
+        } catch (err) {
+          console.error("Purchase internal notification failed:", err);
+        }
       }
     }
   }
@@ -376,7 +403,7 @@ export async function POST({ request, locals }: APIContext) {
 
     try {
       const { email, name } = await getCustomer(env, customerId);
-      if (email) {
+      if (email && isFirstDelivery) {
         try {
           await sendLoopsCancellationEvent(env, { email, name: name || "", product });
         } catch (err) {

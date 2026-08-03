@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Nav from "../../../components/Nav.astro";
 import Footer from "../../../components/Footer.astro";
+import { NEXT_CALL } from "../../../lib/next-call";
 ---
 <BaseLayout title="You're in — The Spit-Up Society" description="Welcome to the Spit-Up Society. Here's what happens next.">
   <Nav />
@@ -12,7 +13,7 @@ import Footer from "../../../components/Footer.astro";
       <h1>Welcome to the Spit-Up Society.</h1>
       <p class="hero-sub">
         You're in — $5/month, cancel anytime. A confirmation email is headed to your inbox
-        now. Our first live Q&amp;A is <strong>August 4th at 7pm</strong> — we'll email you
+        now. Our next live Q&amp;A is <strong>{NEXT_CALL.dateLabel}</strong> — we'll email you
         the link.
       </p>
       <a href="/join/spit-up-society" class="btn btn-primary">See what's included</a>

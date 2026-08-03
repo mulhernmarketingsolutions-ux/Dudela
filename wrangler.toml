@@ -17,3 +17,10 @@ directory = "./dist"
 binding = "DB"
 database_name = "dudela"
 database_id = "13a7f296-441d-48be-9a54-380a0a816adf"
+
+# Keeps Workers Logs on across deploys — the dashboard's Observability toggle
+# is NOT persisted here by default and silently resets to disabled on every
+# new deploy unless it's set in this file.
+[observability.logs]
+enabled = true
+invocation_logs = true

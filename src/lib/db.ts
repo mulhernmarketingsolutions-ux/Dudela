@@ -377,6 +377,28 @@ export async function createMerchOrder(
     .run();
 }
 
+// --- Webhook redelivery guard ---
+//
+// Stripe redelivers the same event id on automatic retries, and clicking
+// "Resend" in the Stripe dashboard also redelivers the identical event id.
+// The webhook handler used to treat every delivery as brand-new, which meant
+// a redelivered checkout.session.completed event re-sent the customer's
+// purchase receipt and the internal admin notification email for real, every
+// single time. claimWebhookEvent() is an atomic "have we handled this event
+// before" check — INSERT OR IGNORE on the primary key, then check whether a
+// row actually got inserted (D1's `meta.changes` is 1 for a new row, 0 for a
+// no-op IGNORE). Call once per event, right before any one-shot side effects
+// (emails, Loops events, sheet logging) — but NOT before Printful order
+// creation or the merch_orders insert, since those are separately idempotent
+// and need to keep retrying on redelivery (that's what makes a previously
+// -failed Printful confirmation recoverable via a Stripe resend).
+export async function claimWebhookEvent(env: DbEnv, eventId: string): Promise<boolean> {
+  const result = await env.DB.prepare(`INSERT OR IGNORE INTO processed_webhook_events (event_id) VALUES (?)`)
+    .bind(eventId)
+    .run();
+  return (result.meta?.changes ?? 0) > 0;
+}
+
 export async function createInquiry(
   env: DbEnv,
   opts: { memberEmail: string; memberName?: string; question: string }
