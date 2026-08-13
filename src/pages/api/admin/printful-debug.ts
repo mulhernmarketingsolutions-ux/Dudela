@@ -27,6 +27,19 @@ export async function GET({ request, locals, cookies }: APIContext) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
+  // ?styles=1 — list every mockup camera-angle/style Printful offers for the
+  // Otto Cap 31-069 (catalog product 952), so we can pick the exact style_ids
+  // for "front flat" and "front, tilted to show the left side" instead of
+  // guessing ids blind. Flat/product-only styles are the ones that support a
+  // transparent background — lifestyle/model shots don't.
+  if (url.searchParams.get("styles") === "1") {
+    const res = await fetch("https://api.printful.com/mockup-generator/templates/952", {
+      headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { "Content-Type": "application/json" } });
+  }
+
   // ?all=1 — loop every published sync product and return only the fields
   // the site actually needs (name, color, sync_variant_id, retail price, the
   // real photographic mockup URL) instead of Printful's full verbose payload
