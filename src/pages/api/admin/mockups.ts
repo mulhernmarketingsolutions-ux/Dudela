@@ -81,8 +81,8 @@ export async function GET({ request, locals, cookies }: APIContext) {
         const threadLeft = first.options.find((o) => o.id === "thread_colors_left")?.value;
 
         const files: Array<Record<string, unknown>> = [];
-        if (frontFile) files.push({ placement: "front", image_url: frontFile.preview_url });
-        if (leftFile) files.push({ placement: "left", image_url: leftFile.preview_url });
+        if (frontFile) files.push({ placement: "embroidery_front_large", image_url: frontFile.preview_url });
+        if (leftFile) files.push({ placement: "embroidery_left", image_url: leftFile.preview_url });
 
         const product_options: Record<string, unknown> = {};
         if (threadFront) product_options.thread_colors_front_large = threadFront;
