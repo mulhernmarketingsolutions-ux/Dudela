@@ -26,6 +26,56 @@ export async function GET({ request, locals, cookies }: APIContext) {
 
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
+
+  // ?all=1 — loop every published sync product and return only the fields
+  // the site actually needs (name, color, sync_variant_id, retail price, the
+  // real photographic mockup URL) instead of Printful's full verbose payload
+  // per product. Built so we only need ONE deployed call instead of one
+  // request per product (12 round trips) to build the site's new catalog.
+  if (url.searchParams.get("all") === "1") {
+    const listRes = await fetch("https://api.printful.com/sync/products?limit=100", {
+      headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+    });
+    const listData = (await listRes.json()) as { result: Array<{ id: number; name: string }> };
+
+    const products = await Promise.all(
+      listData.result.map(async (p) => {
+        const res = await fetch(`https://api.printful.com/sync/products/${p.id}`, {
+          headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+        });
+        const data = (await res.json()) as {
+          result: {
+            sync_product: { id: number; name: string };
+            sync_variants: Array<{
+              id: number;
+              name: string;
+              color: string;
+              retail_price: string;
+              variant_id: number;
+              product: { image: string };
+              files: Array<{ type: string; preview_url: string }>;
+            }>;
+          };
+        };
+        return {
+          id: data.result.sync_product.id,
+          name: data.result.sync_product.name,
+          variants: data.result.sync_variants.map((v) => ({
+            sync_variant_id: v.id,
+            color: v.color,
+            retail_price: v.retail_price,
+            catalog_variant_id: v.variant_id,
+            mockup_url: v.files.find((f) => f.type === "preview")?.preview_url || null,
+          })),
+        };
+      })
+    );
+
+    return new Response(JSON.stringify({ products }, null, 2), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const path = id ? `/sync/products/${id}` : `/sync/products?limit=100`;
 
   const res = await fetch(`https://api.printful.com${path}`, {
