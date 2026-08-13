@@ -80,9 +80,40 @@ export async function GET({ request, locals, cookies }: APIContext) {
         const threadFront = first.options.find((o) => o.id === "thread_colors_front_large")?.value;
         const threadLeft = first.options.find((o) => o.id === "thread_colors_left")?.value;
 
+        // The sync/products API doesn't expose each variant's saved position (that's
+        // only visible in the Design Maker UI), so these are close approximations of
+        // the real sizing already dialed in there — good enough for a preview photo,
+        // not used for anything that touches production.
+        const FRONT_AREA = { area_width: 6.3, area_height: 2.55 };
+        const FRONT_SIZE = { width: 2.6, height: 1.35 };
+        const LEFT_AREA = { area_width: 2.0, area_height: 1.0 };
+        const LEFT_SIZE = { width: 1.3, height: 0.4 };
+
         const files: Array<Record<string, unknown>> = [];
-        if (frontFile) files.push({ placement: "embroidery_front_large", image_url: frontFile.preview_url });
-        if (leftFile) files.push({ placement: "embroidery_left", image_url: leftFile.preview_url });
+        if (frontFile) {
+          files.push({
+            placement: "embroidery_front_large",
+            image_url: frontFile.preview_url,
+            position: {
+              ...FRONT_AREA,
+              ...FRONT_SIZE,
+              top: (FRONT_AREA.area_height - FRONT_SIZE.height) / 2,
+              left: (FRONT_AREA.area_width - FRONT_SIZE.width) / 2,
+            },
+          });
+        }
+        if (leftFile) {
+          files.push({
+            placement: "embroidery_left",
+            image_url: leftFile.preview_url,
+            position: {
+              ...LEFT_AREA,
+              ...LEFT_SIZE,
+              top: (LEFT_AREA.area_height - LEFT_SIZE.height) / 2,
+              left: (LEFT_AREA.area_width - LEFT_SIZE.width) / 2,
+            },
+          });
+        }
 
         const product_options: Record<string, unknown> = {};
         if (threadFront) product_options.thread_colors_front_large = threadFront;
