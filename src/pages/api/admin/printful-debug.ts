@@ -33,7 +33,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // guessing ids blind. Flat/product-only styles are the ones that support a
   // transparent background — lifestyle/model shots don't.
   if (url.searchParams.get("styles") === "1") {
-    const res = await fetch("https://api.printful.com/mockup-generator/templates/952", {
+    const res = await fetch("https://api.printful.com/v2/catalog-products/952/mockup-styles", {
       headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
     });
     const text = await res.text();
