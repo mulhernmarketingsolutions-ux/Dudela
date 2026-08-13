@@ -180,6 +180,14 @@ export async function GET({ request, locals, cookies }: APIContext) {
           product_name: p.name,
           task_key: createData?.result?.task_key || null,
           error: createData?.error || null,
+          // Temporary debug fields — remove once the missing add-on issue is
+          // confirmed fixed. Shows exactly what got sent and what Printful's
+          // create-task call said back (including any per-file warnings),
+          // instead of only finding out via the rendered image.
+          debug_leftFileFound: !!leftFile,
+          debug_filesSubmitted: files,
+          debug_productOptions: product_options,
+          debug_createResponse: createData,
         };
       })
     );
