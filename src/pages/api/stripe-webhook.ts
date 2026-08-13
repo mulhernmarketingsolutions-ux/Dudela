@@ -26,7 +26,11 @@ export const prerender = false;
 // create-checkout-session.ts) to receipt-email copy. isSubscription flips the copy from
 // "here's your download" to "welcome to the membership." fileName/url are only relevant
 // for one-time digital products — leave unset for subscriptions.
-const PRODUCTS: Record<
+// Exported (not just used internally) so /api/admin/test-hat-order.ts can
+// send the exact real receipt copy for a spot-check — reusing this instead
+// of a second hand-typed copy of the same email means the test tool can
+// never drift out of sync with what a real customer actually gets.
+export const PRODUCTS: Record<
   string,
   { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean }
 > = {
@@ -158,7 +162,7 @@ function emailShell(innerHtml: string) {
   `;
 }
 
-function receiptEmailHtml(
+export function receiptEmailHtml(
   name: string,
   product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean }
 ) {

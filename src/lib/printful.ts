@@ -323,8 +323,23 @@ async function shortExternalId(raw: string): Promise<string> {
 
 export async function createPrintfulOrder(
   env: PrintfulEnv,
-  opts: { hatSlug: string; recipient: PrintfulRecipient; externalId: string }
+  opts: {
+    hatSlug: string;
+    recipient: PrintfulRecipient;
+    externalId: string;
+    // Set false to create the order and stop — leaves it sitting as an
+    // unconfirmed draft instead of calling /confirmation. Printful only
+    // bills for fulfillment once an order is confirmed into production, so
+    // a draft costs nothing and can be freely deleted from the dashboard —
+    // this is what lets /api/admin/test-hat-order spot-check the real
+    // design/color/thread mapping for any of the 12 hats (mockup, print
+    // files, catalog variant) without spending real money. Real webhook
+    // orders always omit this (default true) since a customer who paid
+    // needs their order actually confirmed into production.
+    confirm?: boolean;
+  }
 ): Promise<{ id: number; status: string }> {
+  const confirm = opts.confirm ?? true;
   const hat = getHatConfig(opts.hatSlug);
   if (!hat) throw new Error(`Unknown hat slug "${opts.hatSlug}" — not in HAT_CATALOG`);
 
@@ -378,6 +393,15 @@ export async function createPrintfulOrder(
     } else {
       throw new Error(`Printful order create failed: ${createRes.status} ${errText}`);
     }
+  }
+
+  if (!confirm) {
+    const res = await fetch(`${PRINTFUL_API}/v2/orders/${orderId}`, {
+      headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+    });
+    if (!res.ok) throw new Error(`Printful draft order ${orderId} created but re-fetch failed: ${res.status} ${await res.text()}`);
+    const draft = (await res.json()) as { data: { id: number; status: string } };
+    return draft.data;
   }
 
   // Printful calculates shipping/costs asynchronously right after an order is
