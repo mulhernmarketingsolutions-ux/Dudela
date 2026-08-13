@@ -8,6 +8,8 @@
 // automations inside Loops — build one workflow per eventName below in the
 // Loops dashboard (Workflows → New → "Event" trigger).
 
+import { HAT_CATALOG } from "./printful";
+
 export interface LoopsEnv {
   LOOPS_API_KEY: string;
 }
@@ -37,21 +39,15 @@ export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: str
   // product; the purchase itself, receipt email, and D1 order row all still
   // worked fine, so this went unnoticed). One shared "Customer – Hat" group
   // rather than one per colorway — for email segmentation, "bought a hat" is
-  // the useful distinction, not which color.
-  // hat-fistbump-green and hat-upsidedown-white added 2026-07-28 once real
-  // matching mockups turned up for both.
-  "hat-fistbump-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-fistbump-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-fistbump-blackorange": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-fistbump-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-fistbump-whiteblack": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-fistbump-green": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-cream": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-black": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-blackorange": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-white": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-whiteorange": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
-  "hat-upsidedown-blackbill": { eventName: "purchase-hat", userGroup: "Customer – Hat" },
+  // the useful distinction, not which color. Generated from HAT_CATALOG
+  // (lib/printful.ts) instead of hand-typed — the old hardcoded list here
+  // used the previous hat-fistbump-*/hat-upsidedown-* slugs, which stopped
+  // matching anything the moment the catalog was rebuilt around real
+  // Printful sync products (2026-08-13) — same silent-no-op failure mode
+  // this comment already warns about, just from a different cause.
+  ...Object.fromEntries(
+    HAT_CATALOG.map((hat) => [hat.key, { eventName: "purchase-hat", userGroup: "Customer – Hat" }])
+  ),
 };
 
 // Fired on customer.subscription.deleted — separate from PURCHASE_EVENTS since it's a

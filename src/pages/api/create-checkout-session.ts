@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
 import { countMerchOrders } from "../../lib/db";
 import { getAuthedMember } from "../../lib/auth";
+import { HAT_CATALOG } from "../../lib/printful";
 
 export const prerender = false;
 
@@ -40,36 +41,22 @@ const PRODUCTS: Record<
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
   },
-  // The 12 buyable hats (Fist Bump x 6, Upside Down x 6) — see lib/printful.ts
-  // HAT_CATALOG for the design/color/thread config each of these slugs maps
-  // to. White and Black each come in 2 thread-color variants per design;
-  // Cream only comes in 1 thread color per bill color. All twelve share one
-  // $38 Stripe price (same physical cost regardless of design/color), so
+  // Every buyable hat — see lib/printful.ts HAT_CATALOG, the single source of
+  // truth for the real (design, thread color, add-on, cap color) combos
+  // Printful actually has built as sync products. All variants share one $38
+  // Stripe price (same physical cost regardless of design/color/thread), so
   // they all point at the same price env var rather than needing separate
   // Stripe Price objects.
   ...Object.fromEntries(
-    [
-      "hat-fistbump-cream",
-      "hat-fistbump-black",
-      "hat-fistbump-blackorange",
-      "hat-fistbump-white",
-      "hat-fistbump-whiteblack",
-      "hat-fistbump-green",
-      "hat-upsidedown-cream",
-      "hat-upsidedown-blackbill",
-      "hat-upsidedown-black",
-      "hat-upsidedown-blackorange",
-      "hat-upsidedown-white",
-      "hat-upsidedown-whiteorange",
-    ].map((slug) => [
-      slug,
+    HAT_CATALOG.map((hat) => [
+      hat.key,
       {
         priceEnvVar: "STRIPE_PRICE_HAT_CLASSIC",
         returnPath: "/merch",
         thankYouPath: "/merch/thank-you",
         mode: "payment" as const,
         shipping: true,
-        merchColor: slug,
+        merchColor: hat.key,
       },
     ])
   ),

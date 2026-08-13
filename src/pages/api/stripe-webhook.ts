@@ -9,7 +9,7 @@ import {
   claimWebhookEvent,
 } from "../../lib/db";
 import { getGoogleAccessToken, appendSheetRow, GOOGLE_SCOPES } from "../../lib/google";
-import { createPrintfulOrder, getHatConfig } from "../../lib/printful";
+import { createPrintfulOrder, getHatVariant, HAT_CATALOG, hatLabel } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
 
 export const prerender = false;
@@ -45,68 +45,14 @@ export const PRODUCTS: Record<
     price: "$5/mo",
     isSubscription: true,
   },
-  "hat-fistbump-cream": {
-    name: "Dudela Hat — Cream/Black Bill, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-fistbump-black": {
-    name: "Dudela Hat — Black, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-fistbump-blackorange": {
-    name: "Dudela Hat — Black/Orange Stitch, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-fistbump-white": {
-    name: "Dudela Hat — White, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-fistbump-whiteblack": {
-    name: "Dudela Hat — White/Black Stitch, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-fistbump-green": {
-    name: "Dudela Hat — Cream/Green Bill, Fist Bump",
-    price: "$38",
-    isMerch: true,
-  },
-  // Cream/Green Bill is Upside Down's hero color (re-stitched in rust
-  // orange) — see printful.ts HAT_CATALOG note.
-  "hat-upsidedown-cream": {
-    name: "Dudela Hat — Cream/Green Bill, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-black": {
-    name: "Dudela Hat — Black, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-blackorange": {
-    name: "Dudela Hat — Black/Orange Stitch, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-white": {
-    name: "Dudela Hat — White, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-whiteorange": {
-    name: "Dudela Hat — White/Orange Stitch, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
-  "hat-upsidedown-blackbill": {
-    name: "Dudela Hat — Cream/Black Bill, Upside Down",
-    price: "$38",
-    isMerch: true,
-  },
+  // Every buyable hat — see lib/printful.ts HAT_CATALOG, the single source
+  // of truth for the real (design, thread color, add-on, cap color) combos
+  // Printful actually has built as sync products. Generated instead of
+  // hand-typed so this can never drift out of sync with what's actually
+  // buyable on /merch.
+  ...Object.fromEntries(
+    HAT_CATALOG.map((hat) => [hat.key, { name: hatLabel(hat), price: "$38", isMerch: true }])
+  ),
 };
 
 // Stripe's Basil API version (2025-03-31+) moved collected checkout-time
@@ -317,12 +263,15 @@ export async function POST({ request, locals }: APIContext) {
         // automatic (no hand-packing/shipping on John's end). Requires a real shipping
         // address; if Stripe didn't collect one for some reason, this logs an error and
         // falls through rather than throwing, so the buyer's receipt/records still go out.
-        const hatConfig = getHatConfig(color);
+        // References the pre-built sync product directly via sync_variant_id — no
+        // catalog placements/thread options to get right at order time, since all
+        // of that is already baked into the Sync Product in Printful's dashboard.
+        const hatVariant = getHatVariant(color);
         const recipient = extractPrintfulRecipient(session, name, email);
-        if (hatConfig && recipient) {
+        if (hatVariant && recipient) {
           try {
             await createPrintfulOrder(env, {
-              hatSlug: color,
+              syncVariantId: hatVariant.syncVariantId,
               recipient,
               externalId: session.id,
             });
@@ -337,7 +286,7 @@ export async function POST({ request, locals }: APIContext) {
             console.error(`Printful order creation failed [${name}]: ${message || "(empty message)"}`, { stack });
           }
         } else {
-          console.error(`Skipped Printful order for session ${session.id}: hatConfig=${!!hatConfig} recipient=${!!recipient}`);
+          console.error(`Skipped Printful order for session ${session.id}: hatVariant=${!!hatVariant} recipient=${!!recipient}`);
         }
 
         // Also logged to the shared Sheet's "Merch Orders" tab as a human-readable

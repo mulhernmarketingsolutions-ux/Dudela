@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { isAdminAuthed } from "../../../lib/auth";
-import { createPrintfulOrder, getHatConfig, HAT_CATALOG } from "../../../lib/printful";
+import { createPrintfulOrder, getHatVariant, HAT_CATALOG } from "../../../lib/printful";
 import { sendEmail } from "../../../lib/email";
 import { PRODUCTS, receiptEmailHtml } from "../stripe-webhook";
 
@@ -23,10 +23,11 @@ export const prerender = false;
 // Printful charge, same as a live purchase) — only do that for a genuine
 // "I want to hold the finished hat in my hands" check, not routine testing.
 //
-// Usage (while logged in at /admin/login):
-//   /api/admin/test-hat-order?color=hat-fistbump-black
-//   /api/admin/test-hat-order?color=hat-upsidedown-cream&email=you@example.com
-//   /api/admin/test-hat-order?color=hat-fistbump-green&confirm=1   (real charge)
+// Usage (while logged in at /admin/login) — color is a HAT_CATALOG key,
+// e.g. "classic-white-noaddon-black" or "rookie-orange-withaddon-white":
+//   /api/admin/test-hat-order?color=classic-white-noaddon-black
+//   /api/admin/test-hat-order?color=rookie-orange-withaddon-white&email=you@example.com
+//   /api/admin/test-hat-order?color=classic-black-withaddon-white&confirm=1   (real charge)
 export async function GET({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
 
@@ -43,12 +44,12 @@ export async function GET({ request, locals, cookies }: APIContext) {
   const confirm = url.searchParams.get("confirm") === "1";
   const testEmail = url.searchParams.get("email") || env.NOTIFY_EMAIL || "dude@thedudelaco.com";
 
-  const hat = getHatConfig(color);
+  const hat = getHatVariant(color);
   if (!hat) {
     return new Response(
       JSON.stringify({
         error: `Unknown color "${color}".`,
-        validColors: HAT_CATALOG.map((h) => h.slug),
+        validColors: HAT_CATALOG.map((h) => h.key),
       }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
@@ -66,12 +67,12 @@ export async function GET({ request, locals, cookies }: APIContext) {
     email: testEmail,
   };
 
-  const externalId = `admin-test-${hat.slug}-${Date.now()}`;
+  const externalId = `admin-test-${hat.key}-${Date.now()}`;
 
   let printfulResult;
   try {
     printfulResult = await createPrintfulOrder(env, {
-      hatSlug: hat.slug,
+      syncVariantId: hat.syncVariantId,
       recipient,
       externalId,
       confirm,
@@ -86,7 +87,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
 
   let emailSent = false;
   let emailError: string | null = null;
-  const productInfo = PRODUCTS[hat.slug];
+  const productInfo = PRODUCTS[hat.key];
   if (productInfo) {
     try {
       await sendEmail(env, {
@@ -104,7 +105,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
     JSON.stringify(
       {
         ok: true,
-        hat: { slug: hat.slug, label: hat.label, design: hat.design, printfulColor: hat.printfulColor },
+        hat: { key: hat.key, design: hat.designLabel, thread: hat.threadLabel, addon: hat.addon, printfulColor: hat.printfulColor },
         printful: printfulResult,
         confirmed: confirm,
         note: confirm

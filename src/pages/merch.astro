@@ -6,8 +6,8 @@ export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { countMerchOrders } from "../lib/db";
 import { getAuthedMember } from "../lib/auth";
+import { HAT_CATALOG, type HatVariant, type Design } from "../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
 
@@ -19,141 +19,77 @@ const env = (Astro.locals as any).runtime.env;
 // of what a merch drop is for.
 const member = await getAuthedMember(Astro.cookies, env);
 
-// Source of truth for what's buyable lives in lib/printful.ts (HAT_CATALOG) — this
-// mirrors it, grouped by design so the page can show one card per design with a
-// color picker inside it, instead of one flat card per color (easier to compare,
-// and matches how John actually thinks about these: 2 designs, pick your color).
+// REWRITTEN 2026-08-13: the old version of this page had one static color
+// picker per design, backed by pre-merged "pair" images built by hand at
+// image-prep time. That worked for 12 fixed colorways — it doesn't for the
+// real current catalog, where cap color and thread color are independently
+// selectable (e.g. a Black cap exists under both the White-thread and
+// Orange-thread product groups) and there's now a "Dude² Dad" side-embroidery
+// add-on toggle on top of that. HAT_CATALOG in lib/printful.ts is the single
+// source of truth for every real, buyable combination — this page groups it
+// by design and hands the client JS below a small catalog of real variants
+// (thread color, cap color, add-on state, real Printful mockup photos, and
+// the checkout key) to pick from, instead of a fixed list of colors.
 //
-// Per John: The Classic (the arched, flipped wordmark) is the original design —
-// Fist Bump is the newer one. The original cream/green-bill Classic mockup
-// had its wordmark stitched in green thread, which clashed against the green
-// bill — John fixed it by re-stitching in rust orange (same accent used on
-// White/Cream-Black-bill) and re-shot it front + a 3/4 angle side view. It's
-// the hero color for The Classic now (shown by default) — Fist Bump doesn't
-// have an equivalent green colorway back yet, so it stays at 3 colors.
-//
-// Every color below is backed by two real Printful mockup photos (front +
-// a second angle), pre-merged at build time into one PNG per color
-// (hat-{design}-{color}-pair.png — see public/images) so the page only ever
-// shows a single <img>, not two side-by-side tags. That's what makes the
-// swatch click feel like "the photo changes color," not "a new image loads":
-// one element, one src swap, dimensions never move.
-const DESIGNS = [
-  {
-    key: "upsidedown",
+// Every color/thread combo is backed by two real Printful mockup photos —
+// straight-on front + a 3/4 angle showing the left side — shown side by side
+// (same "two real photos together" strategy as the old pre-merged pairs,
+// just as two separate <img>s instead of one baked-together PNG, since these
+// are generated per-thread-color rather than hand-merged upfront).
+const DESIGN_INFO: Record<Design, { title: string; tagline: string }> = {
+  classic: {
     title: "The Classic",
     tagline: "The one that started it all — DUDELA, flipped and arched, reading right back at you.",
-    colors: [
-      {
-        slug: "hat-upsidedown-cream",
-        name: "Cream, Green Bill",
-        swatch: "#3a4a32",
-        description: "The hero color. Cream crown, dark green bill, wordmark stitched in rust orange.",
-        image: "/images/hat-upsidedown-cream-pair.png",
-      },
-      {
-        slug: "hat-upsidedown-blackbill",
-        name: "Cream, Black Bill",
-        swatch: "#ece3d1",
-        description: "Where it began. The wordmark flipped and arched, stitched in black.",
-        image: "/images/hat-upsidedown-blackbill-pair.png",
-      },
-      {
-        slug: "hat-upsidedown-black",
-        name: "Black",
-        swatch: "#141414",
-        description: "Blacked out, wordmark stitched in white.",
-        image: "/images/hat-upsidedown-black-pair.png",
-      },
-      {
-        slug: "hat-upsidedown-blackorange",
-        name: "Black, Orange Stitch",
-        swatch: "#141414",
-        description: "Blacked out, wordmark stitched in rust orange.",
-        image: "/images/hat-upsidedown-blackorange-pair.png",
-      },
-      {
-        slug: "hat-upsidedown-white",
-        name: "White",
-        swatch: "#f5f5f0",
-        description: "Clean white, wordmark stitched in black.",
-        image: "/images/hat-upsidedown-white-pair.png",
-      },
-      {
-        slug: "hat-upsidedown-whiteorange",
-        name: "White, Orange Stitch",
-        swatch: "#f5f5f0",
-        description: "Clean white, wordmark stitched in rust orange.",
-        image: "/images/hat-upsidedown-whiteorange-pair.png",
-      },
-    ],
   },
-  {
-    key: "fistbump",
+  rookie: {
     title: "The Rookie",
-    tagline: "The new one — a fist bump up front, DUDELA stitched across the back.",
-    colors: [
-      {
-        slug: "hat-fistbump-black",
-        name: "Black",
-        swatch: "#141414",
-        description: "Blacked out, stitched in white so it still throws a punch.",
-        image: "/images/hat-fistbump-black-pair.png",
-      },
-      {
-        slug: "hat-fistbump-blackorange",
-        name: "Black, Orange Stitch",
-        swatch: "#141414",
-        description: "Blacked out, fist bump stitched in rust orange.",
-        image: "/images/hat-fistbump-blackorange-pair.png",
-      },
-      {
-        slug: "hat-fistbump-white",
-        name: "White",
-        swatch: "#f5f5f0",
-        description: "Clean and simple, fist bump stitched in rust orange.",
-        image: "/images/hat-fistbump-white-pair.png",
-      },
-      {
-        slug: "hat-fistbump-whiteblack",
-        name: "White, Black Stitch",
-        swatch: "#f5f5f0",
-        description: "Clean and simple, fist bump stitched in black.",
-        image: "/images/hat-fistbump-whiteblack-pair.png",
-      },
-      {
-        slug: "hat-fistbump-cream",
-        name: "Cream, Black Bill",
-        swatch: "#ece3d1",
-        description: "Fist bump up front, DUDELA on the back, stitched in black.",
-        image: "/images/hat-fistbump-cream-pair.png",
-      },
-      {
-        slug: "hat-fistbump-green",
-        name: "Cream, Green Bill",
-        swatch: "#3a4a32",
-        description: "Fist bump up front, DUDELA on the back, stitched in rust orange.",
-        image: "/images/hat-fistbump-green-pair.png",
-      },
-    ],
+    tagline: "The new one — DUDELA stitched across the front, ready to grow with the job.",
   },
-];
+};
 
-// Printful makes these to order, so there's no real stock cap anymore — countMerchOrders
-// is kept purely as an internal sales count (still useful to glance at), not a gate.
-const designs = await Promise.all(
-  DESIGNS.map(async (d) => ({
-    ...d,
-    colors: await Promise.all(
-      d.colors.map(async (c) => ({ ...c, sold: await countMerchOrders(env, c.slug) }))
-    ),
-  }))
-);
+const THREAD_ORDER = ["white", "orange", "black"] as const;
+
+function colorSlug(v: HatVariant): string {
+  const prefix = `${v.design}-${v.thread}-${v.addon ? "withaddon" : "noaddon"}-`;
+  return v.key.startsWith(prefix) ? v.key.slice(prefix.length) : v.key;
+}
+
+const designs = (Object.keys(DESIGN_INFO) as Design[]).map((dkey) => {
+  const variants = HAT_CATALOG.filter((v) => v.design === dkey);
+
+  const threads = THREAD_ORDER.filter((t) => variants.some((v) => v.thread === t)).map((t) => {
+    const sample = variants.find((v) => v.thread === t)!;
+    return { key: t, label: sample.threadLabel, hex: sample.threadHex };
+  });
+
+  const clientVariants = variants.map((v) => ({
+    key: v.key,
+    thread: v.thread,
+    color: colorSlug(v),
+    colorLabel: v.colorLabel,
+    colorHex: v.colorHex,
+    colorHex2: v.colorHex2 || v.colorHex,
+    addon: v.addon,
+    front: v.frontImage,
+    left: v.leftImage,
+  }));
+
+  const first = clientVariants.find((v) => v.thread === threads[0].key && !v.addon)!;
+
+  return {
+    key: dkey,
+    title: DESIGN_INFO[dkey].title,
+    tagline: DESIGN_INFO[dkey].tagline,
+    threads,
+    variants: clientVariants,
+    first,
+  };
+});
 
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Two designs, $38, free shipping. Made to order and shipped straight to your door.">
+<BaseLayout title="Dudela Hats — Merch" description="Two designs, three thread colors, an optional side add-on — $38, free shipping. Made to order and shipped straight to your door.">
   <Nav isAuthed={!!member} />
 
   <section class="hero section-dark">
@@ -161,8 +97,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <p class="eyebrow">Merch</p>
       <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Two designs, several colors each, $38, free shipping. Every hat is made to order and
-        shipped straight to your door — no waiting on a batch.
+        Two designs, three thread colors, a cap color to match, and an optional "Dude² Dad" side
+        add-on — $38, free shipping. Every hat is made to order and shipped straight to your door.
       </p>
 
       {!member && (
@@ -173,52 +109,63 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       )}
 
       {canceled && (
-        <p class="notice">Checkout was canceled — nothing was charged. Pick a color below whenever you're ready.</p>
+        <p class="notice">Checkout was canceled — nothing was charged. Pick your hat below whenever you're ready.</p>
       )}
     </div>
   </section>
 
   <section class="colors section-light">
     <div class="container colors-grid">
-      {designs.map((d) => {
-        const first = d.colors[0];
-        return (
-          <div class="design-card" data-design={d.key}>
-            <div class="design-media" data-media>
-              <img class="pair-img" src={first.image} alt={`Dudela Hat — ${d.title}, ${first.name}`} data-photo />
+      {designs.map((d) => (
+        <div class="design-card" data-design={d.key}>
+          <div class="design-media">
+            <div class="mockup-pair">
+              <img class="mockup-photo" data-photo-front src={d.first.front} alt={`Dudela Hat — ${d.title}, front`} />
+              <img class="mockup-photo" data-photo-left src={d.first.left} alt={`Dudela Hat — ${d.title}, angled left`} />
             </div>
-            <div class="design-body">
-              <h3>{d.title}</h3>
-              <p class="design-tagline">{d.tagline}</p>
-              <p class="color-desc" data-desc>{first.description}</p>
+          </div>
+          <div class="design-body">
+            <h3>{d.title}</h3>
+            <p class="design-tagline">{d.tagline}</p>
 
-              <div class="swatches" role="group" aria-label={`${d.title} color`}>
-                {d.colors.map((c, i) => (
+            <div class="selector">
+              <span class="selector-label">Thread color</span>
+              <div class="thread-swatches" role="group" aria-label={`${d.title} thread color`} data-thread-swatches>
+                {d.threads.map((t, i) => (
                   <button
                     type="button"
-                    class={`swatch${i === 0 ? " active" : ""}`}
-                    style={`--swatch: ${c.swatch}`}
-                    title={c.name}
-                    aria-label={c.name}
-                    data-slug={c.slug}
-                    data-name={c.name}
-                    data-desc={c.description}
-                    data-image={c.image}
+                    class={`thread-swatch${i === 0 ? " active" : ""}`}
+                    style={`--swatch: ${t.hex}`}
+                    title={t.label}
+                    aria-label={t.label}
+                    data-thread={t.key}
                   />
                 ))}
               </div>
-
-              <div class="color-meta">
-                <span class="price">$38</span>
-                <span class="color-name" data-colorname>{first.name}</span>
-              </div>
-              <a href={`/api/create-checkout-session?product=${first.slug}`} class="btn btn-primary" data-buy>
-                Buy Now — $38
-              </a>
             </div>
+
+            <div class="selector">
+              <span class="selector-label">Cap color</span>
+              <div class="color-swatches" role="group" aria-label={`${d.title} cap color`} data-color-swatches></div>
+            </div>
+
+            <label class="addon-toggle">
+              <input type="checkbox" data-addon-toggle />
+              <span>Add "Dude² Dad" side embroidery</span>
+            </label>
+
+            <div class="color-meta">
+              <span class="price">$38</span>
+              <span class="variant-name" data-variant-name>{d.first.colorLabel}</span>
+            </div>
+            <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
+              Buy Now — $38
+            </a>
           </div>
-        );
-      })}
+
+          <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
+        </div>
+      ))}
     </div>
   </section>
 
@@ -249,55 +196,136 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 </BaseLayout>
 
 <script>
-  // Vanilla JS color-swatch picker — no framework, matches the rest of the site.
-  // Each design card renders its first color server-side; clicking a swatch swaps
-  // the (single, pre-merged front+back/side) photo, description, color name, and
-  // buy-now link to that color's data, embedded on each swatch button as data-*
-  // attributes at build time.
+  // Vanilla JS, no framework — matches the rest of the site. Each design card
+  // gets its own small catalog (embedded as JSON at build time, see
+  // `data-catalog` above) of every real (thread, cap color, add-on) variant
+  // Printful actually has built, plus that variant's two real mockup photos
+  // and its checkout key. Three controls read/write one piece of state per
+  // card — thread, color, add-on — and any change re-resolves to the exact
+  // matching variant and updates the photos, label, and buy link.
   //
-  // Every color's photo gets preloaded up front (new Image() below) so the swap
-  // on click is instant — no network fetch, no flash of a half-loaded image, no
-  // layout shift (same <img> element, same aspect-ratio box, only its src
-  // changes). That's what makes clicking a color feel like "the hat changes
-  // color" instead of "a new photo loads."
-  document.querySelectorAll<HTMLElement>(".design-card").forEach((card) => {
-    const photo = card.querySelector<HTMLImageElement>("[data-photo]");
-    const desc = card.querySelector<HTMLElement>("[data-desc]");
-    const colorName = card.querySelector<HTMLElement>("[data-colorname]");
-    const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
-    const swatches = card.querySelectorAll<HTMLButtonElement>(".swatch");
-    if (!photo || !desc || !colorName || !buyBtn) return;
+  // Thread and cap color are NOT a full cross product (e.g. no cap ships in
+  // Black cap + Black thread — the stitching wouldn't show up), so the cap
+  // color swatches are rebuilt from only the colors that actually exist for
+  // the currently selected thread every time the thread changes. The add-on
+  // toggle doesn't affect which colors are available — every (thread, color)
+  // pair exists in both add-on states — so it's a simple independent switch.
+  interface CardVariant {
+    key: string;
+    thread: string;
+    color: string;
+    colorLabel: string;
+    colorHex: string;
+    colorHex2: string;
+    addon: boolean;
+    front: string;
+    left: string;
+  }
+  interface CardCatalog {
+    title: string;
+    threads: Array<{ key: string; label: string; hex: string }>;
+    variants: CardVariant[];
+  }
 
-    // Preload every color's photo for this design so none of them have to hit
-    // the network the moment a swatch is clicked.
-    swatches.forEach((btn) => {
-      if (btn.dataset.image) {
-        const preload = new Image();
-        preload.src = btn.dataset.image;
-      }
+  document.querySelectorAll<HTMLElement>(".design-card").forEach((card) => {
+    const catalogScript = card.querySelector<HTMLScriptElement>("[data-catalog]");
+    if (!catalogScript?.textContent) return;
+    const catalog: CardCatalog = JSON.parse(catalogScript.textContent);
+
+    const photoFront = card.querySelector<HTMLImageElement>("[data-photo-front]");
+    const photoLeft = card.querySelector<HTMLImageElement>("[data-photo-left]");
+    const threadButtons = card.querySelectorAll<HTMLButtonElement>("[data-thread]");
+    const colorContainer = card.querySelector<HTMLElement>("[data-color-swatches]");
+    const addonToggle = card.querySelector<HTMLInputElement>("[data-addon-toggle]");
+    const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
+    const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
+    if (!photoFront || !photoLeft || !colorContainer || !addonToggle || !variantName || !buyBtn) return;
+
+    // Preload every real mockup photo for this card up front so swapping
+    // thread/color/add-on never shows a half-loaded image or a network
+    // delay — same instant-swap feel as the old single-image pair picker.
+    catalog.variants.forEach((v) => {
+      new Image().src = v.front;
+      new Image().src = v.left;
     });
 
-    swatches.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (btn.classList.contains("active")) return;
-        swatches.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
+    const state = { thread: catalog.threads[0]?.key || "", color: "", addon: false };
 
-        // Quick crossfade instead of an instant pop — the src is already
-        // cached from the preload above, so this is purely a visual
-        // transition, not a loading state.
-        photo.classList.add("is-swapping");
-        window.setTimeout(() => {
-          photo.src = btn.dataset.image || "";
-          photo.alt = `Dudela Hat — ${btn.dataset.name || ""}`;
-          photo.classList.remove("is-swapping");
-        }, 120);
+    function variantsForThread(thread: string) {
+      return catalog.variants.filter((v) => v.thread === thread);
+    }
 
-        desc.textContent = btn.dataset.desc || "";
-        colorName.textContent = btn.dataset.name || "";
-        buyBtn.href = `/api/create-checkout-session?product=${btn.dataset.slug}`;
+    function renderColorSwatches() {
+      if (!colorContainer) return;
+      colorContainer.innerHTML = "";
+      const seen = new Set<string>();
+      for (const v of variantsForThread(state.thread)) {
+        if (seen.has(v.color)) continue;
+        seen.add(v.color);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "swatch" + (v.color === state.color ? " active" : "");
+        btn.style.setProperty("--swatch", v.colorHex);
+        btn.style.setProperty("--swatch2", v.colorHex2);
+        btn.title = v.colorLabel;
+        btn.setAttribute("aria-label", v.colorLabel);
+        btn.addEventListener("click", () => {
+          if (state.color === v.color) return;
+          state.color = v.color;
+          render();
+        });
+        colorContainer.appendChild(btn);
+      }
+    }
+
+    function currentVariant(): CardVariant | undefined {
+      return catalog.variants.find(
+        (v) => v.thread === state.thread && v.color === state.color && v.addon === state.addon
+      );
+    }
+
+    function render() {
+      const avail = variantsForThread(state.thread);
+      if (!avail.some((v) => v.color === state.color)) {
+        state.color = avail[0]?.color || "";
+      }
+
+      threadButtons.forEach((b) => b.classList.toggle("active", b.dataset.thread === state.thread));
+      renderColorSwatches();
+
+      const variant = currentVariant();
+      if (!variant || !photoFront || !photoLeft || !variantName || !buyBtn) return;
+
+      photoFront.classList.add("is-swapping");
+      photoLeft.classList.add("is-swapping");
+      window.setTimeout(() => {
+        photoFront.src = variant.front;
+        photoFront.alt = `Dudela Hat — ${catalog.title}, ${variant.colorLabel}, front`;
+        photoLeft.src = variant.left;
+        photoLeft.alt = `Dudela Hat — ${catalog.title}, ${variant.colorLabel}, angled left`;
+        photoFront.classList.remove("is-swapping");
+        photoLeft.classList.remove("is-swapping");
+      }, 120);
+
+      variantName.textContent = variant.colorLabel;
+      buyBtn.href = `/api/create-checkout-session?product=${variant.key}`;
+    }
+
+    threadButtons.forEach((b) => {
+      b.addEventListener("click", () => {
+        if (b.dataset.thread === state.thread) return;
+        state.thread = b.dataset.thread || state.thread;
+        render();
       });
     });
+
+    addonToggle.addEventListener("change", () => {
+      state.addon = addonToggle.checked;
+      render();
+    });
+
+    state.color = variantsForThread(state.thread)[0]?.color || "";
+    render();
   });
 </script>
 
@@ -356,60 +384,97 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
   .design-media {
     width: 100%;
+    background: var(--cream-100);
+  }
+  /* Two real Printful mockup photos (front + a 3/4 angle showing the left
+     side) shown side by side — same "two photos together" feel as the old
+     pre-merged pair images, just as two <img>s instead of one baked PNG. */
+  .mockup-pair {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+  }
+  .mockup-photo {
+    width: 50%;
+    height: 100%;
+    object-fit: contain;
+    background: var(--cream-100);
+    opacity: 1;
+    transition: opacity 0.12s ease;
+  }
+  .mockup-photo.is-swapping {
+    opacity: 0;
   }
   .design-tagline {
     color: var(--text-on-light-muted);
     font-size: 0.85rem;
-    margin: 0 0 0.75rem;
+    margin: 0 0 1.1rem;
   }
-  .swatches {
+  .selector {
+    margin: 0 0 1.1rem;
+  }
+  .selector-label {
+    display: block;
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-light-muted);
+    margin-bottom: 0.5rem;
+  }
+  .thread-swatches,
+  .color-swatches {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
-    margin: 0 0 1.1rem;
   }
+  .thread-swatch,
   .swatch {
     width: 2rem;
     height: 2rem;
     border-radius: 50%;
-    background: var(--swatch);
     border: 2px solid var(--border-light);
     cursor: pointer;
     padding: 0;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
+  .thread-swatch {
+    background: var(--swatch);
+  }
+  /* Cap-color swatches use a two-tone gradient dot for two-tone caps
+     (e.g. Black crown / Natural mesh bill) so the swatch itself hints at
+     what the cap actually looks like, not just a flat color guess. */
+  .swatch {
+    background: linear-gradient(135deg, var(--swatch) 50%, var(--swatch2) 50%);
+  }
+  .thread-swatch.active,
   .swatch.active {
     border-color: var(--forest-800);
     box-shadow: 0 0 0 2px var(--bg-light-raised), 0 0 0 4px var(--forest-800);
   }
-  .color-name {
+  .addon-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.88rem;
+    color: var(--text-on-light-muted);
+    margin: 0 0 1.1rem;
+    cursor: pointer;
+  }
+  .addon-toggle input {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--forest-800);
+    cursor: pointer;
+  }
+  .color-name,
+  .variant-name {
     font-family: var(--font-label);
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-on-light-muted);
   }
-  /* One <img> per card now — its src attribute is swapped in place on swatch
-     click (see the <script> above), it never gets removed/re-created, so
-     there's no Astro scoped-style gotcha to worry about here (that bug only
-     bit the old two-image innerHTML-rebuild approach). Each src points at a
-     pre-merged front+second-angle PNG (2:1) built at image-prep time, so the
-     box's aspect-ratio never changes between colors — nothing jumps. */
-  .pair-img {
-    width: 100%;
-    aspect-ratio: 2 / 1;
-    object-fit: cover;
-    display: block;
-    background: var(--cream-100);
-    opacity: 1;
-    transition: opacity 0.12s ease;
-  }
-  .pair-img.is-swapping {
-    opacity: 0;
-  }
-  /* Was .color-body — leftover from before the swatch-picker rewrite, and no
-     longer matched the actual markup (which uses .design-body), so this
-     entire padding/spacing block was silently not applying at all. That's
-     why the card content looked jammed against the edges. */
   .design-body {
     padding: 2rem 2.1rem 2.35rem;
     display: flex;
@@ -420,11 +485,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-family: var(--font-display);
     font-size: 1.3rem;
     margin: 0 0 0.4rem;
-  }
-  .color-desc {
-    color: var(--text-on-light-muted);
-    margin: 0 0 1rem;
-    font-size: 0.92rem;
   }
   .color-meta {
     display: flex;
@@ -437,36 +497,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-size: 1.4rem;
     color: var(--forest-800);
   }
-  .stock {
-    font-family: var(--font-label);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--rust-600);
-  }
-  .stock-out {
-    color: var(--text-on-light-muted);
-  }
   .design-body .btn {
     width: 100%;
     text-align: center;
-    /* Pins the buy button to the bottom of the card regardless of how long
-       the description runs — .design-card cards in the same grid row stretch
-       to equal height, and without this the shorter card's button floated
-       right under its text with a big dead gap below it. */
     margin-top: auto;
-  }
-  .btn-outline-light {
-    background: transparent;
-    border: 1.5px solid var(--border-light);
-    color: var(--text-on-light-muted);
-    cursor: not-allowed;
-    padding: 0.85rem 1.5rem;
-    border-radius: var(--radius-sm);
-    font-family: var(--font-label);
-    font-weight: 600;
-    font-size: 0.9rem;
   }
 
   .perks {
