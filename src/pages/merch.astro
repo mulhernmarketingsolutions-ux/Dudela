@@ -540,3 +540,26 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     }
   }
 </style>
+
+<!-- Cap-color swatch buttons are created client-side via document.createElement
+     (see script above) — they never get the data-astro-cid scoping attribute
+     Astro adds to elements written directly in this template, so the scoped
+     .swatch rule in the <style> block above silently never applies to them.
+     This duplicate, unscoped copy is what actually styles them. Keep it in
+     sync with .thread-swatch/.swatch above if those ever change. -->
+<style is:global>
+  .color-swatches .swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 2px solid var(--border-light);
+    cursor: pointer;
+    padding: 0;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, var(--swatch) 50%, var(--swatch2) 50%);
+  }
+  .color-swatches .swatch.active {
+    border-color: var(--forest-800);
+    box-shadow: 0 0 0 2px var(--bg-light-raised), 0 0 0 4px var(--forest-800);
+  }
+</style>
