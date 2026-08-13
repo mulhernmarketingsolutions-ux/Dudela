@@ -105,18 +105,33 @@ export async function GET({ request, locals, cookies }: APIContext) {
         const first = variants[0];
 
         const frontFile = first.files.find((f) => f.type === "embroidery_front_large");
-        const leftFile = first.files.find((f) => f.type === "embroidery_left");
+        // Real sync_variant.files use the short type "left" for the side add-on
+        // file (its filename embeds "embroidery_left", but the `type` field
+        // itself is just "left") — matching only "embroidery_left" here meant
+        // this never matched anything, so the Dude² Dad side text was silently
+        // missing from every mockup generated so far, on every WithAddOn
+        // variant. Accept both spellings so this actually gets included.
+        const leftFile = first.files.find((f) => f.type === "left" || f.type === "embroidery_left");
         const threadFront = first.options.find((o) => o.id === "thread_colors_front_large")?.value;
-        const threadLeft = first.options.find((o) => o.id === "thread_colors_left")?.value;
+        // Same story on the option id — the left file on the real add-on
+        // variants carries its thread color under "text_thread_colors_left"
+        // (it's stitched text, not a graphic), not "thread_colors_left" (which
+        // is empty). Prefer whichever one is actually populated.
+        const threadLeftGraphic = first.options.find((o) => o.id === "thread_colors_left")?.value;
+        const threadLeftText = first.options.find((o) => o.id === "text_thread_colors_left")?.value;
+        const threadLeft = Array.isArray(threadLeftGraphic) && threadLeftGraphic.length ? threadLeftGraphic : threadLeftText;
 
         // The sync/products API doesn't expose each variant's saved position (that's
-        // only visible in the Design Maker UI), so these are close approximations of
-        // the real sizing already dialed in there — good enough for a preview photo,
-        // not used for anything that touches production.
+        // only visible in the Design Maker UI) — these are approximations of the
+        // real sizing dialed in there. First pass (2.6x1.35 / 1.3x0.4) rendered
+        // visibly smaller than the real thing per a side-by-side check against
+        // the Design Maker, so this pass sizes both placements to fill most of
+        // their print area instead (previous experience: Printful's real
+        // placements run close to the area bounds, not centered-and-small).
         const FRONT_AREA = { area_width: 6.3, area_height: 2.55 };
-        const FRONT_SIZE = { width: 2.6, height: 1.35 };
+        const FRONT_SIZE = { width: 4.5, height: 2.19 }; // 720x350 source aspect, ~86% of area height
         const LEFT_AREA = { area_width: 2.0, area_height: 1.0 };
-        const LEFT_SIZE = { width: 1.3, height: 0.4 };
+        const LEFT_SIZE = { width: 1.6, height: 0.8 }; // 600x300 source aspect, ~80% of area height
 
         const files: Array<Record<string, unknown>> = [];
         if (frontFile) {
