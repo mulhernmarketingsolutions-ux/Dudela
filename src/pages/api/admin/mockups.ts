@@ -49,11 +49,19 @@ export async function GET({ request, locals, cookies }: APIContext) {
   }
 
   if (url.searchParams.get("start") === "1") {
+    // Chunked on purpose — Printful rate-limits mockup-generator create-task
+    // to ~10/60s, and firing all 12 products at once (Promise.all) tripped
+    // that limit on the first pass. Process a small slice per call instead:
+    // ?start=1&offset=0 then &offset=4, &offset=8, etc.
+    const offset = Number(url.searchParams.get("offset") || "0");
+    const chunkSize = 4;
+
     const listRes = await pf("/sync/products?limit=100");
     const listData = (await listRes.json()) as { result: Array<{ id: number; name: string }> };
+    const slice = listData.result.slice(offset, offset + chunkSize);
 
     const tasks = await Promise.all(
-      listData.result.map(async (p) => {
+      slice.map(async (p) => {
         const res = await pf(`/sync/products/${p.id}`);
         const data = (await res.json()) as {
           result: {
