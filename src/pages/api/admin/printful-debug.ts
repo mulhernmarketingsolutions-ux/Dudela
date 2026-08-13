@@ -32,6 +32,19 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // for "front flat" and "front, tilted to show the left side" instead of
   // guessing ids blind. Flat/product-only styles are the ones that support a
   // transparent background — lifestyle/model shots don't.
+  // ?template=<id> — fetches the real Product Template behind a sync product
+  // (Design Maker's saved data: exact placement position/size for every
+  // print file), so we can find out whether the mockup-generator preview
+  // photos actually match what's really configured, instead of the guessed
+  // position mockups.ts had to use (sync/products doesn't expose this).
+  if (url.searchParams.get("template")) {
+    const res = await fetch(`https://api.printful.com/product-templates/${url.searchParams.get("template")}`, {
+      headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { "Content-Type": "application/json" } });
+  }
+
   if (url.searchParams.get("styles") === "1") {
     const res = await fetch("https://api.printful.com/v2/catalog-products/952/mockup-styles", {
       headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
