@@ -35,6 +35,35 @@ export async function GET({ request, locals, cookies }: APIContext) {
       headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}`, "Content-Type": "application/json" },
     });
 
+  // ?download=<comma-separated mockup URLs> — the generator's mockup_url/extra[].url
+  // values live on printful-upload's S3 "tmp/" prefix, which is not meant to be
+  // hotlinked long-term. This fetches each one (through the Worker, since our
+  // own sandbox tooling can't reach printful-upload's S3 host directly) and
+  // returns it as base64 so it can be saved as a permanent static asset in the
+  // site repo instead. Keep batches small (a handful of URLs per call) —
+  // base64 inflates payload size ~33%, and this is meant to be pulled through
+  // a browser JSON view, not streamed.
+  const download = url.searchParams.get("download");
+  if (download) {
+    const urls = download.split(",").map((u) => u.trim()).filter(Boolean);
+    const results = await Promise.all(
+      urls.map(async (u) => {
+        try {
+          const res = await fetch(u);
+          if (!res.ok) return { url: u, error: `HTTP ${res.status}` };
+          const buf = await res.arrayBuffer();
+          let binary = "";
+          const bytes = new Uint8Array(buf);
+          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+          return { url: u, base64: btoa(binary) };
+        } catch (e) {
+          return { url: u, error: String(e) };
+        }
+      })
+    );
+    return new Response(JSON.stringify({ results }), { headers: { "Content-Type": "application/json" } });
+  }
+
   const poll = url.searchParams.get("poll");
   if (poll) {
     const keys = poll.split(",").map((k) => k.trim()).filter(Boolean);
