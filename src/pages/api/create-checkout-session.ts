@@ -102,7 +102,7 @@ const PRODUCTS: Record<
 // two separate discounted line items (not a Stripe Coupon on top of full
 // price), so the checkout page and the resulting receipt itemize each
 // piece at its real discounted price rather than one opaque combined charge.
-const BUNDLE_DISCOUNT_PERCENT = 20;
+const BUNDLE_DISCOUNT_PERCENT = 15;
 
 export async function GET({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;

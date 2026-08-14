@@ -7,7 +7,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import { getAuthedMember } from "../lib/auth";
-import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG, hatLabel, shirtLabel } from "../lib/printful";
+import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG } from "../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
 
@@ -19,23 +19,23 @@ const env = (Astro.locals as any).runtime.env;
 // of what a merch drop is for.
 const member = await getAuthedMember(Astro.cookies, env);
 
-// Bundle & Save — buy one hat + one shirt together, 20% off each. Must match
+// Bundle & Save — buy one hat + one shirt together, 15% off each. Must match
 // BUNDLE_DISCOUNT_PERCENT in api/create-checkout-session.ts (that's the file
-// that actually charges the card; this is only used to render the promo
-// copy/estimated price here, so a mismatch would just show the wrong number,
-// not the wrong charge — but keep them in sync).
-const BUNDLE_DISCOUNT_PERCENT = 20;
-const bundleHats = HAT_CATALOG.map((h) => ({
-  key: h.key,
-  label: hatLabel(h),
-  price: parseFloat(h.price),
-  addon: h.addon,
-}));
-const bundleShirts = SHIRT_CATALOG.map((s) => ({
-  key: s.key,
-  label: shirtLabel(s),
-  price: parseFloat(s.price),
-}));
+// that actually charges the card; this is only used to render the live bar's
+// estimated price below, so a mismatch would just show the wrong number, not
+// the wrong charge — but keep them in sync).
+//
+// REWRITTEN 2026-08-13: this used to be its own promo section with two
+// dropdowns duplicating the hat/shirt pickers below — confusing, since a
+// buyer could set a color/size down in the real product cards and then see
+// totally different options in the bundle box. Now there's no separate
+// picker at all: a slim bar fixed to the bottom of the screen just mirrors
+// whatever hat + shirt variant the cards below currently have selected (see
+// the client script's currentHat/currentShirt + updateBundleBar()), and its
+// buy link is computed from that live state. bundleHats/bundleShirts arrays
+// are gone — the cards' own embedded catalogs are the only source of truth
+// for prices/labels now.
+const BUNDLE_DISCOUNT_PERCENT = 15;
 
 // REWRITTEN 2026-08-13: the old version of this page had one static color
 // picker per design, backed by pre-merged "pair" images built by hand at
@@ -174,10 +174,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       </p>
 
       <div class="product-nav" role="group" aria-label="Jump to product">
-        <a href="#bundle" class="product-nav-link product-nav-link-bundle">Bundle — Save {BUNDLE_DISCOUNT_PERCENT}%</a>
         <a href="#shirts" class="product-nav-link">Shirts — $40</a>
         <a href="#hats" class="product-nav-link">Hats — from $38</a>
       </div>
+      <p class="bundle-hint">Get a hat and a shirt together and we knock {BUNDLE_DISCOUNT_PERCENT}% off each — no code needed, it shows up automatically once you've picked both.</p>
 
       {!member && (
         <p class="login-nudge">
@@ -189,45 +189,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       {canceled && (
         <p class="notice">Checkout was canceled — nothing was charged. Pick your gear below whenever you're ready.</p>
       )}
-    </div>
-  </section>
-
-  <section id="bundle" class="bundle-promo section-dark">
-    <div class="container bundle-inner">
-      <div class="bundle-copy">
-        <span class="bundle-badge">Bundle &amp; Save</span>
-        <h2>Buy the set. Save {BUNDLE_DISCOUNT_PERCENT}% on both.</h2>
-        <p class="bundle-sub">
-          Pick your hat and your shirt — {BUNDLE_DISCOUNT_PERCENT}% off each one when you buy them
-          together, one checkout, both shipped right to your door.
-        </p>
-      </div>
-      <div class="bundle-picker">
-        <label class="bundle-field">
-          <span class="bundle-field-label">Hat</span>
-          <select data-bundle-hat>
-            {bundleHats.map((h) => (
-              <option value={h.key} data-price={h.price} data-addon={h.addon ? "1" : "0"}>{h.label}</option>
-            ))}
-          </select>
-        </label>
-        <label class="bundle-field">
-          <span class="bundle-field-label">Shirt</span>
-          <select data-bundle-shirt>
-            {bundleShirts.map((s) => (
-              <option value={s.key} data-price={s.price}>{s.label}</option>
-            ))}
-          </select>
-        </label>
-        <div class="bundle-price-row">
-          <span class="bundle-price-was" data-bundle-was></span>
-          <span class="bundle-price-now" data-bundle-now></span>
-        </div>
-        <a href="/api/create-checkout-session?product=bundle" class="btn btn-primary bundle-buy" data-bundle-buy>
-          Buy the Bundle
-        </a>
-      </div>
-      <script type="application/json" data-bundle-config set:html={JSON.stringify({ discountPercent: BUNDLE_DISCOUNT_PERCENT })} />
     </div>
   </section>
 
@@ -252,8 +213,12 @@ const canceled = url.searchParams.get("purchase") === "canceled";
               <button type="button" class="details-link" data-open-details="shirt">Material, fit &amp; sizing ›</button>
 
               <div class="logo-detail" data-logo-detail-wrap>
-                <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} logo, up close`} />
-                <span class="logo-detail-caption">The design, up close</span>
+                <button type="button" class="logo-detail-toggle" data-logo-detail-toggle aria-expanded="false">
+                  See the design up close ›
+                </button>
+                <div class="logo-detail-popover" data-logo-detail-popover hidden>
+                  <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} logo, up close`} />
+                </div>
               </div>
 
               <div class="selector">
@@ -431,6 +396,34 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
   </section>
 
+  <!-- Live Bundle bar — reflects whatever hat + shirt variant the cards
+       above currently have selected (see updateBundleBar() in the script
+       below). Starts hidden and gets an is-visible class the first time
+       both a hat and a shirt selection exist, which in practice is
+       immediately on load since both sections default to a real variant. -->
+  <div class="bundle-bar" id="bundle-bar" role="region" aria-label="Bundle discount">
+    <div class="container bundle-bar-inner">
+      <div class="bundle-bar-items">
+        <img class="bundle-bar-thumb" data-bar-hat-img alt="" />
+        <span class="bundle-bar-plus">+</span>
+        <img class="bundle-bar-thumb" data-bar-shirt-img alt="" />
+        <div class="bundle-bar-text">
+          <span class="bundle-bar-label">Get both, save {BUNDLE_DISCOUNT_PERCENT}%</span>
+          <span class="bundle-bar-picks" data-bar-picks></span>
+        </div>
+      </div>
+      <div class="bundle-bar-right">
+        <div class="bundle-bar-price">
+          <span class="bundle-bar-was" data-bar-was></span>
+          <span class="bundle-bar-now" data-bar-now></span>
+        </div>
+        <a href="/api/create-checkout-session?product=bundle" class="btn btn-primary bundle-bar-buy" data-bar-buy>
+          Buy the Bundle
+        </a>
+      </div>
+    </div>
+  </div>
+
   <Footer />
 </BaseLayout>
 
@@ -449,6 +442,69 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   // the currently selected thread every time the thread changes. The add-on
   // toggle doesn't affect which colors are available — every (thread, color)
   // pair exists in both add-on states — so it's a simple independent switch.
+
+  // Live Bundle bar (fixed to the bottom of the screen, markup near the end
+  // of the page body) — mirrors whichever hat + shirt variant these two
+  // sections currently have selected, so there's no separate/duplicate
+  // bundle picker anywhere on the page. REWRITTEN 2026-08-13: the old bundle
+  // section had its own two <select> dropdowns, which could disagree with
+  // whatever was actually picked in the cards below — confusing. Now the
+  // cards themselves are the only source of truth; currentHat/currentShirt
+  // just track the latest one, and updateBundleBar() repaints the bar
+  // whenever either changes.
+  interface BundleSelection {
+    key: string;
+    label: string;
+    price: number;
+    addon: boolean;
+    image: string;
+  }
+  let currentHat: BundleSelection | null = null;
+  let currentShirt: BundleSelection | null = null;
+
+  // Keep in sync with BUNDLE_DISCOUNT_PERCENT in this page's frontmatter and
+  // in api/create-checkout-session.ts (the actual source of truth for the
+  // charge) — this copy only drives the bar's live price preview.
+  const BUNDLE_DISCOUNT_PERCENT = 15;
+
+  const bundleBar = document.getElementById("bundle-bar");
+  const barHatImg = bundleBar?.querySelector<HTMLImageElement>("[data-bar-hat-img]");
+  const barShirtImg = bundleBar?.querySelector<HTMLImageElement>("[data-bar-shirt-img]");
+  const barPicks = bundleBar?.querySelector<HTMLElement>("[data-bar-picks]");
+  const barWas = bundleBar?.querySelector<HTMLElement>("[data-bar-was]");
+  const barNow = bundleBar?.querySelector<HTMLElement>("[data-bar-now]");
+  const barBuy = bundleBar?.querySelector<HTMLAnchorElement>("[data-bar-buy]");
+
+  function updateBundleBar() {
+    if (!bundleBar || !currentHat || !currentShirt) return;
+    if (barHatImg) {
+      barHatImg.src = currentHat.image;
+      barHatImg.alt = currentHat.label;
+    }
+    if (barShirtImg) {
+      barShirtImg.src = currentShirt.image;
+      barShirtImg.alt = currentShirt.label;
+    }
+    if (barPicks) barPicks.textContent = `${currentHat.label} + ${currentShirt.label}`;
+
+    const discountMultiplier = 1 - BUNDLE_DISCOUNT_PERCENT / 100;
+    // The $1 add-on surcharge isn't discounted server-side either (see
+    // handleBundleCheckout in create-checkout-session.ts) — kept flat here
+    // to match.
+    const addonSurcharge = currentHat.addon ? 1 : 0;
+    const fullTotal = currentHat.price + addonSurcharge + currentShirt.price;
+    const discountedTotal =
+      currentHat.price * discountMultiplier + addonSurcharge + currentShirt.price * discountMultiplier;
+
+    if (barWas) barWas.textContent = `$${fullTotal.toFixed(2)}`;
+    if (barNow) barNow.textContent = `$${discountedTotal.toFixed(2)}`;
+    if (barBuy) {
+      barBuy.href = `/api/create-checkout-session?product=bundle&hat=${encodeURIComponent(currentHat.key)}&shirt=${encodeURIComponent(currentShirt.key)}`;
+    }
+
+    bundleBar.classList.add("is-visible");
+  }
+
   interface CardVariant {
     key: string;
     thread: string;
@@ -466,10 +522,18 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     variants: CardVariant[];
   }
 
-  document.querySelectorAll<HTMLElement>(".design-card").forEach((card) => {
+  document.querySelectorAll<HTMLElement>(".design-card").forEach((card, cardIndex) => {
     const catalogScript = card.querySelector<HTMLScriptElement>("[data-catalog]");
     if (!catalogScript?.textContent) return;
     const catalog: CardCatalog = JSON.parse(catalogScript.textContent);
+
+    // Which hat design "counts" for the bundle bar: the first design card
+    // (Classic — the hero design) publishes its selection by default on
+    // load; whichever hat card the visitor actually interacts with takes
+    // over from then on, so the bar always tracks the last thing you
+    // actually touched instead of silently reverting to Classic.
+    const isDefaultForBundle = cardIndex === 0;
+    let userInteracted = false;
 
     const photoFront = card.querySelector<HTMLImageElement>("[data-photo-front]");
     const photoLeft = card.querySelector<HTMLImageElement>("[data-photo-left]");
@@ -511,6 +575,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         btn.setAttribute("aria-label", v.colorLabel);
         btn.addEventListener("click", () => {
           if (state.color === v.color) return;
+          userInteracted = true;
           state.color = v.color;
           render();
         });
@@ -556,17 +621,33 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       priceEl.textContent = priceLabel;
       buyBtn.textContent = `Buy Now — ${priceLabel}`;
       buyBtn.href = `/api/create-checkout-session?product=${variant.key}`;
+
+      if (isDefaultForBundle || userInteracted) {
+        // Base hat price is a flat $38 across every real variant (see
+        // HAT_CATALOG in lib/printful.ts) — the add-on is tracked
+        // separately as its own $1 surcharge, same split the server uses.
+        currentHat = {
+          key: variant.key,
+          label: `${catalog.title} — ${variant.colorLabel}`,
+          price: 38,
+          addon: variant.addon,
+          image: variant.front,
+        };
+        updateBundleBar();
+      }
     }
 
     threadButtons.forEach((b) => {
       b.addEventListener("click", () => {
         if (b.dataset.thread === state.thread) return;
+        userInteracted = true;
         state.thread = b.dataset.thread || state.thread;
         render();
       });
     });
 
     addonToggle.addEventListener("click", () => {
+      userInteracted = true;
       state.addon = !state.addon;
       addonToggle.setAttribute("aria-pressed", String(state.addon));
       addonToggle.classList.toggle("active", state.addon);
@@ -603,6 +684,22 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     variants: ShirtCardVariant[];
   }
 
+  // Closes any open logo-detail popover across every shirt card — one set
+  // of global listeners rather than one per card (see the click handler
+  // inside the forEach below).
+  function closeAllLogoPopovers() {
+    document.querySelectorAll<HTMLElement>("[data-logo-detail-popover]").forEach((el) => {
+      el.hidden = true;
+    });
+    document.querySelectorAll<HTMLButtonElement>("[data-logo-detail-toggle]").forEach((el) => {
+      el.setAttribute("aria-expanded", "false");
+    });
+  }
+  document.addEventListener("click", closeAllLogoPopovers);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllLogoPopovers();
+  });
+
   document.querySelectorAll<HTMLElement>(".shirt-card").forEach((card) => {
     const catalogScript = card.querySelector<HTMLScriptElement>("[data-shirt-catalog]");
     if (!catalogScript?.textContent) return;
@@ -611,12 +708,32 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const photoFront = card.querySelector<HTMLImageElement>("[data-photo-front]");
     const photoBack = card.querySelector<HTMLImageElement>("[data-photo-back]");
     const logoDetailImg = card.querySelector<HTMLImageElement>("[data-logo-detail]");
+    const logoDetailToggle = card.querySelector<HTMLButtonElement>("[data-logo-detail-toggle]");
+    const logoDetailPopover = card.querySelector<HTMLElement>("[data-logo-detail-popover]");
     const colorContainer = card.querySelector<HTMLElement>("[data-shirt-colors]");
     const sizeContainer = card.querySelector<HTMLElement>("[data-shirt-sizes]");
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
     const priceEl = card.querySelector<HTMLElement>("[data-price]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
     if (!photoFront || !photoBack || !colorContainer || !sizeContainer || !variantName || !priceEl || !buyBtn) return;
+
+    // Logo-close-up popover — was a thumbnail permanently sitting in the
+    // card whether anyone wanted it or not; now it's collapsed behind a
+    // small link and only appears on demand. Closing (outside click /
+    // Escape) is handled once, globally, below — not per card — so this
+    // doesn't stack up duplicate document listeners if a second shirt
+    // design is ever added.
+    if (logoDetailToggle && logoDetailPopover) {
+      logoDetailToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = !logoDetailPopover.hidden;
+        closeAllLogoPopovers();
+        if (!isOpen) {
+          logoDetailPopover.hidden = false;
+          logoDetailToggle.setAttribute("aria-expanded", "true");
+        }
+      });
+    }
 
     catalog.variants.forEach((v) => {
       new Image().src = v.front;
@@ -661,6 +778,18 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       priceEl.textContent = priceLabel;
       buyBtn.textContent = `Buy Now — ${priceLabel}`;
       buyBtn.href = `/api/create-checkout-session?product=${variant.key}`;
+
+      // Only one shirt design exists today, so this always publishes — if a
+      // second design is ever added, this'll need the same
+      // isDefaultForBundle/userInteracted split the hat cards use above.
+      currentShirt = {
+        key: variant.key,
+        label: `${catalog.title} — ${variant.colorLabel}, ${variant.size}`,
+        price: parseFloat(variant.price),
+        addon: false,
+        image: variant.front,
+      };
+      updateBundleBar();
     }
 
     colorContainer.addEventListener("click", (e) => {
@@ -679,52 +808,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
     render();
   });
-
-  // Bundle & Save picker — two plain <select>s (28 hat variants + 14 shirt
-  // variants would be a lot of swatch UI to duplicate for a single promo
-  // section) rather than the swatch-picker pattern the individual cards
-  // use above. Price shown here is purely a client-side preview computed
-  // from each option's data-price/data-addon attributes — the real charge
-  // is computed server-side in create-checkout-session.ts's
-  // handleBundleCheckout, which is the actual source of truth; this only
-  // has to be readable, not authoritative.
-  (() => {
-    const section = document.getElementById("bundle");
-    if (!section) return;
-    const configScript = section.querySelector<HTMLScriptElement>("[data-bundle-config]");
-    const discountPercent = configScript?.textContent ? JSON.parse(configScript.textContent).discountPercent : 20;
-
-    const hatSelect = section.querySelector<HTMLSelectElement>("[data-bundle-hat]");
-    const shirtSelect = section.querySelector<HTMLSelectElement>("[data-bundle-shirt]");
-    const wasEl = section.querySelector<HTMLElement>("[data-bundle-was]");
-    const nowEl = section.querySelector<HTMLElement>("[data-bundle-now]");
-    const buyBtn = section.querySelector<HTMLAnchorElement>("[data-bundle-buy]");
-    if (!hatSelect || !shirtSelect || !wasEl || !nowEl || !buyBtn) return;
-
-    function render() {
-      const hatOpt = hatSelect!.selectedOptions[0];
-      const shirtOpt = shirtSelect!.selectedOptions[0];
-      if (!hatOpt || !shirtOpt) return;
-
-      const hatPrice = parseFloat(hatOpt.dataset.price || "0");
-      const hasAddon = hatOpt.dataset.addon === "1";
-      const shirtPrice = parseFloat(shirtOpt.dataset.price || "0");
-
-      const fullTotal = hatPrice + (hasAddon ? 1 : 0) + shirtPrice;
-      const discountMultiplier = 1 - discountPercent / 100;
-      // Addon surcharge isn't discounted server-side either — see
-      // handleBundleCheckout in create-checkout-session.ts.
-      const discountedTotal = hatPrice * discountMultiplier + (hasAddon ? 1 : 0) + shirtPrice * discountMultiplier;
-
-      wasEl!.textContent = `$${fullTotal.toFixed(2)}`;
-      nowEl!.textContent = `$${discountedTotal.toFixed(2)}`;
-      buyBtn!.href = `/api/create-checkout-session?product=bundle&hat=${encodeURIComponent(hatSelect!.value)}&shirt=${encodeURIComponent(shirtSelect!.value)}`;
-    }
-
-    hatSelect.addEventListener("change", render);
-    shirtSelect.addEventListener("change", render);
-    render();
-  })();
 
   // Product Details & Sizing modal — one shared <dialog>, content switched
   // by adding data-type="hat"|"shirt" to it (see the matching CSS below,
@@ -810,106 +893,114 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     color: var(--amber-500);
     font-weight: 600;
   }
-  .product-nav-link-bundle {
-    background: var(--amber-500);
-    color: var(--forest-900, #12180f);
+  .bundle-hint {
+    margin-top: 1.1rem;
+    color: var(--text-on-dark-muted);
+    font-size: 0.88rem;
+    max-width: 48ch;
   }
 
-  /* Bundle & Save — its own dark section right after the hero (same
-     background as the hero, no divider between them) so it reads as the
-     page's headline offer rather than just another product tile. */
-  .bundle-promo {
-    padding: 3rem 0 4.5rem;
+  /* Live Bundle bar — fixed to the bottom of the viewport, mirrors whatever
+     hat + shirt the cards below currently have selected. Stays out of the
+     way (translated off-screen) until updateBundleBar() in the script above
+     has real data to show, which in practice is immediately on load. */
+  .bundle-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--forest-900, #12180f);
+    border-top: 1px solid var(--amber-500);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
   }
-  .bundle-inner {
+  .bundle-bar.is-visible {
+    transform: translateY(0);
+  }
+  .bundle-bar-inner {
     display: flex;
-    flex-wrap: wrap;
-    gap: 2.5rem;
     align-items: center;
     justify-content: space-between;
-    max-width: 900px;
-    padding: 2.25rem 2.5rem;
-    border: 1px solid var(--amber-500);
-    border-radius: var(--radius-md);
-    background: var(--forest-700);
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.85rem 0;
   }
-  .bundle-copy {
-    flex: 1 1 280px;
-    min-width: 240px;
-  }
-  .bundle-badge {
-    display: inline-block;
-    font-family: var(--font-label);
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--forest-900, #12180f);
-    background: var(--amber-500);
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    margin-bottom: 0.75rem;
-  }
-  .bundle-copy h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    color: var(--cream-100);
-    margin: 0 0 0.6rem;
-  }
-  .bundle-sub {
-    color: var(--text-on-dark-muted);
-    margin: 0;
-    max-width: 42ch;
-  }
-  .bundle-picker {
-    flex: 1 1 280px;
-    min-width: 260px;
+  .bundle-bar-items {
     display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
   }
-  .bundle-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .bundle-field-label {
-    font-family: var(--font-label);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-on-dark-muted);
-  }
-  .bundle-field select {
-    width: 100%;
-    padding: 0.65rem 0.8rem;
+  .bundle-bar-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    background: var(--cream-100);
     border-radius: var(--radius-sm);
     border: 1px solid var(--forest-600);
-    background: var(--bg-light-raised);
-    color: var(--text-on-light);
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
+    flex-shrink: 0;
   }
-  .bundle-price-row {
+  .bundle-bar-plus {
+    color: var(--text-on-dark-muted);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .bundle-bar-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+  .bundle-bar-label {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--amber-500);
+  }
+  .bundle-bar-picks {
+    color: var(--cream-100);
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 46vw;
+  }
+  .bundle-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+  .bundle-bar-price {
     display: flex;
     align-items: baseline;
-    gap: 0.65rem;
-    margin-top: 0.25rem;
+    gap: 0.5rem;
   }
-  .bundle-price-was {
-    font-size: 0.95rem;
+  .bundle-bar-was {
+    font-size: 0.85rem;
     color: var(--text-on-dark-muted);
     text-decoration: line-through;
   }
-  .bundle-price-now {
+  .bundle-bar-now {
     font-family: var(--font-display);
-    font-size: 1.6rem;
+    font-size: 1.35rem;
     color: var(--amber-500);
   }
-  .bundle-buy {
-    width: 100%;
-    text-align: center;
+  .bundle-bar-buy {
+    white-space: nowrap;
+    padding: 0.65rem 1.3rem;
+  }
+  @media (max-width: 640px) {
+    .bundle-bar-picks {
+      display: none;
+    }
+    .bundle-bar-inner {
+      justify-content: center;
+    }
   }
 
   .colors {
@@ -927,10 +1018,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--bg-light-raised);
+    /* A flat 1px border on a light background reads thin/insubstantial on
+       its own — the added shadow gives each card real physical weight
+       without changing the border itself. */
+    box-shadow: 0 1px 2px rgba(18, 24, 15, 0.04), 0 10px 28px rgba(18, 24, 15, 0.07);
   }
   .design-media {
     width: 100%;
     background: var(--cream-100);
+    border-bottom: 1px solid var(--border-light);
   }
   /* Two real Printful mockup photos (front + a 3/4 angle showing the left
      side) shown side by side — same "two photos together" feel as the old
@@ -969,37 +1065,46 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     transform: scale(1.8);
     transform-origin: 85% 55%;
   }
-  /* A tight crop of the real chest-logo print file on a flat brand-color
-     card, shown alongside the color/size pickers — the full-body lifestyle
-     photo alone makes a small chest logo too tiny to actually read. */
+  /* A tight crop of the real chest-logo print file — collapsed behind a
+     small toggle by default (a persistent thumbnail sitting in every card
+     whether or not anyone wanted it felt like clutter) and shown on demand
+     as a popover anchored to the toggle. */
   .logo-detail {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    position: relative;
     margin: 0 0 1.1rem;
-    padding: 0.5rem 0.5rem 0.5rem 0;
+  }
+  .logo-detail-toggle {
+    display: inline-block;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--forest-800);
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .logo-detail-toggle:hover {
+    color: var(--amber-500);
+  }
+  .logo-detail-popover {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    left: 0;
+    z-index: 5;
+    padding: 0.6rem;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
   }
   .logo-detail-img {
-    width: 92px;
+    display: block;
+    width: 200px;
     height: auto;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-light);
-    cursor: zoom-in;
-    transition: transform 0.2s ease;
-    flex-shrink: 0;
-  }
-  .logo-detail-img:hover {
-    transform: scale(1.6);
-    position: relative;
-    z-index: 2;
-  }
-  .logo-detail-caption {
-    font-family: var(--font-label);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-on-light-muted);
+    border-radius: 4px;
   }
   .design-tagline {
     color: var(--text-on-light-muted);
@@ -1170,6 +1275,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     width: 100%;
     text-align: center;
     margin-top: auto;
+    box-shadow: 0 4px 12px rgba(18, 24, 15, 0.12);
   }
 
   .perks {
@@ -1384,5 +1490,18 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .color-swatches .swatch.active {
     border-color: var(--forest-800);
     box-shadow: 0 0 0 2px var(--bg-light-raised), 0 0 0 4px var(--forest-800);
+  }
+
+  /* Reserve space at the bottom of the page for the fixed Live Bundle bar so
+     it doesn't sit on top of the footer once it's visible — global because
+     it targets <body>, which Astro's scoped styles can't reach from this
+     component. */
+  body:has(.bundle-bar.is-visible) {
+    padding-bottom: 84px;
+  }
+  @media (max-width: 640px) {
+    body:has(.bundle-bar.is-visible) {
+      padding-bottom: 96px;
+    }
   }
 </style>
