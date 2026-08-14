@@ -368,7 +368,7 @@ export async function POST({ request, locals }: APIContext) {
         // createPrintfulOrder comment in lib/printful.ts.
         const recipient = extractPrintfulRecipient(session, name, email);
         let bundlePrintfulOrderId: number | undefined;
-        if (bundleHatVariant && bundleShirtVariant && recipient) {
+        if (bundleHatVariant?.syncVariantId && bundleShirtVariant?.syncVariantId && recipient) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId: bundleHatVariant.syncVariantId,

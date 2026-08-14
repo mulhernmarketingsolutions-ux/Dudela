@@ -7,7 +7,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import { getAuthedMember } from "../lib/auth";
-import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG } from "../lib/printful";
+import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG, SHIRT_YEARS } from "../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
 
@@ -110,17 +110,23 @@ const designs = (Object.keys(DESIGN_INFO) as Design[]).map((dkey) => {
   };
 });
 
-// SHIRTS — a clean color × size cross product (no filtering needed the way
-// hats need thread-vs-cap-color filtering), grouped by `design` so a second
-// shirt design (already planned) just needs a SHIRT_DESIGN_INFO entry and a
-// SHIRT_CATALOG row in lib/printful.ts, not a rewrite of this page.
+// SHIRTS — a clean color × year × size cross product (no filtering needed
+// the way hats need thread-vs-cap-color filtering), grouped by `design` so
+// a second shirt design (already planned) just needs a SHIRT_DESIGN_INFO
+// entry and SHIRT_CATALOG rows in lib/printful.ts, not a rewrite of this
+// page. "Year" is the "EST. 2024"–"EST. 2027" print on the design itself —
+// added 2026-08-14 alongside color as a second selector; title/tagline no
+// longer bake in a specific year since that's now user-selectable (the card
+// title updates client-side to match — see data-shirt-title in the client
+// script below).
 const SHIRT_DESIGN_INFO: Record<string, { title: string; tagline: string }> = {
   "dad-est": {
-    title: "DAD EST. 2026",
-    tagline: `A clean "DAD EST. 2026" chest hit up front, the DUDELA fist-bump wordmark across the back.`,
+    title: "DAD EST.",
+    tagline: `A clean "DAD EST." chest hit up front — pick your year — the DUDELA fist-bump wordmark across the back.`,
   },
 };
 const SHIRT_COLOR_ORDER = ["black", "ivory"];
+const DEFAULT_SHIRT_YEAR = "2026";
 
 const shirtDesignKeys = [...new Set(SHIRT_CATALOG.map((v) => v.design))];
 const shirtDesigns = shirtDesignKeys.map((dkey) => {
@@ -129,12 +135,14 @@ const shirtDesigns = shirtDesignKeys.map((dkey) => {
     const sample = variants.find((v) => v.color === c)!;
     return { key: c, label: sample.colorLabel, hex: sample.colorHex };
   });
+  const years = SHIRT_YEARS.filter((y) => variants.some((v) => v.year === y));
 
   const clientVariants = variants.map((v) => ({
     key: v.key,
     color: v.color,
     colorLabel: v.colorLabel,
     colorHex: v.colorHex,
+    year: v.year,
     size: v.size,
     front: v.frontImage,
     back: v.backImage,
@@ -143,7 +151,9 @@ const shirtDesigns = shirtDesignKeys.map((dkey) => {
   }));
 
   const first =
-    clientVariants.find((v) => v.color === colors[0]?.key && v.size === "M") || clientVariants[0];
+    clientVariants.find((v) => v.color === colors[0]?.key && v.year === DEFAULT_SHIRT_YEAR && v.size === "M") ||
+    clientVariants.find((v) => v.color === colors[0]?.key && v.size === "M") ||
+    clientVariants[0];
 
   const info = SHIRT_DESIGN_INFO[dkey] || { title: dkey, tagline: "" };
 
@@ -152,6 +162,7 @@ const shirtDesigns = shirtDesignKeys.map((dkey) => {
     title: info.title,
     tagline: info.tagline,
     colors,
+    years,
     sizes: variants.map((v) => v.size).filter((s, i, arr) => arr.indexOf(s) === i),
     variants: clientVariants,
     first,
@@ -208,7 +219,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
               </div>
             </div>
             <div class="design-body">
-              <h3>{d.title}</h3>
+              <h3 data-shirt-title>{d.title} {d.first.year}</h3>
               <p class="design-tagline">{d.tagline}</p>
               <button type="button" class="details-link" data-open-details="shirt">Material, fit &amp; sizing ›</button>
 
@@ -217,17 +228,26 @@ const canceled = url.searchParams.get("purchase") === "canceled";
                   See the design up close ›
                 </button>
                 <div class="logo-detail-popover" data-logo-detail-popover hidden>
-                  <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} logo, up close`} />
+                  <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} ${d.first.year} logo, up close`} />
+                </div>
+              </div>
+
+              <div class="selector">
+                <span class="selector-label">Year</span>
+                <div class="size-options" role="group" aria-label={`${d.title} year`} data-shirt-years>
+                  {d.years.map((y) => (
+                    <button type="button" class={`size-btn${y === d.first.year ? " active" : ""}`} data-shirt-year={y}>{y}</button>
+                  ))}
                 </div>
               </div>
 
               <div class="selector">
                 <span class="selector-label">Color</span>
                 <div class="color-swatches" role="group" aria-label={`${d.title} color`} data-shirt-colors>
-                  {d.colors.map((c, i) => (
+                  {d.colors.map((c) => (
                     <button
                       type="button"
-                      class={`swatch${i === 0 ? " active" : ""}`}
+                      class={`swatch${c.key === d.first.color ? " active" : ""}`}
                       style={`--swatch: ${c.hex}; --swatch2: ${c.hex}`}
                       title={c.label}
                       aria-label={c.label}
@@ -241,14 +261,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
                 <span class="selector-label">Size</span>
                 <div class="size-options" role="group" aria-label={`${d.title} size`} data-shirt-sizes>
                   {d.sizes.map((s) => (
-                    <button type="button" class={`size-btn${s === "M" ? " active" : ""}`} data-shirt-size={s}>{s}</button>
+                    <button type="button" class={`size-btn${s === d.first.size ? " active" : ""}`} data-shirt-size={s}>{s}</button>
                   ))}
                 </div>
               </div>
 
               <div class="color-meta">
                 <span class="price" data-price>${Math.round(parseFloat(d.first.price))}</span>
-                <span class="variant-name" data-variant-name>{d.first.colorLabel}, {d.first.size}</span>
+                <span class="variant-name" data-variant-name>{d.first.colorLabel}, {d.first.year}, {d.first.size}</span>
               </div>
               <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
                 Buy Now — ${Math.round(parseFloat(d.first.price))}
@@ -767,14 +787,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     render();
   });
 
-  // Shirt cards — same pattern as hat cards above but simpler: color and
-  // size are a full cross product (no filtering), no add-on, and the two
-  // mockup photos are front/back instead of front/angled-left.
+  // Shirt cards — same pattern as hat cards above but simpler: color, year,
+  // and size are a full cross product (no filtering), no add-on, and the
+  // two mockup photos are front/back instead of front/angled-left.
   interface ShirtCardVariant {
     key: string;
     color: string;
     colorLabel: string;
     colorHex: string;
+    year: string;
     size: string;
     front: string;
     back: string;
@@ -784,6 +805,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   interface ShirtCardCatalog {
     title: string;
     colors: Array<{ key: string; label: string; hex: string }>;
+    years: string[];
     sizes: string[];
     variants: ShirtCardVariant[];
   }
@@ -814,12 +836,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const logoDetailImg = card.querySelector<HTMLImageElement>("[data-logo-detail]");
     const logoDetailToggle = card.querySelector<HTMLButtonElement>("[data-logo-detail-toggle]");
     const logoDetailPopover = card.querySelector<HTMLElement>("[data-logo-detail-popover]");
+    const titleEl = card.querySelector<HTMLElement>("[data-shirt-title]");
+    const yearContainer = card.querySelector<HTMLElement>("[data-shirt-years]");
     const colorContainer = card.querySelector<HTMLElement>("[data-shirt-colors]");
     const sizeContainer = card.querySelector<HTMLElement>("[data-shirt-sizes]");
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
     const priceEl = card.querySelector<HTMLElement>("[data-price]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
-    if (!photoFront || !photoBack || !colorContainer || !sizeContainer || !variantName || !priceEl || !buyBtn) return;
+    if (!photoFront || !photoBack || !yearContainer || !colorContainer || !sizeContainer || !variantName || !priceEl || !buyBtn) return;
 
     // Logo-close-up popover — was a thumbnail permanently sitting in the
     // card whether anyone wanted it or not; now it's collapsed behind a
@@ -845,13 +869,23 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       new Image().src = v.logoDetail;
     });
 
-    const state = { color: catalog.colors[0]?.key || "", size: "M" };
+    const DEFAULT_SHIRT_YEAR = "2026";
+    const state = {
+      color: catalog.colors[0]?.key || "",
+      year: catalog.years.includes(DEFAULT_SHIRT_YEAR) ? DEFAULT_SHIRT_YEAR : catalog.years[0] || "",
+      size: "M",
+    };
 
     function currentVariant(): ShirtCardVariant | undefined {
-      return catalog.variants.find((v) => v.color === state.color && v.size === state.size);
+      return catalog.variants.find(
+        (v) => v.color === state.color && v.year === state.year && v.size === state.size
+      );
     }
 
     function render() {
+      yearContainer!.querySelectorAll<HTMLButtonElement>("[data-shirt-year]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.shirtYear === state.year);
+      });
       colorContainer!.querySelectorAll<HTMLButtonElement>("[data-shirt-color]").forEach((b) => {
         b.classList.toggle("active", b.dataset.shirtColor === state.color);
       });
@@ -866,18 +900,19 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       photoBack.classList.add("is-swapping");
       window.setTimeout(() => {
         photoFront.src = variant.front;
-        photoFront.alt = `Dudela Shirt — ${catalog.title}, ${variant.colorLabel}, front`;
+        photoFront.alt = `Dudela Shirt — ${catalog.title} ${variant.year}, ${variant.colorLabel}, front`;
         photoBack.src = variant.back;
-        photoBack.alt = `Dudela Shirt — ${catalog.title}, ${variant.colorLabel}, back`;
+        photoBack.alt = `Dudela Shirt — ${catalog.title} ${variant.year}, ${variant.colorLabel}, back`;
         photoFront.classList.remove("is-swapping");
         photoBack.classList.remove("is-swapping");
         if (logoDetailImg) {
           logoDetailImg.src = variant.logoDetail;
-          logoDetailImg.alt = `${catalog.title} logo, up close, ${variant.colorLabel}`;
+          logoDetailImg.alt = `${catalog.title} ${variant.year} logo, up close, ${variant.colorLabel}`;
         }
       }, 120);
 
-      variantName.textContent = `${variant.colorLabel}, ${variant.size}`;
+      if (titleEl) titleEl.textContent = `${catalog.title} ${variant.year}`;
+      variantName.textContent = `${variant.colorLabel}, ${variant.year}, ${variant.size}`;
       const priceLabel = `$${Math.round(parseFloat(variant.price))}`;
       priceEl.textContent = priceLabel;
       buyBtn.textContent = `Buy Now — ${priceLabel}`;
@@ -888,13 +923,20 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       // isDefaultForBundle/userInteracted split the hat cards use above.
       currentShirt = {
         key: variant.key,
-        label: `${catalog.title} — ${variant.colorLabel}, ${variant.size}`,
+        label: `${catalog.title} ${variant.year} — ${variant.colorLabel}, ${variant.size}`,
         price: parseFloat(variant.price),
         addon: false,
         image: variant.front,
       };
       updateBundleBar();
     }
+
+    yearContainer.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-shirt-year]");
+      if (!btn) return;
+      state.year = btn.dataset.shirtYear || state.year;
+      render();
+    });
 
     colorContainer.addEventListener("click", (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-shirt-color]");

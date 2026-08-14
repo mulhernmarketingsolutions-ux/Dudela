@@ -550,47 +550,72 @@ export function hatPrice(v: HatVariant): string {
 // SHIRTS
 // ---------------------------------------------------------------------------
 // Unlike hats (a curated subset of design/thread/addon/color combos — not
-// every combination physically exists), every shirt design × color × size
-// really is fully buyable, a clean cross product. So instead of hand-typing
-// 14+ variant blocks like HAT_CATALOG, SHIRT_CATALOG is generated from one
-// row per (design, color) — each row's sizeSyncVariantIds is the real,
-// verified S→4XL sync_variant_id list read directly from
-// /api/admin/printful-debug?id=<sync_product_id> for that color's Sync
-// Product (455805171 = Black, 455805870 = Ivory), not assumed/guessed. This
-// also means adding John's next shirt design later is one more row here,
-// not retyping 7+ variant blocks by hand.
+// every combination physically exists), every shirt design × color × year ×
+// size really is fully buyable, a clean cross product. So instead of
+// hand-typing every variant block like HAT_CATALOG, SHIRT_CATALOG is
+// generated from one row per (color, year) — each row's sizeSyncVariantIds
+// is meant to be the real, verified S→4XL sync_variant_id list read
+// directly from /api/admin/printful-debug?id=<sync_product_id> for that
+// row's Sync Product, not assumed/guessed.
+//
+// *** 2024–2027 ROWS ARE PLACEHOLDERS — SEE "TODO: REAL SYNC VARIANT IDS" ***
+// John published 8 new sync products in Printful (2 colors × 4 "EST. year"
+// designs) but pulling their real sync_variant_ids requires being logged
+// into /admin/login, which the agent can't do on his behalf. Until those
+// numbers are swapped in below, PLACEHOLDER_SYNC_VARIANT_IDS (all 0) makes
+// every 2024–2027 variant's syncVariantId falsy on purpose — both
+// stripe-webhook.ts's single-item path (`if (syncVariantId && recipient)`)
+// and its bundle path (`if (bundleHatVariant?.syncVariantId && ...)`)
+// already skip placing a Printful order when the id is falsy and log an
+// error instead, so a real customer can still check out (Stripe charges
+// fine — price doesn't depend on syncVariantId) but no bogus Printful order
+// gets attempted with a fake id. Swap in the real ids as soon as they're
+// available; don't ship this to real customers with the placeholders still
+// in place, since a paid order with a skipped Printful order needs manual
+// fulfillment.
 
 export type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
 export const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
+export type ShirtYear = "2024" | "2025" | "2026" | "2027";
+export const SHIRT_YEARS: ShirtYear[] = ["2024", "2025", "2026", "2027"];
+
+// TODO: REAL SYNC VARIANT IDS — replace with the true S→4XL ids for each of
+// the 8 new 2024–2027 sync products once available (see block comment
+// above). All-zero on purpose so downstream order-creation code treats them
+// as "not orderable yet" instead of silently hitting Printful with junk ids.
+const PLACEHOLDER_SYNC_VARIANT_IDS: number[] = [0, 0, 0, 0, 0, 0, 0];
+
 export interface ShirtVariant {
-  key: string; // `shirt-${design}-${color}-${size}` (lowercase) — the checkout `product` value
+  key: string; // `shirt-${design}-${color}-${year}-${size}` (lowercase) — the checkout `product` value
   design: string;
   designLabel: string;
   color: string;
   colorLabel: string;
   colorHex: string;
+  year: ShirtYear;
   size: ShirtSize;
   syncVariantId: number;
-  price: string; // "40.00" — every size/color of a given design is the same price
+  price: string; // "40.00" — every size/color/year of a given design is the same price
   frontImage: string;
   backImage: string;
   // A tight crop of the actual chest-logo print file (not the full-body
   // lifestyle photo) on a flat brand-color card — the lifestyle photo alone
   // makes the logo too small to actually read at product-card size. Sourced
-  // directly from the real Printful print file per color (white ink on the
-  // Black sync product, black ink on Ivory), not a crop of the lifestyle
-  // photo, since that photo is only 384x512 and looks visibly soft/blurry
-  // once cropped in tight — see public/images/shirts/shirt-*-logo-detail.png.
+  // directly from the real Printful print file per color (white ink on
+  // Black, black ink on Ivory) and per year, not a crop of the lifestyle
+  // photo, since that photo looks visibly soft/blurry once cropped in
+  // tight — see public/images/shirts/shirt-*-logo-detail.png.
   logoDetailImage: string;
 }
 
-interface ShirtDesignColorRow {
+interface ShirtDesignColorYearRow {
   design: string;
   designLabel: string;
   color: string;
   colorLabel: string;
   colorHex: string;
+  year: ShirtYear;
   frontImage: string;
   backImage: string;
   logoDetailImage: string;
@@ -599,43 +624,36 @@ interface ShirtDesignColorRow {
   sizeSyncVariantIds: number[];
 }
 
-const SHIRT_DESIGN_COLORS: ShirtDesignColorRow[] = [
-  {
+const SHIRT_COLORS = [
+  { color: "black", colorLabel: "Black", colorHex: "#141414" },
+  { color: "ivory", colorLabel: "Ivory", colorHex: "#e9dfc7" },
+] as const;
+
+const SHIRT_DESIGN_COLORS: ShirtDesignColorYearRow[] = SHIRT_COLORS.flatMap(({ color, colorLabel, colorHex }) =>
+  SHIRT_YEARS.map((year) => ({
     design: "dad-est",
-    designLabel: "DAD EST. 2026",
-    color: "black",
-    colorLabel: "Black",
-    colorHex: "#141414",
-    frontImage: "/images/shirts/shirt-black-front.png",
-    backImage: "/images/shirts/shirt-black-back.png",
-    logoDetailImage: "/images/shirts/shirt-black-logo-detail.png",
+    designLabel: `DAD EST. ${year}`,
+    color,
+    colorLabel,
+    colorHex,
+    year,
+    frontImage: `/images/shirts/shirt-${color}-${year}-front.png`,
+    backImage: `/images/shirts/shirt-${color}-${year}-back.png`,
+    logoDetailImage: `/images/shirts/shirt-${color}-${year}-logo-detail.png`,
     price: "40.00",
-    // Printful sync_product 455805171 ("DUDELA Shirt")
-    sizeSyncVariantIds: [5440054361, 5440054362, 5440054363, 5440054364, 5440054365, 5440054366, 5440054367],
-  },
-  {
-    design: "dad-est",
-    designLabel: "DAD EST. 2026",
-    color: "ivory",
-    colorLabel: "Ivory",
-    colorHex: "#e9dfc7",
-    frontImage: "/images/shirts/shirt-ivory-front.png",
-    backImage: "/images/shirts/shirt-ivory-back.png",
-    logoDetailImage: "/images/shirts/shirt-ivory-logo-detail.png",
-    price: "40.00",
-    // Printful sync_product 455805870 ("Dudela Shirt - Ivory")
-    sizeSyncVariantIds: [5440059834, 5440059835, 5440059836, 5440059837, 5440059838, 5440059839, 5440059840],
-  },
-];
+    sizeSyncVariantIds: PLACEHOLDER_SYNC_VARIANT_IDS,
+  }))
+);
 
 export const SHIRT_CATALOG: ShirtVariant[] = SHIRT_DESIGN_COLORS.flatMap((row) =>
   SHIRT_SIZES.map((size, i) => ({
-    key: `shirt-${row.design}-${row.color}-${size.toLowerCase()}`,
+    key: `shirt-${row.design}-${row.color}-${row.year}-${size.toLowerCase()}`,
     design: row.design,
     designLabel: row.designLabel,
     color: row.color,
     colorLabel: row.colorLabel,
     colorHex: row.colorHex,
+    year: row.year,
     size,
     syncVariantId: row.sizeSyncVariantIds[i],
     price: row.price,
