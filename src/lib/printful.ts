@@ -575,6 +575,14 @@ export interface ShirtVariant {
   price: string; // "40.00" — every size/color of a given design is the same price
   frontImage: string;
   backImage: string;
+  // A tight crop of the actual chest-logo print file (not the full-body
+  // lifestyle photo) on a flat brand-color card — the lifestyle photo alone
+  // makes the logo too small to actually read at product-card size. Sourced
+  // directly from the real Printful print file per color (white ink on the
+  // Black sync product, black ink on Ivory), not a crop of the lifestyle
+  // photo, since that photo is only 384x512 and looks visibly soft/blurry
+  // once cropped in tight — see public/images/shirts/shirt-*-logo-detail.png.
+  logoDetailImage: string;
 }
 
 interface ShirtDesignColorRow {
@@ -585,6 +593,7 @@ interface ShirtDesignColorRow {
   colorHex: string;
   frontImage: string;
   backImage: string;
+  logoDetailImage: string;
   price: string;
   // [S, M, L, XL, 2XL, 3XL, 4XL] — same order as SHIRT_SIZES
   sizeSyncVariantIds: number[];
@@ -599,6 +608,7 @@ const SHIRT_DESIGN_COLORS: ShirtDesignColorRow[] = [
     colorHex: "#141414",
     frontImage: "/images/shirts/shirt-black-front.png",
     backImage: "/images/shirts/shirt-black-back.png",
+    logoDetailImage: "/images/shirts/shirt-black-logo-detail.png",
     price: "40.00",
     // Printful sync_product 455805171 ("DUDELA Shirt")
     sizeSyncVariantIds: [5440054361, 5440054362, 5440054363, 5440054364, 5440054365, 5440054366, 5440054367],
@@ -611,6 +621,7 @@ const SHIRT_DESIGN_COLORS: ShirtDesignColorRow[] = [
     colorHex: "#e9dfc7",
     frontImage: "/images/shirts/shirt-ivory-front.png",
     backImage: "/images/shirts/shirt-ivory-back.png",
+    logoDetailImage: "/images/shirts/shirt-ivory-logo-detail.png",
     price: "40.00",
     // Printful sync_product 455805870 ("Dudela Shirt - Ivory")
     sizeSyncVariantIds: [5440059834, 5440059835, 5440059836, 5440059837, 5440059838, 5440059839, 5440059840],
@@ -630,6 +641,7 @@ export const SHIRT_CATALOG: ShirtVariant[] = SHIRT_DESIGN_COLORS.flatMap((row) =
     price: row.price,
     frontImage: row.frontImage,
     backImage: row.backImage,
+    logoDetailImage: row.logoDetailImage,
   }))
 );
 

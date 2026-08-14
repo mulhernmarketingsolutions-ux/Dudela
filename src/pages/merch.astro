@@ -120,6 +120,7 @@ const shirtDesigns = shirtDesignKeys.map((dkey) => {
     size: v.size,
     front: v.frontImage,
     back: v.backImage,
+    logoDetail: v.logoDetailImage,
     price: v.price,
   }));
 
@@ -254,6 +255,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <div class="design-body">
               <h3>{d.title}</h3>
               <p class="design-tagline">{d.tagline}</p>
+
+              <div class="logo-detail" data-logo-detail-wrap>
+                <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} logo, up close`} />
+                <span class="logo-detail-caption">The design, up close</span>
+              </div>
 
               <div class="selector">
                 <span class="selector-label">Color</span>
@@ -481,6 +487,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     size: string;
     front: string;
     back: string;
+    logoDetail: string;
     price: string;
   }
   interface ShirtCardCatalog {
@@ -497,6 +504,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
     const photoFront = card.querySelector<HTMLImageElement>("[data-photo-front]");
     const photoBack = card.querySelector<HTMLImageElement>("[data-photo-back]");
+    const logoDetailImg = card.querySelector<HTMLImageElement>("[data-logo-detail]");
     const colorContainer = card.querySelector<HTMLElement>("[data-shirt-colors]");
     const sizeContainer = card.querySelector<HTMLElement>("[data-shirt-sizes]");
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
@@ -507,6 +515,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     catalog.variants.forEach((v) => {
       new Image().src = v.front;
       new Image().src = v.back;
+      new Image().src = v.logoDetail;
     });
 
     const state = { color: catalog.colors[0]?.key || "", size: "M" };
@@ -535,6 +544,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         photoBack.alt = `Dudela Shirt — ${catalog.title}, ${variant.colorLabel}, back`;
         photoFront.classList.remove("is-swapping");
         photoBack.classList.remove("is-swapping");
+        if (logoDetailImg) {
+          logoDetailImg.src = variant.logoDetail;
+          logoDetailImg.alt = `${catalog.title} logo, up close, ${variant.colorLabel}`;
+        }
       }, 120);
 
       variantName.textContent = `${variant.colorLabel}, ${variant.size}`;
@@ -648,6 +661,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     display: flex;
     width: 100%;
     aspect-ratio: 2 / 1;
+    overflow: hidden;
   }
   .mockup-photo {
     width: 50%;
@@ -658,9 +672,16 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     transform: scale(1);
     transform-origin: 50% 50%;
     transition: opacity 0.12s ease, transform 0.25s ease;
+    cursor: zoom-in;
   }
   .mockup-photo.is-swapping {
     opacity: 0;
+  }
+  /* Hover-to-zoom for a closer look at the product — skipped while the
+     add-on zoom below is already active on that image, so the two effects
+     never fight over the transform. */
+  .mockup-photo:hover:not(.is-addon-zoom) {
+    transform: scale(1.35);
   }
   /* When the Dude² Dad add-on is selected, the angled (left) photo zooms in
      on the side stitch — a full-hat shot makes it too small to read
@@ -669,6 +690,38 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .mockup-photo[data-photo-left].is-addon-zoom {
     transform: scale(1.8);
     transform-origin: 85% 55%;
+  }
+  /* A tight crop of the real chest-logo print file on a flat brand-color
+     card, shown alongside the color/size pickers — the full-body lifestyle
+     photo alone makes a small chest logo too tiny to actually read. */
+  .logo-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1.1rem;
+    padding: 0.5rem 0.5rem 0.5rem 0;
+  }
+  .logo-detail-img {
+    width: 92px;
+    height: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    cursor: zoom-in;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  .logo-detail-img:hover {
+    transform: scale(1.6);
+    position: relative;
+    z-index: 2;
+  }
+  .logo-detail-caption {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-light-muted);
   }
   .design-tagline {
     color: var(--text-on-light-muted);
