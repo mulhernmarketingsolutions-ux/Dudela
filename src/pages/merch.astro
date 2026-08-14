@@ -156,8 +156,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       </p>
 
       <div class="product-nav" role="group" aria-label="Jump to product">
-        <a href="#hats" class="product-nav-link">Hats — from $38</a>
         <a href="#shirts" class="product-nav-link">Shirts — $40</a>
+        <a href="#hats" class="product-nav-link">Hats — from $38</a>
       </div>
 
       {!member && (
@@ -170,70 +170,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       {canceled && (
         <p class="notice">Checkout was canceled — nothing was charged. Pick your gear below whenever you're ready.</p>
       )}
-    </div>
-  </section>
-
-  <section id="hats" class="colors section-light">
-    <div class="container">
-      <div class="section-divider">
-        <h2>The Dudela hat.</h2>
-        <p class="section-sub">Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side stitch — $38, free shipping.</p>
-      </div>
-      <div class="colors-grid">
-      {designs.map((d) => (
-        <div class="design-card" data-design={d.key}>
-          <div class="design-media">
-            <div class="mockup-pair">
-              <img class="mockup-photo" data-photo-front src={d.first.front} alt={`Dudela Hat — ${d.title}, front`} />
-              <img class="mockup-photo" data-photo-left src={d.first.left} alt={`Dudela Hat — ${d.title}, angled left`} />
-            </div>
-          </div>
-          <div class="design-body">
-            <h3>{d.title}</h3>
-            <p class="design-tagline">{d.tagline}</p>
-
-            <div class="selector">
-              <span class="selector-label">Thread color</span>
-              <div class="thread-swatches" role="group" aria-label={`${d.title} thread color`} data-thread-swatches>
-                {d.threads.map((t, i) => (
-                  <button
-                    type="button"
-                    class={`thread-swatch${i === 0 ? " active" : ""}`}
-                    style={`--swatch: ${t.hex}`}
-                    title={t.label}
-                    aria-label={t.label}
-                    data-thread={t.key}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div class="selector">
-              <span class="selector-label">Cap color</span>
-              <div class="color-swatches" role="group" aria-label={`${d.title} cap color`} data-color-swatches></div>
-            </div>
-
-            <button type="button" class="addon-toggle" data-addon-toggle aria-pressed="false">
-              <span class="addon-toggle-switch" aria-hidden="true"></span>
-              <span class="addon-toggle-text">
-                <span class="addon-toggle-title">+ "Dude to Dad" stitch <span class="addon-toggle-price">+$1</span></span>
-                <span class="addon-toggle-sub">A little extra flex on the side — proof you made the leap.</span>
-              </span>
-            </button>
-
-            <div class="color-meta">
-              <span class="price" data-price>{d.first.addon ? "$39" : "$38"}</span>
-              <span class="variant-name" data-variant-name>{d.first.colorLabel}</span>
-            </div>
-            <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
-              Buy Now — {d.first.addon ? "$39" : "$38"}
-            </a>
-          </div>
-
-          <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
-        </div>
-      ))}
-      </div>
     </div>
   </section>
 
@@ -298,6 +234,70 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <script type="application/json" data-shirt-catalog set:html={JSON.stringify(d)} />
           </div>
         ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="hats" class="colors section-light hats-section">
+    <div class="container">
+      <div class="section-divider">
+        <h2>The Dudela hat.</h2>
+        <p class="section-sub">Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side stitch — $38, free shipping.</p>
+      </div>
+      <div class="colors-grid">
+      {designs.map((d) => (
+        <div class="design-card" data-design={d.key}>
+          <div class="design-media">
+            <div class="mockup-pair">
+              <img class="mockup-photo" data-photo-front src={d.first.front} alt={`Dudela Hat — ${d.title}, front`} />
+              <img class="mockup-photo" data-photo-left src={d.first.left} alt={`Dudela Hat — ${d.title}, angled left`} />
+            </div>
+          </div>
+          <div class="design-body">
+            <h3>{d.title}</h3>
+            <p class="design-tagline">{d.tagline}</p>
+
+            <div class="selector">
+              <span class="selector-label">Thread color</span>
+              <div class="thread-swatches" role="group" aria-label={`${d.title} thread color`} data-thread-swatches>
+                {d.threads.map((t, i) => (
+                  <button
+                    type="button"
+                    class={`thread-swatch${i === 0 ? " active" : ""}`}
+                    style={`--swatch: ${t.hex}`}
+                    title={t.label}
+                    aria-label={t.label}
+                    data-thread={t.key}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div class="selector">
+              <span class="selector-label">Cap color</span>
+              <div class="color-swatches" role="group" aria-label={`${d.title} cap color`} data-color-swatches></div>
+            </div>
+
+            <button type="button" class="addon-toggle" data-addon-toggle aria-pressed="false">
+              <span class="addon-toggle-switch" aria-hidden="true"></span>
+              <span class="addon-toggle-text">
+                <span class="addon-toggle-title">+ "Dude to Dad" stitch <span class="addon-toggle-price">+$1</span></span>
+                <span class="addon-toggle-sub">A little extra flex on the side — proof you made the leap.</span>
+              </span>
+            </button>
+
+            <div class="color-meta">
+              <span class="price" data-price>{d.first.addon ? "$39" : "$38"}</span>
+              <span class="variant-name" data-variant-name>{d.first.colorLabel}</span>
+            </div>
+            <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
+              Buy Now — {d.first.addon ? "$39" : "$38"}
+            </a>
+          </div>
+
+          <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
+        </div>
+      ))}
       </div>
     </div>
   </section>
@@ -917,7 +917,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   /* Shirt section — reuses most .design-card/.colors-grid styling above;
      only new pieces are the section heading and the size-picker buttons
      (hats don't have a size selector). */
-  .shirts-section {
+  /* Shirts now leads the page (right after the dark hero) so it keeps its
+     normal top padding; hats — now second, directly after another
+     .colors.section-light block — loses its top padding instead so the two
+     light sections don't stack double spacing between them. */
+  .hats-section {
     padding-top: 0;
   }
   .section-divider {
