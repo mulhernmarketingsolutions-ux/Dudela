@@ -84,10 +84,17 @@ export async function GET({ request, locals, cookies }: APIContext) {
     // ?start=1&offset=0 then &offset=4, &offset=8, etc.
     const offset = Number(url.searchParams.get("offset") || "0");
     const chunkSize = 4;
+    // Optional substring filter on product name — lets a re-run target just
+    // the products that need fixing (e.g. ?filter=Rookie) instead of
+    // re-generating mockups for every product again.
+    const nameFilter = url.searchParams.get("filter");
 
     const listRes = await pf("/sync/products?limit=100");
     const listData = (await listRes.json()) as { result: Array<{ id: number; name: string }> };
-    const slice = listData.result.slice(offset, offset + chunkSize);
+    const filtered = nameFilter
+      ? listData.result.filter((p) => p.name.toLowerCase().includes(nameFilter.toLowerCase()))
+      : listData.result;
+    const slice = filtered.slice(offset, offset + chunkSize);
 
     const tasks = await Promise.all(
       slice.map(async (p) => {
@@ -123,13 +130,25 @@ export async function GET({ request, locals, cookies }: APIContext) {
 
         // The sync/products API doesn't expose each variant's saved position (that's
         // only visible in the Design Maker UI) — these are approximations of the
-        // real sizing dialed in there. First pass (2.6x1.35 / 1.3x0.4) rendered
-        // visibly smaller than the real thing per a side-by-side check against
-        // the Design Maker, so this pass sizes both placements to fill most of
-        // their print area instead (previous experience: Printful's real
-        // placements run close to the area bounds, not centered-and-small).
+        // real sizing dialed in there, tuned per design rather than one-size-
+        // fits-all. The Classic's wordmark is a wide graphic meant to run
+        // nearly the full front width, centered — 4.5x2.19 confirmed correct
+        // via a side-by-side check against the Design Maker. The Rookie's
+        // fist-bump icon is a completely different, much smaller graphic
+        // placed off-center (small logo look, not a full front graphic) — its
+        // real size (2.53 x 1.33in) IS exposed in the Design Maker's
+        // Width/Height readout, so that part isn't a guess; only its exact
+        // left/top offset is estimated from the Design Maker's rendered
+        // preview (right-of-center, roughly mid-height).
+        const isRookie = p.name.toLowerCase().includes("rookie");
         const FRONT_AREA = { area_width: 6.3, area_height: 2.55 };
-        const FRONT_SIZE = { width: 4.5, height: 2.19 }; // 720x350 source aspect, ~86% of area height
+        const FRONT_SIZE = isRookie ? { width: 2.53, height: 1.33 } : { width: 4.5, height: 2.19 };
+        const FRONT_POSITION = isRookie
+          ? { top: 1.05, left: 3.4 } // off-center, small — matches the real Design Maker placement
+          : {
+              top: (FRONT_AREA.area_height - FRONT_SIZE.height) / 2,
+              left: (FRONT_AREA.area_width - FRONT_SIZE.width) / 2,
+            };
         const LEFT_AREA = { area_width: 2.0, area_height: 1.0 };
         const LEFT_SIZE = { width: 1.6, height: 0.8 }; // 600x300 source aspect, ~80% of area height
 
@@ -141,8 +160,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
             position: {
               ...FRONT_AREA,
               ...FRONT_SIZE,
-              top: (FRONT_AREA.area_height - FRONT_SIZE.height) / 2,
-              left: (FRONT_AREA.area_width - FRONT_SIZE.width) / 2,
+              ...FRONT_POSITION,
             },
           });
         }
