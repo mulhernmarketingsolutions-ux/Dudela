@@ -400,7 +400,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
        above currently have selected (see updateBundleBar() in the script
        below). Starts hidden and gets an is-visible class the first time
        both a hat and a shirt selection exist, which in practice is
-       immediately on load since both sections default to a real variant. -->
+       immediately on load since both sections default to a real variant.
+
+       On mobile it can also be is-collapsed — the full bar took up a real
+       chunk of a small screen at all times. Collapsed keeps just the label,
+       live price, and a toggle; the thumbnails/picks detail/Buy button
+       tuck away. The toggle button itself only exists so there's an
+       explicit, obvious way to dismiss/reopen it — see the script below
+       for the auto-expand-then-settle behavior that also helps make it
+       clear that picking options above is what's changing this. -->
   <div class="bundle-bar" id="bundle-bar" role="region" aria-label="Bundle discount">
     <div class="bundle-bar-inner">
       <div class="bundle-bar-items">
@@ -420,6 +428,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         <a href="/api/create-checkout-session?product=bundle" class="btn btn-primary bundle-bar-buy" data-bar-buy>
           Buy the Bundle
         </a>
+        <button
+          type="button"
+          class="bundle-bar-toggle"
+          data-bar-toggle
+          aria-expanded="true"
+          aria-label="Minimize bundle bar"
+        >
+          <span data-bar-toggle-icon aria-hidden="true">▾</span>
+        </button>
       </div>
     </div>
   </div>
@@ -474,6 +491,34 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   const barWas = bundleBar?.querySelector<HTMLElement>("[data-bar-was]");
   const barNow = bundleBar?.querySelector<HTMLElement>("[data-bar-now]");
   const barBuy = bundleBar?.querySelector<HTMLAnchorElement>("[data-bar-buy]");
+  const barToggle = bundleBar?.querySelector<HTMLButtonElement>("[data-bar-toggle]");
+  const barToggleIcon = bundleBar?.querySelector<HTMLElement>("[data-bar-toggle-icon]");
+
+  // Collapse/expand only really matters on mobile — on desktop the bar is a
+  // slim single row already, nothing to minimize. is-collapsed is purely a
+  // CSS switch (see the mobile media query below); this JS just decides
+  // when to flip it.
+  const isMobile = () => window.matchMedia("(max-width: 640px)").matches;
+  let userHasToggledManually = false;
+  let autoCollapseTimer: number | undefined;
+
+  function setBarCollapsed(collapsed: boolean) {
+    if (!bundleBar || !barToggle) return;
+    bundleBar.classList.toggle("is-collapsed", collapsed);
+    barToggle.setAttribute("aria-expanded", String(!collapsed));
+    barToggle.setAttribute("aria-label", collapsed ? "Show bundle details" : "Minimize bundle bar");
+    if (barToggleIcon) barToggleIcon.textContent = collapsed ? "▴" : "▾";
+  }
+
+  barToggle?.addEventListener("click", () => {
+    // Once someone has touched this control, their choice sticks — stop
+    // auto-expanding/collapsing on future updates. Forcing it back open
+    // right after someone deliberately minimized it would defeat the
+    // entire point of giving them a dismiss button.
+    userHasToggledManually = true;
+    if (autoCollapseTimer) window.clearTimeout(autoCollapseTimer);
+    setBarCollapsed(!bundleBar!.classList.contains("is-collapsed"));
+  });
 
   function updateBundleBar() {
     if (!bundleBar || !currentHat || !currentShirt) return;
@@ -514,6 +559,23 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       bundleBar.classList.remove("is-updated");
       void bundleBar.offsetWidth; // force reflow so the animation restarts on rapid re-clicks
       bundleBar.classList.add("is-updated");
+    }
+
+    // Mobile-only: pop open (or stay open) briefly whenever something
+    // changes, then settle back down to the compact pill — teaches what
+    // the bar is on first appearance, then keeps reinforcing "this reacted
+    // to what you just picked" on every change after, without permanently
+    // eating screen space. Skipped entirely once the visitor has taken
+    // manual control of the toggle.
+    if (isMobile() && !userHasToggledManually) {
+      setBarCollapsed(false);
+      if (autoCollapseTimer) window.clearTimeout(autoCollapseTimer);
+      autoCollapseTimer = window.setTimeout(
+        () => {
+          if (!userHasToggledManually) setBarCollapsed(true);
+        },
+        wasAlreadyVisible ? 2500 : 4000
+      );
     }
   }
 
@@ -1072,14 +1134,66 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     white-space: nowrap;
     padding: 0.65rem 1.3rem;
   }
+  /* Dismiss/minimize control — hidden on desktop, where the bar is already
+     a single slim row with nothing worth collapsing. */
+  .bundle-bar-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--cream-100);
+    font-size: 0.85rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+  }
+  .bundle-bar-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
   @media (max-width: 640px) {
     .bundle-bar-inner {
       justify-content: center;
       text-align: center;
+      transition: padding 0.2s ease;
     }
     .bundle-bar-items {
       flex: 1 1 100%;
       justify-content: center;
+    }
+    .bundle-bar-toggle {
+      display: inline-flex;
+    }
+    /* Collapsed: down to one compact row — label, live price, and the
+       toggle. Thumbnails, the full pick description, the struck-through
+       "was" price, and the Buy button all tuck away until it's reopened,
+       so the bar isn't permanently eating a chunk of a small screen. */
+    .bundle-bar.is-collapsed .bundle-bar-inner {
+      padding-top: 0.55rem;
+      padding-bottom: 0.55rem;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+    }
+    .bundle-bar.is-collapsed .bundle-bar-items {
+      flex: 0 1 auto;
+      justify-content: flex-start;
+    }
+    .bundle-bar.is-collapsed .bundle-bar-thumb,
+    .bundle-bar.is-collapsed .bundle-bar-plus,
+    .bundle-bar.is-collapsed .bundle-bar-picks,
+    .bundle-bar.is-collapsed .bundle-bar-was,
+    .bundle-bar.is-collapsed .bundle-bar-buy {
+      display: none;
+    }
+    .bundle-bar.is-collapsed .bundle-bar-now {
+      font-size: 1.1rem;
+    }
+    .bundle-bar.is-collapsed .bundle-bar-right {
+      gap: 0.6rem;
     }
   }
 
