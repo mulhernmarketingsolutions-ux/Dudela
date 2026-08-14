@@ -32,8 +32,13 @@ const orders = merchOrders.map((o) => {
   const hat = getHatVariant(o.color);
   const shirt = hat ? undefined : getShirtVariant(o.color);
 
-  let title = o.color;
-  let subtitle = "";
+  // Orders placed against a product that's since been discontinued/rebuilt
+  // (its stored `color` key no longer matches anything in HAT_CATALOG /
+  // SHIRT_CATALOG) fall back to a clean generic look instead of surfacing
+  // the raw internal key as a "title" — that key was never meant to be
+  // customer-facing copy.
+  let title = "Dudela Order";
+  let subtitle = "This item is no longer available in our current lineup.";
   let image: string | null = null;
   let reorderHref = "/merch";
 
