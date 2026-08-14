@@ -713,6 +713,15 @@ export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: {
     syncVariantId: number;
+    // Extra items to include in the SAME Printful order (and therefore the
+    // same shipment/package) as syncVariantId above — used for the
+    // hat+shirt bundle, so a bundle buyer gets one box instead of two
+    // separate orders/shipments. Empty/omitted for every other (single-item)
+    // purchase, which is why syncVariantId above stays a required single
+    // value rather than folding everything into one items[] array — it
+    // keeps every existing single-item caller (real webhook orders, the
+    // hat/shirt admin test tools) unchanged.
+    extraSyncVariantIds?: number[];
     recipient: PrintfulRecipient;
     externalId: string;
     // Set false to create the order and leave it as an unconfirmed draft
@@ -730,7 +739,10 @@ export async function createPrintfulOrder(
   const body = {
     external_id: opts.externalId,
     recipient: opts.recipient,
-    items: [{ sync_variant_id: opts.syncVariantId, quantity: 1 }],
+    items: [opts.syncVariantId, ...(opts.extraSyncVariantIds || [])].map((id) => ({
+      sync_variant_id: id,
+      quantity: 1,
+    })),
   };
 
   let lastErr = "";

@@ -59,13 +59,14 @@ export async function createCheckoutSession(
     // Subscriptions already generate invoices automatically, so this only
     // matters (and is only passed) for one-time purchases.
     invoiceCreation?: boolean;
-    // Optional second line item priced inline via Stripe's price_data
-    // instead of a pre-created Price object — used for the $1 Dude to Dad
-    // add-on surcharge so it doesn't need its own Stripe Price ID per hat
-    // variant (28 variants × 2 add-on states would mean maintaining twice as
-    // many price env vars for a flat $1 bump). Shows up as its own line item
-    // at Stripe Checkout, e.g. "Dudela Hat — $38" + "Dude to Dad Stitch — $1".
-    extraLineItem?: { name: string; unitAmountCents: number };
+    // Additional line items beyond the main one at index 0, each priced
+    // inline via price_data — used for the $1 Dude to Dad add-on surcharge
+    // (so it doesn't need its own Stripe Price ID per hat variant) and for
+    // the hat+shirt bundle discount (both items are their own line item so
+    // the buyer's card statement/receipt itemizes each piece, rather than
+    // one opaque combined charge). Shows up as its own line item at Stripe
+    // Checkout, e.g. "Dudela Hat — $38" + "Dude to Dad Stitch — $1".
+    extraLineItems?: Array<{ name: string; unitAmountCents: number; images?: string[] }>;
   }
 ) {
   const mode = opts.mode || "payment";
@@ -91,12 +92,16 @@ export async function createCheckoutSession(
   } else {
     throw new Error("createCheckoutSession requires either priceId or priceData");
   }
-  if (opts.extraLineItem) {
-    params["line_items[1][price_data][currency]"] = "usd";
-    params["line_items[1][price_data][unit_amount]"] = String(opts.extraLineItem.unitAmountCents);
-    params["line_items[1][price_data][product_data][name]"] = opts.extraLineItem.name;
-    params["line_items[1][quantity]"] = "1";
-  }
+  opts.extraLineItems?.forEach((item, i) => {
+    const idx = i + 1; // index 0 is always the main priceId/priceData item above
+    params[`line_items[${idx}][price_data][currency]`] = "usd";
+    params[`line_items[${idx}][price_data][unit_amount]`] = String(item.unitAmountCents);
+    params[`line_items[${idx}][price_data][product_data][name]`] = item.name;
+    item.images?.forEach((img, j) => {
+      params[`line_items[${idx}][price_data][product_data][images][${j}]`] = img;
+    });
+    params[`line_items[${idx}][quantity]`] = "1";
+  });
   // Stripe rejects a session that sets both `customer` and `customer_email` —
   // prefer the known customer id so the purchase attaches to their existing
   // record instead of spinning up a new disconnected guest customer.

@@ -297,9 +297,27 @@ export async function POST({ request, locals }: APIContext) {
         }
       }
 
-      const productInfo = PRODUCTS[product] || { name: product, price: amountTotal };
-      // Hoisted out of the isMerch block below so the internal notify email
-      // (sent further down, after both branches) can include shipping
+      // The hat+shirt bundle isn't a PRODUCTS entry (see create-checkout-session.ts's
+      // handleBundleCheckout) since it's parameterized by two catalog picks, not one
+      // fixed product — metadata carries hatColor/shirtColor instead of a single color.
+      // Built into a PRODUCTS-shaped object here so the exact same receiptEmailHtml/
+      // notifyEmailHtml code paths below work unchanged for bundle orders too.
+      const isBundle = product === "bundle";
+      const bundleHatVariant = isBundle ? getHatVariant(session.metadata?.hatColor || "") : undefined;
+      const bundleShirtVariant = isBundle ? getShirtVariant(session.metadata?.shirtColor || "") : undefined;
+      const productInfo = isBundle
+        ? {
+            name:
+              bundleHatVariant && bundleShirtVariant
+                ? `Bundle — ${hatLabel(bundleHatVariant)} + ${shirtLabel(bundleShirtVariant)}`
+                : "Dudela Bundle",
+            price: amountTotal,
+            isMerch: true,
+            image: bundleHatVariant?.frontImage,
+          }
+        : PRODUCTS[product] || { name: product, price: amountTotal };
+      // Hoisted out of the isMerch/isBundle blocks below so the internal notify
+      // email (sent further down, after those branches) can include shipping
       // details for merch orders without re-parsing the session.
       let shippingName: string | null = null;
       let shippingAddress: string | null = null;
@@ -321,7 +339,89 @@ export async function POST({ request, locals }: APIContext) {
         }
       }
 
-      if (productInfo.isMerch) {
+      if (isBundle) {
+        ({ name: shippingName, address: shippingAddress } = extractShippingDetails(session));
+        const hatKey = session.metadata?.hatColor || "unknown";
+        const shirtKey = session.metadata?.shirtColor || "unknown";
+        // Split the charged total evenly across the two D1 rows just for a
+        // sane per-row amount_total (shown on /member/dashboard) — Stripe's
+        // own line items (and the receipt) already show each item's real
+        // discounted price; this is only an approximation for that one
+        // display field, not used for any accounting.
+        const halfAmount =
+          typeof session.amount_total === "number" ? Math.round(session.amount_total / 2) : undefined;
+
+        // Two merch_orders rows (one per item) so each still counts toward
+        // its own color's scarcity cap and both show up separately in
+        // "Your Orders" — merch_orders.session_id is UNIQUE (normally one
+        // row per Stripe session), so each row gets a deterministic suffix
+        // instead of the bare session id. Deterministic means a redelivered
+        // webhook event still resolves to the same two ids, so INSERT OR
+        // IGNORE still dedupes a retry instead of creating duplicates.
+        try {
+          await createMerchOrder(env, {
+            sessionId: `${session.id}::hat`,
+            color: hatKey,
+            email,
+            name,
+            shippingName: shippingName || undefined,
+            shippingAddress: shippingAddress || undefined,
+            amountTotal: halfAmount,
+          });
+          await createMerchOrder(env, {
+            sessionId: `${session.id}::shirt`,
+            color: shirtKey,
+            email,
+            name,
+            shippingName: shippingName || undefined,
+            shippingAddress: shippingAddress || undefined,
+            amountTotal: halfAmount,
+          });
+        } catch (err) {
+          console.error("Bundle merch order insert failed:", err);
+        }
+
+        // One Printful order with BOTH items (extraSyncVariantIds) so a
+        // bundle buyer gets one shipment/package instead of two separate
+        // orders — see the createPrintfulOrder comment in lib/printful.ts.
+        const recipient = extractPrintfulRecipient(session, name, email);
+        if (bundleHatVariant && bundleShirtVariant && recipient) {
+          try {
+            await createPrintfulOrder(env, {
+              syncVariantId: bundleHatVariant.syncVariantId,
+              extraSyncVariantIds: [bundleShirtVariant.syncVariantId],
+              recipient,
+              externalId: await shortExternalId(session.id),
+            });
+          } catch (err) {
+            const errName = err instanceof Error ? err.name : typeof err;
+            const message = err instanceof Error ? err.message : String(err);
+            const stack = err instanceof Error ? err.stack : undefined;
+            console.error(`Bundle Printful order creation failed [${errName}]: ${message || "(empty message)"}`, { stack });
+          }
+        } else {
+          console.error(
+            `Skipped bundle Printful order for session ${session.id}: hat=${!!bundleHatVariant} shirt=${!!bundleShirtVariant} recipient=${!!recipient}`
+          );
+        }
+
+        if (isFirstDelivery) {
+          try {
+            const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
+            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:G", [
+              new Date().toISOString(),
+              name,
+              email,
+              `bundle: ${hatKey} + ${shirtKey}`,
+              shippingName || "",
+              shippingAddress || "",
+              amountTotal,
+            ]);
+          } catch (err) {
+            console.error("Bundle order sheet log failed:", err);
+          }
+        }
+      } else if (productInfo.isMerch) {
         ({ name: shippingName, address: shippingAddress } = extractShippingDetails(session));
         const color = session.metadata?.color || "unknown";
 

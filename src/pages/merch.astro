@@ -7,7 +7,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import { getAuthedMember } from "../lib/auth";
-import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG } from "../lib/printful";
+import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG, hatLabel, shirtLabel } from "../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
 
@@ -18,6 +18,24 @@ const env = (Astro.locals as any).runtime.env;
 // lock out anyone who isn't already a paying member, which is the opposite
 // of what a merch drop is for.
 const member = await getAuthedMember(Astro.cookies, env);
+
+// Bundle & Save — buy one hat + one shirt together, 20% off each. Must match
+// BUNDLE_DISCOUNT_PERCENT in api/create-checkout-session.ts (that's the file
+// that actually charges the card; this is only used to render the promo
+// copy/estimated price here, so a mismatch would just show the wrong number,
+// not the wrong charge — but keep them in sync).
+const BUNDLE_DISCOUNT_PERCENT = 20;
+const bundleHats = HAT_CATALOG.map((h) => ({
+  key: h.key,
+  label: hatLabel(h),
+  price: parseFloat(h.price),
+  addon: h.addon,
+}));
+const bundleShirts = SHIRT_CATALOG.map((s) => ({
+  key: s.key,
+  label: shirtLabel(s),
+  price: parseFloat(s.price),
+}));
 
 // REWRITTEN 2026-08-13: the old version of this page had one static color
 // picker per design, backed by pre-merged "pair" images built by hand at
@@ -156,6 +174,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       </p>
 
       <div class="product-nav" role="group" aria-label="Jump to product">
+        <a href="#bundle" class="product-nav-link product-nav-link-bundle">Bundle — Save {BUNDLE_DISCOUNT_PERCENT}%</a>
         <a href="#shirts" class="product-nav-link">Shirts — $40</a>
         <a href="#hats" class="product-nav-link">Hats — from $38</a>
       </div>
@@ -170,6 +189,45 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       {canceled && (
         <p class="notice">Checkout was canceled — nothing was charged. Pick your gear below whenever you're ready.</p>
       )}
+    </div>
+  </section>
+
+  <section id="bundle" class="bundle-promo section-dark">
+    <div class="container bundle-inner">
+      <div class="bundle-copy">
+        <span class="bundle-badge">Bundle &amp; Save</span>
+        <h2>Buy the set. Save {BUNDLE_DISCOUNT_PERCENT}% on both.</h2>
+        <p class="bundle-sub">
+          Pick your hat and your shirt — {BUNDLE_DISCOUNT_PERCENT}% off each one when you buy them
+          together. One checkout, one shipment.
+        </p>
+      </div>
+      <div class="bundle-picker">
+        <label class="bundle-field">
+          <span class="bundle-field-label">Hat</span>
+          <select data-bundle-hat>
+            {bundleHats.map((h) => (
+              <option value={h.key} data-price={h.price} data-addon={h.addon ? "1" : "0"}>{h.label}</option>
+            ))}
+          </select>
+        </label>
+        <label class="bundle-field">
+          <span class="bundle-field-label">Shirt</span>
+          <select data-bundle-shirt>
+            {bundleShirts.map((s) => (
+              <option value={s.key} data-price={s.price}>{s.label}</option>
+            ))}
+          </select>
+        </label>
+        <div class="bundle-price-row">
+          <span class="bundle-price-was" data-bundle-was></span>
+          <span class="bundle-price-now" data-bundle-now></span>
+        </div>
+        <a href="/api/create-checkout-session?product=bundle" class="btn btn-primary bundle-buy" data-bundle-buy>
+          Buy the Bundle
+        </a>
+      </div>
+      <script type="application/json" data-bundle-config set:html={JSON.stringify({ discountPercent: BUNDLE_DISCOUNT_PERCENT })} />
     </div>
   </section>
 
@@ -573,6 +631,52 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
     render();
   });
+
+  // Bundle & Save picker — two plain <select>s (28 hat variants + 14 shirt
+  // variants would be a lot of swatch UI to duplicate for a single promo
+  // section) rather than the swatch-picker pattern the individual cards
+  // use above. Price shown here is purely a client-side preview computed
+  // from each option's data-price/data-addon attributes — the real charge
+  // is computed server-side in create-checkout-session.ts's
+  // handleBundleCheckout, which is the actual source of truth; this only
+  // has to be readable, not authoritative.
+  (() => {
+    const section = document.getElementById("bundle");
+    if (!section) return;
+    const configScript = section.querySelector<HTMLScriptElement>("[data-bundle-config]");
+    const discountPercent = configScript?.textContent ? JSON.parse(configScript.textContent).discountPercent : 20;
+
+    const hatSelect = section.querySelector<HTMLSelectElement>("[data-bundle-hat]");
+    const shirtSelect = section.querySelector<HTMLSelectElement>("[data-bundle-shirt]");
+    const wasEl = section.querySelector<HTMLElement>("[data-bundle-was]");
+    const nowEl = section.querySelector<HTMLElement>("[data-bundle-now]");
+    const buyBtn = section.querySelector<HTMLAnchorElement>("[data-bundle-buy]");
+    if (!hatSelect || !shirtSelect || !wasEl || !nowEl || !buyBtn) return;
+
+    function render() {
+      const hatOpt = hatSelect!.selectedOptions[0];
+      const shirtOpt = shirtSelect!.selectedOptions[0];
+      if (!hatOpt || !shirtOpt) return;
+
+      const hatPrice = parseFloat(hatOpt.dataset.price || "0");
+      const hasAddon = hatOpt.dataset.addon === "1";
+      const shirtPrice = parseFloat(shirtOpt.dataset.price || "0");
+
+      const fullTotal = hatPrice + (hasAddon ? 1 : 0) + shirtPrice;
+      const discountMultiplier = 1 - discountPercent / 100;
+      // Addon surcharge isn't discounted server-side either — see
+      // handleBundleCheckout in create-checkout-session.ts.
+      const discountedTotal = hatPrice * discountMultiplier + (hasAddon ? 1 : 0) + shirtPrice * discountMultiplier;
+
+      wasEl!.textContent = `$${fullTotal.toFixed(2)}`;
+      nowEl!.textContent = `$${discountedTotal.toFixed(2)}`;
+      buyBtn!.href = `/api/create-checkout-session?product=bundle&hat=${encodeURIComponent(hatSelect!.value)}&shirt=${encodeURIComponent(shirtSelect!.value)}`;
+    }
+
+    hatSelect.addEventListener("change", render);
+    shirtSelect.addEventListener("change", render);
+    render();
+  })();
 </script>
 
 <style>
@@ -632,6 +736,107 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .login-nudge a {
     color: var(--amber-500);
     font-weight: 600;
+  }
+  .product-nav-link-bundle {
+    background: var(--amber-500);
+    color: var(--forest-900, #12180f);
+  }
+
+  /* Bundle & Save — its own dark section right after the hero (same
+     background as the hero, no divider between them) so it reads as the
+     page's headline offer rather than just another product tile. */
+  .bundle-promo {
+    padding: 3rem 0 4.5rem;
+  }
+  .bundle-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 900px;
+    padding: 2.25rem 2.5rem;
+    border: 1px solid var(--amber-500);
+    border-radius: var(--radius-md);
+    background: var(--forest-700);
+  }
+  .bundle-copy {
+    flex: 1 1 280px;
+    min-width: 240px;
+  }
+  .bundle-badge {
+    display: inline-block;
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--forest-900, #12180f);
+    background: var(--amber-500);
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+  }
+  .bundle-copy h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--cream-100);
+    margin: 0 0 0.6rem;
+  }
+  .bundle-sub {
+    color: var(--text-on-dark-muted);
+    margin: 0;
+    max-width: 42ch;
+  }
+  .bundle-picker {
+    flex: 1 1 280px;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .bundle-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .bundle-field-label {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-dark-muted);
+  }
+  .bundle-field select {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--bg-light-raised);
+    color: var(--text-on-light);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+  }
+  .bundle-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+  }
+  .bundle-price-was {
+    font-size: 0.95rem;
+    color: var(--text-on-dark-muted);
+    text-decoration: line-through;
+  }
+  .bundle-price-now {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--amber-500);
+  }
+  .bundle-buy {
+    width: 100%;
+    text-align: center;
   }
 
   .colors {

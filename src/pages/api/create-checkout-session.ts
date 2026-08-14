@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
 import { countMerchOrders } from "../../lib/db";
 import { getAuthedMember } from "../../lib/auth";
-import { HAT_CATALOG, getHatVariant, hatLabel, SHIRT_CATALOG, shirtLabel } from "../../lib/printful";
+import { HAT_CATALOG, getHatVariant, hatLabel, SHIRT_CATALOG, getShirtVariant, shirtLabel } from "../../lib/printful";
 
 export const prerender = false;
 
@@ -94,11 +94,22 @@ const PRODUCTS: Record<
   ),
 };
 
+// Buy a hat + shirt together and get 20% off each — see /merch's "Bundle &
+// Save" section. Not a PRODUCTS entry above since it's parameterized by
+// TWO catalog picks (?hat=<HAT_CATALOG key>&shirt=<SHIRT_CATALOG key>), not
+// one fixed product — handled in its own branch (handleBundleCheckout)
+// below instead. A flat percentage off each item's own price, applied as
+// two separate discounted line items (not a Stripe Coupon on top of full
+// price), so the checkout page and the resulting receipt itemize each
+// piece at its real discounted price rather than one opaque combined charge.
+const BUNDLE_DISCOUNT_PERCENT = 20;
+
 export async function GET({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
   const url = new URL(request.url);
   const product = url.searchParams.get("product") || "prep-kit";
   const email = url.searchParams.get("email") || undefined;
+  const origin = url.origin;
 
   // If the buyer is already logged in as a Spit-Up Society member (e.g.
   // browsing /merch while signed in), attach this purchase to their existing
@@ -109,6 +120,10 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // its own hosted page, after this route has already run.
   const member = await getAuthedMember(cookies, env);
   const existingCustomerId = member?.stripe_customer_id || undefined;
+
+  if (product === "bundle") {
+    return handleBundleCheckout(env, url, origin, email, existingCustomerId);
+  }
 
   const productConfig = PRODUCTS[product];
   if (!productConfig) {
@@ -126,8 +141,6 @@ export async function GET({ request, locals, cookies }: APIContext) {
     console.error(`Product "${product}" has neither priceEnvVar nor priceData configured`);
     return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
   }
-
-  const origin = url.origin;
 
   // Presale scarcity check — block new checkouts once a colorway hits its cap.
   // This is a "don't open checkout at all" gate, not the source of truth for
@@ -150,7 +163,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // added here, not baked into priceId, so the base hat price stays a single
   // shared Stripe Price across all 28 variants.
   const hatVariant = productConfig.merchColor ? getHatVariant(productConfig.merchColor) : undefined;
-  const extraLineItem = hatVariant?.addon ? { name: 'Dude to Dad Stitch', unitAmountCents: 100 } : undefined;
+  const extraLineItems = hatVariant?.addon ? [{ name: 'Dude to Dad Stitch', unitAmountCents: 100 }] : undefined;
 
   // Stripe fetches the image itself, so it needs a real absolute https URL —
   // resolve the catalog's relative /images/... path against this request's
@@ -179,7 +192,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
       // it actually shows up in the Billing Portal's invoice history instead
       // of being an invisible PaymentIntent the portal has nothing to display.
       invoiceCreation: productConfig.mode === "payment",
-      extraLineItem,
+      extraLineItems,
     });
 
     return new Response(null, {
@@ -188,6 +201,70 @@ export async function GET({ request, locals, cookies }: APIContext) {
     });
   } catch (err) {
     console.error("Stripe checkout session creation failed:", err);
+    return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
+  }
+}
+
+// Split out of GET above purely for readability — the bundle's inputs
+// (two catalog keys instead of one PRODUCTS lookup) and pricing (20% off
+// each item, computed here rather than read off a fixed PRODUCTS entry)
+// are different enough from the single-product path that folding it into
+// the same function body made both harder to follow.
+async function handleBundleCheckout(
+  env: any,
+  url: URL,
+  origin: string,
+  email: string | undefined,
+  existingCustomerId: string | undefined
+): Promise<Response> {
+  const hatKey = url.searchParams.get("hat") || "";
+  const shirtKey = url.searchParams.get("shirt") || "";
+  const hat = getHatVariant(hatKey);
+  const shirt = getShirtVariant(shirtKey);
+  if (!hat || !shirt) {
+    return new Response(`Unknown bundle selection (hat="${hatKey}", shirt="${shirtKey}")`, { status: 400 });
+  }
+
+  const discountMultiplier = 1 - BUNDLE_DISCOUNT_PERCENT / 100;
+  const hatCents = Math.round(parseFloat(hat.price) * 100 * discountMultiplier);
+  const shirtCents = Math.round(parseFloat(shirt.price) * 100 * discountMultiplier);
+
+  // Hat is the main (index 0) line item, shirt + the optional $1 add-on
+  // surcharge ride along as extraLineItems — see lib/stripe.ts.
+  const extraLineItems: Array<{ name: string; unitAmountCents: number; images?: string[] }> = [
+    {
+      name: `${shirtLabel(shirt)} (Bundle -${BUNDLE_DISCOUNT_PERCENT}%)`,
+      unitAmountCents: shirtCents,
+      images: [`${origin}${shirt.frontImage}`],
+    },
+  ];
+  if (hat.addon) {
+    extraLineItems.push({ name: "Dude to Dad Stitch", unitAmountCents: 100 });
+  }
+
+  try {
+    const session = await createCheckoutSession(env, {
+      priceData: {
+        name: `${hatLabel(hat)} (Bundle -${BUNDLE_DISCOUNT_PERCENT}%)`,
+        unitAmountCents: hatCents,
+        images: [`${origin}${hat.frontImage}`],
+      },
+      mode: "payment",
+      successUrl: `${origin}/merch/thank-you`,
+      cancelUrl: `${origin}/merch?purchase=canceled`,
+      customerId: existingCustomerId,
+      customerEmail: existingCustomerId ? undefined : email,
+      // No single `color` field — the webhook (stripe-webhook.ts) checks
+      // for product === "bundle" and reads hatColor/shirtColor separately
+      // to create two merch_orders rows and one combined Printful order.
+      metadata: { product: "bundle", hatColor: hat.key, shirtColor: shirt.key },
+      collectShipping: true,
+      invoiceCreation: true,
+      extraLineItems,
+    });
+    return new Response(null, { status: 302, headers: { Location: session.url } });
+  } catch (err) {
+    console.error("Bundle checkout session creation failed:", err);
     return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
   }
 }
