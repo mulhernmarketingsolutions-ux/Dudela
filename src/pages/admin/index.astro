@@ -1,0 +1,178 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { isAdminAuthed } from "../../lib/auth";
+import { HAT_CATALOG, SHIRT_CATALOG, hatLabel, shirtLabel } from "../../lib/printful";
+
+// Real admin home page — didn't exist before. /admin/login used to dump
+// straight into /admin/womb-watch because Womb Watch posting was the only
+// admin tool that existed when that page was built. Everything added since
+// (hat/shirt order testing, mockup regeneration, Printful debug endpoints)
+// only had raw URLs, nothing linking to them. This page is that missing
+// front door — /api/admin/login.ts and /admin/login.astro both redirect
+// here now instead of straight to Womb Watch.
+const env = (Astro.locals as any).runtime.env;
+const authed = await isAdminAuthed(Astro.cookies, env);
+if (!authed) {
+  return Astro.redirect("/admin/login");
+}
+---
+<BaseLayout title="Admin — Dudela" description="">
+  <section class="admin-shell">
+    <div class="container admin-inner">
+      <div class="admin-header">
+        <p class="eyebrow">Dudela Admin</p>
+        <h1>Admin</h1>
+        <a href="/api/admin/logout" class="logout-link">Log out</a>
+      </div>
+
+      <div class="panel">
+        <h2>Womb Watch</h2>
+        <p class="panel-sub">Post a new update or manage existing ones.</p>
+        <a href="/admin/womb-watch" class="btn btn-primary">Open Womb Watch posting</a>
+      </div>
+
+      <div class="panel">
+        <h2>Test a hat order</h2>
+        <p class="panel-sub">
+          Places a real Printful order for the picked color using the exact code the live site
+          uses, but leaves it as an unconfirmed draft — free, no charge. Open Printful → Orders to
+          check it, then delete the draft.
+        </p>
+        <div class="tester-row">
+          <select id="hat-select">
+            {HAT_CATALOG.map((h) => (
+              <option value={h.key}>{hatLabel(h)}</option>
+            ))}
+          </select>
+          <a id="hat-go" href="#" class="btn btn-ghost" target="_blank" rel="noopener">Create test draft</a>
+        </div>
+        <p class="panel-hint">Add <code>&confirm=1</code> to the URL to actually confirm it into production — a real charge, same as a live order.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Test a shirt order</h2>
+        <p class="panel-sub">Same as above, for shirts.</p>
+        <div class="tester-row">
+          <select id="shirt-select">
+            {SHIRT_CATALOG.map((s) => (
+              <option value={s.key}>{shirtLabel(s)}</option>
+            ))}
+          </select>
+          <a id="shirt-go" href="#" class="btn btn-ghost" target="_blank" rel="noopener">Create test draft</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Printful / mockup debug tools</h2>
+        <p class="panel-sub">Read-only or idempotent — safe to open. Mostly useful when adding a new product or troubleshooting mockups.</p>
+        <ul class="tool-list">
+          <li><a href="/api/admin/printful-debug?all=1" target="_blank" rel="noopener">List every published Printful product</a> — name, color, sync_variant_id, mockup URL for each.</li>
+          <li><a href="/api/admin/printful-debug" target="_blank" rel="noopener">Raw sync/products list</a></li>
+          <li><a href="/api/admin/mockups" target="_blank" rel="noopener">Hat mockup regeneration tool</a> — pass <code>?start=1</code> to kick off, <code>?poll=&lt;keys&gt;</code> to check status.</li>
+          <li><a href="/api/admin/mockups-shirt" target="_blank" rel="noopener">Shirt mockup regeneration tool</a> — same pattern, superseded by the real Printful dashboard renders currently live on /merch.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  function wireTester(selectId: string, goId: string, endpoint: string) {
+    const select = document.getElementById(selectId) as HTMLSelectElement | null;
+    const go = document.getElementById(goId) as HTMLAnchorElement | null;
+    if (!select || !go) return;
+    function update() {
+      go!.href = `${endpoint}?color=${encodeURIComponent(select!.value)}`;
+    }
+    select.addEventListener("change", update);
+    update();
+  }
+  wireTester("hat-select", "hat-go", "/api/admin/test-hat-order");
+  wireTester("shirt-select", "shirt-go", "/api/admin/test-shirt-order");
+</script>
+
+<style>
+  .admin-shell {
+    min-height: 100vh;
+    padding: 4rem 0 6rem;
+  }
+  .admin-inner {
+    max-width: 760px;
+  }
+  .admin-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .admin-header h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    margin: 0.25rem 1rem 0 0;
+  }
+  .logout-link {
+    margin-left: auto;
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+  }
+  .panel {
+    background: var(--forest-700);
+    border: 1px solid var(--forest-600);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .panel h2 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+    color: var(--cream-100);
+  }
+  .panel-sub {
+    color: var(--text-on-dark-muted);
+    font-size: 0.88rem;
+    margin: 0 0 1rem;
+    max-width: 60ch;
+  }
+  .panel-hint {
+    color: var(--text-on-dark-muted);
+    font-size: 0.8rem;
+    margin: 0.75rem 0 0;
+  }
+  .panel-hint code,
+  .tool-list code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+  .tester-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .tester-row select {
+    flex: 1;
+    min-width: 220px;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-800, #101710);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .tool-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: var(--text-on-dark-muted);
+    font-size: 0.88rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .tool-list a {
+    color: var(--amber-500);
+    font-weight: 600;
+  }
+</style>

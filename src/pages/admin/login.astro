@@ -7,7 +7,7 @@ import { isAdminAuthed } from "../../lib/auth";
 const env = (Astro.locals as any).runtime.env;
 const authed = await isAdminAuthed(Astro.cookies, env);
 if (authed) {
-  return Astro.redirect("/admin/womb-watch");
+  return Astro.redirect("/admin");
 }
 
 const error = Astro.url.searchParams.get("error");
@@ -21,7 +21,7 @@ const errorMessage = error ? errorMessages[error] || "Something went wrong." : "
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Dudela Admin</p>
-      <h1>Womb Watch Posting</h1>
+      <h1>Admin Login</h1>
       {errorMessage && <p class="form-error">{errorMessage}</p>}
       <form class="login-form" method="POST" action="/api/admin/login">
         <input type="password" name="password" placeholder="Password" required autofocus />

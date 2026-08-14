@@ -5,8 +5,9 @@ import { redirectTo } from "../../../lib/http";
 
 export const prerender = false;
 
-// Single shared password for the Womb Watch posting UI (John + Mike only —
-// not per-person accounts). Set the ADMIN_PASSWORD secret with:
+// Single shared password for the whole /admin area — Womb Watch posting,
+// hat/shirt order testing, mockup/debug tools (John + Mike only, not
+// per-person accounts). Set the ADMIN_PASSWORD secret with:
 //   wrangler secret put ADMIN_PASSWORD
 export async function POST({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
@@ -26,5 +27,5 @@ export async function POST({ request, locals, cookies }: APIContext) {
 
   const token = await createAdminSession(env);
   setAdminSessionCookie(cookies, token);
-  return redirectTo(url.origin, "/admin/womb-watch");
+  return redirectTo(url.origin, "/admin");
 }
