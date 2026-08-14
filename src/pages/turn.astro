@@ -13,14 +13,22 @@ const testimonials = [
       "Before working with Dudela, I was scared and honestly had no idea what kind of dad I was going to be. They helped me put language around something I had never really thought about before: I actually got to decide what kind of dad I wanted to become. That completely changed the way I approached becoming a father.",
     name: "Jason",
     role: "First-time dad, Colorado",
-    shift: { before: "“Who am I going to be?”", after: "“I get to choose the dad I become.”" },
+    shift: {
+      before: "“Who am I going to be?”",
+      after: "“I get to choose the dad I become.”",
+      detail: "They helped me put language around something I'd genuinely never thought about before.",
+    },
   },
   {
     quote:
       "I did not want to feel like a side character in my own home. I wanted to be an active, engaged, educated dad who understood what was happening and had a real role in raising and developing my kids. Dudela helped me step into that role with a lot more confidence and intention.",
     name: "Christian",
     role: "Dad of two, California",
-    shift: { before: "“Where do I fit?”", after: "“I have an active role in this family.”" },
+    shift: {
+      before: "“Where do I fit in?”",
+      after: "“I have an active role in this family.”",
+      detail: "I didn't want to feel like a side character in my own home — now I don't.",
+    },
     featured: true,
   },
   {
@@ -28,13 +36,17 @@ const testimonials = [
       "Nick walked with Dudela for a few months around the birth of our first child, and I got to watch something change in him. He became more confident, more engaged, and more excited about being a dad. It felt like I was watching him light up and become the man and father I always knew was in there.",
     name: "Shelah",
     role: "Wife of a Turn client, Ohio",
-    shift: { before: "“Can he actually do this?”", after: "“He's becoming the father his family needs.”" },
+    shift: {
+      before: "“Can he actually do this?”",
+      after: "“He's becoming the father his family needs.”",
+      detail: "I watched him light up and become the man and father I always knew was in there.",
+    },
   },
 ];
 ---
 <BaseLayout
   title="The Turn — 1:1 Fatherhood Coaching with John & Mike — Dudela"
-  description="A 6-8 week 1:1 onboarding with John and Mike, then ongoing monthly support through your first year. Real access to two dads who've been where you are — not a course, not a community post."
+  description="A 6-week 1:1 onboarding with John and Mike, then ongoing support built around what you actually need. Real access to two dads who've been where you are — not a course, not a community post."
 >
   <Nav />
 
@@ -44,19 +56,25 @@ const testimonials = [
         <p class="eyebrow">The Turn &middot; 1:1 with John &amp; Mike</p>
         <h1>The turn from scared to steady doesn't happen by accident.</h1>
         <p class="hero-sub">
-          A 6-8 week 1:1 onboarding, then ongoing monthly support through your first year. Not a
+          A 6-week 1:1 onboarding, then ongoing support built around what you actually need. Not a
           course. Not another PDF. Direct, personal access to two dads who've done the hard parts
           already — NICU stays, emergency C-sections, the whole thing — and now spend their time
           walking other dads through it.
+        </p>
+        <p class="hero-sub hero-sub-secondary">
+          Most of the dads who come to us are already good at things — they've built companies,
+          led teams, hit every goal they've set for themselves. Fatherhood is the first place that
+          playbook doesn't just work automatically. The Turn is for guys who are used to winning
+          and want to actually be good at this too, not wing it.
         </p>
         <div class="hero-actions">
           <a href="#apply" class="btn btn-primary">Apply for The Turn</a>
           <a href="#pricing" class="btn btn-ghost hero-ghost">See pricing &darr;</a>
         </div>
-        <p class="hero-micro">$2,000 to start &middot; $1,000/mo ongoing &middot; month-to-month, no contract</p>
+        <p class="hero-micro">$1,800 to start &middot; ongoing support built around your needs &middot; no long-term contract</p>
       </div>
       <div class="hero-photo">
-        <img src="/images/IMG_6645.jpeg" alt="John with his daughter" />
+        <img src="/images/natasha-ivanchikhina-eU3e-hO0jkU-unsplash.jpg" alt="A dad lifting his son in the air, both laughing" />
       </div>
     </div>
   </section>
@@ -89,10 +107,13 @@ const testimonials = [
         </div>
       </div>
       <div class="why-stat-card">
-        <p class="why-stat-num">16</p>
+        <div class="why-stat-photo">
+          <img src="/images/tim-mossholder-4VkGIl-2z18-unsplash.jpg" alt="A dad walking hand in hand with his son along the shore" />
+        </div>
         <p class="why-stat-label">
-          Total active clients John and Mike take on between them, at any given time. This isn't
-          manufactured scarcity — it's the real number of guys two people can actually show up for.
+          We're not trying to be everything to everyone. Right now, we're looking for
+          <strong>3 qualified dads</strong> we can walk beside — guys who are ready for this kind
+          of transformation and want two people fully in their corner while they get there.
         </p>
       </div>
     </div>
@@ -108,7 +129,8 @@ const testimonials = [
             <p class="shift-before">{t.shift.before}</p>
             <span class="shift-arrow" aria-hidden="true">&darr;</span>
             <p class="shift-after">{t.shift.after}</p>
-            <p class="shift-name">— {t.name}</p>
+            <p class="shift-detail">&ldquo;{t.shift.detail}&rdquo;</p>
+            <p class="shift-name">{t.name} <span>&middot; {t.role}</span></p>
           </div>
         ))}
       </div>
@@ -129,7 +151,7 @@ const testimonials = [
             </blockquote>
           ))}
         <div class="proof-photo">
-          <img src="/images/mike-riley-face-to-face.png" alt="A dad face to face with his son" />
+          <img src="/images/kelly-sikkema-hS_eGxLjozs-unsplash.jpg" alt="A dad with his son on his shoulders" />
         </div>
       </div>
       <div class="quote-grid">
@@ -153,9 +175,9 @@ const testimonials = [
         <div class="pricing-card">
           <span class="pricing-tag">Phase 1</span>
           <h3>The Onboarding</h3>
-          <p class="pricing-amount">$2,000 <span>one time</span></p>
+          <p class="pricing-amount">$1,800 <span>one time</span></p>
           <p class="pricing-desc">
-            6-8 weeks, 1:1 with John and Mike. This is where the actual turn happens — working
+            6 weeks, 1:1 with John and Mike. This is where the actual turn happens — working
             through who you want to be as a dad and husband, what's actually coming, and how to
             walk into it steady instead of scrambling.
           </p>
@@ -163,10 +185,12 @@ const testimonials = [
         <div class="pricing-card featured">
           <span class="pricing-tag">Phase 2</span>
           <h3>Ongoing Support</h3>
-          <p class="pricing-amount">$1,000 <span>/month</span></p>
+          <p class="pricing-amount">Custom <span>package-based</span></p>
           <p class="pricing-desc">
-            After onboarding, continued 1:1 access through pregnancy, birth, and year one.
-            Month-to-month — no long-term contract. Stay as long as it's useful, no longer.
+            After onboarding, continued 1:1 access through pregnancy, birth, and year one. Every
+            dad's situation is different, so ongoing support isn't a flat rate — we build a
+            package around what you actually need. No long-term contract. Stay as long as it's
+            useful, no longer.
           </p>
         </div>
       </div>
@@ -234,12 +258,12 @@ const testimonials = [
           <p>No. This is coaching and mentorship from two dads who've been through it — not a clinical or medical service. If something needs a licensed professional, we'll say so directly.</p>
         </div>
         <div class="faq-item">
-          <h3>What happens after the 6-8 weeks?</h3>
-          <p>You decide whether to continue into ongoing monthly support. No pressure either way — some guys need the onboarding and are set, others want someone in their corner through year one.</p>
+          <h3>What happens after the 6 weeks?</h3>
+          <p>You decide whether to continue into ongoing support. No pressure either way — some guys need the onboarding and are set, others want someone in their corner through year one. If you continue, we build a package around what you actually need.</p>
         </div>
         <div class="faq-item">
           <h3>Can I cancel the ongoing part?</h3>
-          <p>Yes. Month-to-month, no contract, cancel anytime. The only commitment is the 6-8 week onboarding itself.</p>
+          <p>Yes. No contract, cancel anytime. The only commitment is the 6-week onboarding itself.</p>
         </div>
         <div class="faq-item">
           <h3>What if it's not a fit?</h3>
@@ -321,6 +345,9 @@ const testimonials = [
   .hero-sub {
     color: var(--text-on-dark-muted);
     max-width: 56ch;
+    margin: 0 0 1.1rem;
+  }
+  .hero-sub-secondary {
     margin: 0 0 1.75rem;
   }
   .hero-actions {
@@ -388,19 +415,28 @@ const testimonials = [
     background: var(--forest-900);
     color: var(--cream-100);
     border-radius: var(--radius-md);
-    padding: 2.25rem;
+    padding: 1.75rem;
   }
-  .why-stat-num {
-    font-family: var(--font-display);
-    font-size: 4rem;
-    line-height: 1;
-    color: var(--amber-500);
-    margin: 0 0 0.75rem;
+  .why-stat-photo {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    margin-bottom: 1.25rem;
+  }
+  .why-stat-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
   }
   .why-stat-label {
     color: var(--text-on-dark-muted);
     margin: 0;
     line-height: 1.6;
+  }
+  .why-stat-label strong {
+    color: var(--amber-500);
   }
 
   .shift {
@@ -441,6 +477,16 @@ const testimonials = [
     color: var(--cream-100);
     margin: 0.5rem 0 1rem;
   }
+  .shift-detail {
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    font-style: italic;
+    color: var(--text-on-dark-muted);
+    line-height: 1.5;
+    margin: 0 0 1.1rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--forest-600);
+  }
   .shift-name {
     font-family: var(--font-label);
     font-size: 0.8rem;
@@ -448,6 +494,12 @@ const testimonials = [
     letter-spacing: 0.08em;
     color: var(--amber-500);
     margin: 0;
+  }
+  .shift-name span {
+    color: var(--text-on-dark-muted);
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
   }
 
   .proof {

@@ -20,6 +20,7 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
   "free-guide": { eventName: "lead-free-guide", userGroup: "Lead – Free Guide" },
   "newsletter": { eventName: "lead-newsletter", userGroup: "Lead – Newsletter" },
   "fall-cohort-waitlist": { eventName: "lead-fall-cohort", userGroup: "Lead – Fall Cohort" },
+  "cohort-waitlist": { eventName: "lead-cohort-waitlist", userGroup: "Lead – Steady Dad Cohort" },
   // "hat-waitlist" removed — merch.astro no longer has a waitlist form (real
   // buy buttons + Stripe checkout replaced it), so nothing posts this magnet
   // value anymore. Hat purchases are tracked via PURCHASE_EVENTS below instead.

@@ -24,11 +24,18 @@ export const prerender = false;
 // PDF's public URL. Drop real PDF files in /public/downloads/ and update the url — until
 // then this map is empty-safe: if a magnet isn't listed here, the generic CONFIRMATIONS
 // email below is sent instead, so submitters always hear something back.
-const MAGNETS: Record<string, { subject: string; fileName: string; url: string }> = {
+const MAGNETS: Record<string, { subject: string; fileName: string; url: string; displayName: string }> = {
   "free-guide": {
     subject: "Your free guide — 15 Things Every Dad Should Do Before the Baby Arrives",
     fileName: "Dudela – 15 Things Every Dad Should Do Before the Baby Arrives.pdf",
     url: "https://thedudelaco.com/downloads/dudela-15-things.pdf",
+    displayName: "15 Things Every Dad Should Do Before the Baby Arrives",
+  },
+  "sleep-survival-guide": {
+    subject: "Your Sleep Survival Guide is here",
+    fileName: "Dudela – The Sleep Survival Guide.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-sleep-survival-guide.pdf",
+    displayName: "The Sleep Survival Guide",
   },
 };
 
@@ -43,6 +50,10 @@ const CONFIRMATIONS: Record<string, { subject: string; body: string }> = {
   "fall-cohort-waitlist": {
     subject: "You're on the Fall Cohort waitlist",
     body: "You're on the waitlist for the Steady Dad: Before Birth Workshop / Fall Cohort. We'll email you as soon as dates and spots open up.",
+  },
+  "cohort-waitlist": {
+    subject: "You're on the Steady Dad Cohort waitlist",
+    body: "You're on the waitlist for the Steady Dad Cohort, kicking off October 2026. We'll email you directly as soon as we open enrollment and lock in the Thursday night schedule — seats are capped, and waitlist members get first access before we open it up publicly.",
   },
   "newsletter": {
     subject: "You're on the list",
@@ -74,12 +85,12 @@ function emailShell(innerHtml: string) {
   `;
 }
 
-function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: string }) {
+function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: string; displayName: string }) {
   const firstName = name ? name.split(" ")[0] : "there";
   return emailShell(`
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-      Here it is — <strong>15 Things Every Dad Should Do Before the Baby Arrives</strong>.
+      Here it is — <strong>${magnetInfo.displayName}</strong>.
       Straight from us, no fluff. Save it somewhere you'll actually look at it again.
     </p>
     <div style="text-align:center;margin:30px 0 26px;">

@@ -95,7 +95,7 @@ const stages = [
     label: "6 Months",
     mission: "You're not new at this anymore. Keep going.",
     free: [{ title: "When to Prioritize Yourself as a Dad", type: "Episode" }],
-    paid: [{ title: "The Turn", price: "$2,000 + $1,000/mo" }],
+    paid: [{ title: "The Turn", price: "$1,800 + custom ongoing" }],
   },
   {
     id: "first-birthday",
@@ -119,7 +119,7 @@ function paidHref(title) {
   // Cohort" doesn't get swept into the old #cohort anchor either — it's
   // its own separate (Coming Soon) offer, not The Turn.
   if (title === "The Turn") return "/turn";
-  if (title.includes("Cohort")) return "/join#cohort";
+  if (title.includes("Cohort")) return "/cohort";
   return "/join";
 }
 function iconKind(type) {

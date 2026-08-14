@@ -5,8 +5,8 @@ import { sendEmail } from "../../lib/email";
 
 export const prerender = false;
 
-// Handles the application form on /turn (The Turn — $2,000 6-8 week 1:1 onboarding,
-// then $1,000/mo ongoing). Deliberately NOT a Stripe checkout button like the Prep
+// Handles the application form on /turn (The Turn — $1,800 6-week 1:1 onboarding,
+// then custom/package-based ongoing support). Deliberately NOT a Stripe checkout button like the Prep
 // Kit or Spit-Up Society: this is a screened, capped, high-touch offer (John + Mike
 // personally take every client, capacity is genuinely limited), so the flow is
 // apply → John/Mike review and reach out to book a call → enroll manually, not
