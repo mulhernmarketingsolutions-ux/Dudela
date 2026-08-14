@@ -520,6 +520,27 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     setBarCollapsed(!bundleBar!.classList.contains("is-collapsed"));
   });
 
+  // One-time "flare" — a brief bounce + glow on the collapsed pill — the
+  // first time someone scrolls far enough to plausibly be browsing
+  // products. Starting collapsed from the very first paint means nothing
+  // ever announces the bar exists on its own, so this is what invites a
+  // visitor to tap it open and notice their picks populating inside.
+  // Fires once; does nothing once the visitor has taken manual control of
+  // the toggle or the bar is already open.
+  let hasFlared = false;
+  function maybeFlareOnScroll() {
+    if (hasFlared || !bundleBar || userHasToggledManually) return;
+    if (!isMobile() || !bundleBar.classList.contains("is-collapsed")) return;
+    if (window.scrollY < 350) return;
+    hasFlared = true;
+    window.removeEventListener("scroll", maybeFlareOnScroll);
+    bundleBar.classList.add("is-flaring");
+    // Matches the two 0.9s iterations in the is-flaring animation (1.8s)
+    // plus a hair of margin so the class isn't yanked mid-animation.
+    window.setTimeout(() => bundleBar?.classList.remove("is-flaring"), 1900);
+  }
+  window.addEventListener("scroll", maybeFlareOnScroll, { passive: true });
+
   function updateBundleBar() {
     if (!bundleBar || !currentHat || !currentShirt) return;
     if (barHatImg) {
@@ -561,21 +582,23 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       bundleBar.classList.add("is-updated");
     }
 
-    // Mobile-only: pop open (or stay open) briefly whenever something
-    // changes, then settle back down to the compact pill — teaches what
-    // the bar is on first appearance, then keeps reinforcing "this reacted
-    // to what you just picked" on every change after, without permanently
-    // eating screen space. Skipped entirely once the visitor has taken
-    // manual control of the toggle.
+    // Mobile-only. Skipped entirely once the visitor has taken manual
+    // control of the toggle.
     if (isMobile() && !userHasToggledManually) {
-      setBarCollapsed(false);
-      if (autoCollapseTimer) window.clearTimeout(autoCollapseTimer);
-      autoCollapseTimer = window.setTimeout(
-        () => {
+      if (!wasAlreadyVisible) {
+        // First appearance: start collapsed right away rather than
+        // showing the full bar and taking up space nobody asked for yet —
+        // maybeFlareOnScroll() above is what invites someone to open it.
+        setBarCollapsed(true);
+      } else {
+        // A real selection changed — pop open briefly to show it (with the
+        // flash/price-bump pulse above), then settle back down.
+        setBarCollapsed(false);
+        if (autoCollapseTimer) window.clearTimeout(autoCollapseTimer);
+        autoCollapseTimer = window.setTimeout(() => {
           if (!userHasToggledManually) setBarCollapsed(true);
-        },
-        wasAlreadyVisible ? 2500 : 4000
-      );
+        }, 2500);
+      }
     }
   }
 
@@ -1050,6 +1073,40 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
   .bundle-bar.is-updated .bundle-bar-thumb {
     animation: bundleBarThumbIn 0.35s ease;
+  }
+  /* One-time "flare" (see maybeFlareOnScroll() in the script above) — a
+     bounce + glow ring on the collapsed pill the first time someone
+     scrolls far enough to plausibly be browsing products, since starting
+     collapsed means nothing else announces the bar exists on its own. */
+  @keyframes bundleBarFlareBounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    20% {
+      transform: translateY(-7px);
+    }
+    40% {
+      transform: translateY(0);
+    }
+    60% {
+      transform: translateY(-4px);
+    }
+    80% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes bundleBarFlareGlow {
+    0%,
+    100% {
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(226, 125, 37, 0.55);
+    }
+    50% {
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(226, 125, 37, 0);
+    }
+  }
+  .bundle-bar.is-flaring {
+    animation: bundleBarFlareBounce 0.9s ease 2, bundleBarFlareGlow 0.9s ease 2;
   }
   /* No .container here on purpose — a centered, fixed-max-width box left
      big empty margins on wide screens that made the bar feel like a
