@@ -249,6 +249,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <div class="design-body">
               <h3>{d.title}</h3>
               <p class="design-tagline">{d.tagline}</p>
+              <button type="button" class="details-link" data-open-details="shirt">Material, fit &amp; sizing ›</button>
 
               <div class="logo-detail" data-logo-detail-wrap>
                 <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} logo, up close`} />
@@ -314,6 +315,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
           <div class="design-body">
             <h3>{d.title}</h3>
             <p class="design-tagline">{d.tagline}</p>
+            <button type="button" class="details-link" data-open-details="hat">Material &amp; fit ›</button>
 
             <div class="selector">
               <span class="selector-label">Thread color</span>
@@ -359,6 +361,52 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       </div>
     </div>
   </section>
+
+  <!-- Product Details & Sizing — one shared dialog for both product types
+       rather than one per card, since the specs are the same across every
+       hat design (all Otto Cap 31-069) and every shirt design (all Comfort
+       Colors 1717). All figures below are Printful's own catalog data for
+       these exact products, not marketing copy — pulled from their public
+       Catalog API, not written up ourselves. -->
+  <dialog id="details-modal" class="details-modal">
+    <button type="button" class="details-close" data-details-close aria-label="Close">&times;</button>
+
+    <div class="details-panel" data-panel="hat">
+      <h3>The Dudela hat</h3>
+      <p class="details-sub">5-panel mid-profile cap, Otto Cap 31-069.</p>
+      <dl class="details-list">
+        <div><dt>Material</dt><dd>65% polyester / 35% cotton — a structured, breathable blend, not a soft-crown dad hat.</dd></div>
+        <div><dt>Fit</dt><dd>One size fits most. Adjustable snap closure in back.</dd></div>
+        <div><dt>Details</dt><dd>Structured front panel, matching undervisor and sweatband.</dd></div>
+      </dl>
+    </div>
+
+    <div class="details-panel" data-panel="shirt">
+      <h3>The Dudela shirt</h3>
+      <p class="details-sub">Comfort Colors 1717 heavyweight tee.</p>
+      <dl class="details-list">
+        <div><dt>Material</dt><dd>100% ring-spun cotton, garment-dyed, 6.1 oz/yd² — heavier and sturdier than a standard cotton tee.</dd></div>
+        <div><dt>Fit</dt><dd>Relaxed fit. Runs true to size.</dd></div>
+        <div><dt>Details</dt><dd>Twill-taped neck and shoulders, double-needle stitching at the collar, armholes, sleeves, and hem for durability.</dd></div>
+      </dl>
+      <table class="size-table">
+        <caption>Size chart (inches)</caption>
+        <thead>
+          <tr><th>Size</th><th>Length</th><th>Chest</th><th>Sleeve</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S</td><td>26.6</td><td>18.3</td><td>16.3</td></tr>
+          <tr><td>M</td><td>28</td><td>20.3</td><td>17.8</td></tr>
+          <tr><td>L</td><td>29.4</td><td>22</td><td>19</td></tr>
+          <tr><td>XL</td><td>30.8</td><td>24</td><td>20.5</td></tr>
+          <tr><td>2XL</td><td>31.6</td><td>26</td><td>21.8</td></tr>
+          <tr><td>3XL</td><td>32.5</td><td>27.8</td><td>23.3</td></tr>
+          <tr><td>4XL</td><td>33.5</td><td>29.8</td><td>24.6</td></tr>
+        </tbody>
+      </table>
+      <p class="size-note">Measured flat, product may vary up to 2".</p>
+    </div>
+  </dialog>
 
   <section class="perks section-dark">
     <div class="container perks-grid">
@@ -677,6 +725,31 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     shirtSelect.addEventListener("change", render);
     render();
   })();
+
+  // Product Details & Sizing modal — one shared <dialog>, content switched
+  // by adding data-type="hat"|"shirt" to it (see the matching CSS below,
+  // which shows/hides the two .details-panel blocks accordingly).
+  (() => {
+    const modal = document.getElementById("details-modal") as HTMLDialogElement | null;
+    if (!modal) return;
+
+    document.querySelectorAll<HTMLButtonElement>("[data-open-details]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        modal.dataset.type = btn.dataset.openDetails || "hat";
+        modal.showModal();
+      });
+    });
+
+    modal.querySelector("[data-details-close]")?.addEventListener("click", () => modal.close());
+
+    // Click on the backdrop (outside the modal's own padded box) closes it —
+    // clicking the modal element itself fires for both the box and the
+    // ::backdrop, so this checks the click actually landed on the <dialog>
+    // element rather than something inside it.
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.close();
+    });
+  })();
 </script>
 
 <style>
@@ -933,6 +1006,23 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-size: 0.85rem;
     margin: 0 0 1.1rem;
   }
+  .details-link {
+    display: inline-block;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: -0.6rem 0 1.1rem;
+    color: var(--forest-800);
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .details-link:hover {
+    color: var(--amber-500);
+  }
   .selector {
     margin: 0 0 1.1rem;
   }
@@ -1168,6 +1258,109 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     border-color: var(--forest-800);
     background: var(--forest-800);
     color: var(--cream-100);
+  }
+
+  /* Product Details & Sizing — one shared native <dialog>, content panels
+     toggled by the dialog's own data-type attribute (set in the script
+     above) rather than two separate dialogs. */
+  .details-modal {
+    position: relative;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 2rem 2.25rem 2.25rem;
+    max-width: 480px;
+    width: calc(100% - 2.5rem);
+    background: var(--bg-light-raised);
+    color: var(--text-on-light);
+  }
+  .details-modal::backdrop {
+    background: rgba(18, 24, 15, 0.6);
+  }
+  .details-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.9rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-on-light-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+  }
+  .details-panel {
+    display: none;
+  }
+  .details-modal[data-type="hat"] .details-panel[data-panel="hat"],
+  .details-modal[data-type="shirt"] .details-panel[data-panel="shirt"] {
+    display: block;
+  }
+  .details-panel h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 0 0 0.3rem;
+  }
+  .details-sub {
+    color: var(--text-on-light-muted);
+    font-size: 0.85rem;
+    margin: 0 0 1.25rem;
+  }
+  .details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 0 0 1.5rem;
+  }
+  .details-list dt {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--forest-800);
+    margin-bottom: 0.15rem;
+  }
+  .details-list dd {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-on-light);
+    line-height: 1.5;
+  }
+  .size-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 0.6rem;
+  }
+  .size-table caption {
+    text-align: left;
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-light-muted);
+    margin-bottom: 0.5rem;
+  }
+  .size-table th,
+  .size-table td {
+    padding: 0.4rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .size-table th:first-child,
+  .size-table td:first-child {
+    text-align: left;
+  }
+  .size-table th {
+    font-family: var(--font-label);
+    font-weight: 700;
+    color: var(--text-on-light-muted);
+  }
+  .size-note {
+    font-size: 0.76rem;
+    color: var(--text-on-light-muted);
+    margin: 0;
   }
 </style>
 
