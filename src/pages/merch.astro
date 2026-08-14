@@ -522,7 +522,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     variants: CardVariant[];
   }
 
-  document.querySelectorAll<HTMLElement>(".design-card").forEach((card, cardIndex) => {
+  // :not(.shirt-card) matters here — shirt cards also carry the
+  // .design-card class (class="design-card shirt-card"), so a plain
+  // ".design-card" selector counted the shirt card as index 0 and pushed
+  // both hat cards to index >= 1. That meant isDefaultForBundle was false
+  // for every hat card, currentHat never got set on load, and the bundle
+  // bar's is-visible class never got added — the bug that made the whole
+  // bar silently never appear.
+  document.querySelectorAll<HTMLElement>(".design-card:not(.shirt-card)").forEach((card, cardIndex) => {
     const catalogScript = card.querySelector<HTMLScriptElement>("[data-catalog]");
     if (!catalogScript?.textContent) return;
     const catalog: CardCatalog = JSON.parse(catalogScript.textContent);

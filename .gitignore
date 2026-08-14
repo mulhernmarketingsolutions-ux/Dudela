@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .astro/
+.wrangler/
 .DS_Store
 public/images/*.mov
 Dudela 15 Things.pdf
