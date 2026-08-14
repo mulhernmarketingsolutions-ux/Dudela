@@ -402,7 +402,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
        both a hat and a shirt selection exist, which in practice is
        immediately on load since both sections default to a real variant. -->
   <div class="bundle-bar" id="bundle-bar" role="region" aria-label="Bundle discount">
-    <div class="container bundle-bar-inner">
+    <div class="bundle-bar-inner">
       <div class="bundle-bar-items">
         <img class="bundle-bar-thumb" data-bar-hat-img alt="" />
         <span class="bundle-bar-plus">+</span>
@@ -502,7 +502,19 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       barBuy.href = `/api/create-checkout-session?product=bundle&hat=${encodeURIComponent(currentHat.key)}&shirt=${encodeURIComponent(currentShirt.key)}`;
     }
 
+    // The very first call (page load, both sections still at their default
+    // picks) just brings the bar on screen — no pulse needed there. Every
+    // call after that means an actual selection changed, so flash the bar
+    // to make that connection obvious (otherwise a swatch click below just
+    // silently rewrites text at the bottom of the screen with nothing to
+    // draw the eye to it).
+    const wasAlreadyVisible = bundleBar.classList.contains("is-visible");
     bundleBar.classList.add("is-visible");
+    if (wasAlreadyVisible) {
+      bundleBar.classList.remove("is-updated");
+      void bundleBar.offsetWidth; // force reflow so the animation restarts on rapid re-clicks
+      bundleBar.classList.add("is-updated");
+    }
   }
 
   interface CardVariant {
@@ -910,13 +922,19 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   /* Live Bundle bar — fixed to the bottom of the viewport, mirrors whatever
      hat + shirt the cards below currently have selected. Stays out of the
      way (translated off-screen) until updateBundleBar() in the script above
-     has real data to show, which in practice is immediately on load. */
+     has real data to show, which in practice is immediately on load.
+     z-index is CSS's actual maximum (2147483647) — the site's SpeakPipe
+     voicemail widget (loaded in BaseLayout.astro) sets itself to 2147483645,
+     one shy of max, and on short/mobile viewports its vertically-centered
+     position can reach down into this bar's territory. This guarantees the
+     checkout button always wins that fight and stays clickable; see the
+     separate mobile-only override for the widget itself further down. */
   .bundle-bar {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 40;
+    z-index: 2147483647;
     background: var(--forest-900, #12180f);
     border-top: 1px solid var(--amber-500);
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
@@ -926,19 +944,71 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .bundle-bar.is-visible {
     transform: translateY(0);
   }
+  /* A quick background flash + price bump + thumbnail fade whenever a
+     selection actually changes (see the is-updated toggle in
+     updateBundleBar()) — makes it obvious that clicking a swatch/size below
+     is what just updated the bar, instead of it silently rewriting itself
+     at the bottom of the screen. */
+  @keyframes bundleBarFlash {
+    0% {
+      background: var(--forest-900, #12180f);
+    }
+    35% {
+      background: #24361f;
+    }
+    100% {
+      background: var(--forest-900, #12180f);
+    }
+  }
+  @keyframes bundleBarPriceBump {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.18);
+    }
+  }
+  @keyframes bundleBarThumbIn {
+    0% {
+      opacity: 0.25;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  .bundle-bar.is-updated {
+    animation: bundleBarFlash 0.6s ease;
+  }
+  .bundle-bar.is-updated .bundle-bar-now {
+    display: inline-block;
+    animation: bundleBarPriceBump 0.45s ease;
+  }
+  .bundle-bar.is-updated .bundle-bar-thumb {
+    animation: bundleBarThumbIn 0.35s ease;
+  }
+  /* No .container here on purpose — a centered, fixed-max-width box left
+     big empty margins on wide screens that made the bar feel like a
+     floating chip rather than a single continuous piece of the page. Its
+     own responsive padding stretches the real content close to both edges
+     instead, so it reads as one seamless strip rather than something
+     cropped in from the sides. */
   .bundle-bar-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 1rem;
-    padding: 0.85rem 0;
+    gap: 0.75rem 1.5rem;
+    padding: 0.85rem clamp(1rem, 4vw, 3rem);
   }
   .bundle-bar-items {
     display: flex;
     align-items: center;
     gap: 0.6rem;
     min-width: 0;
+    flex: 1 1 auto;
   }
   .bundle-bar-thumb {
     width: 44px;
@@ -968,13 +1038,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     letter-spacing: 0.05em;
     color: var(--amber-500);
   }
+  /* Lets the full pick description wrap onto a second line instead of
+     truncating with an ellipsis — a label cut off mid-word read as broken,
+     not clean. */
   .bundle-bar-picks {
+    display: block;
     color: var(--cream-100);
     font-size: 0.82rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 46vw;
+    line-height: 1.35;
   }
   .bundle-bar-right {
     display: flex;
@@ -1002,10 +1073,12 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     padding: 0.65rem 1.3rem;
   }
   @media (max-width: 640px) {
-    .bundle-bar-picks {
-      display: none;
-    }
     .bundle-bar-inner {
+      justify-content: center;
+      text-align: center;
+    }
+    .bundle-bar-items {
+      flex: 1 1 100%;
       justify-content: center;
     }
   }
