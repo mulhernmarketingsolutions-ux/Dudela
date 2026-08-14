@@ -546,6 +546,103 @@ export function hatPrice(v: HatVariant): string {
   return v.addon ? "39.00" : "38.00";
 }
 
+// ---------------------------------------------------------------------------
+// SHIRTS
+// ---------------------------------------------------------------------------
+// Unlike hats (a curated subset of design/thread/addon/color combos — not
+// every combination physically exists), every shirt design × color × size
+// really is fully buyable, a clean cross product. So instead of hand-typing
+// 14+ variant blocks like HAT_CATALOG, SHIRT_CATALOG is generated from one
+// row per (design, color) — each row's sizeSyncVariantIds is the real,
+// verified S→4XL sync_variant_id list read directly from
+// /api/admin/printful-debug?id=<sync_product_id> for that color's Sync
+// Product (455805171 = Black, 455805870 = Ivory), not assumed/guessed. This
+// also means adding John's next shirt design later is one more row here,
+// not retyping 7+ variant blocks by hand.
+
+export type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
+export const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
+
+export interface ShirtVariant {
+  key: string; // `shirt-${design}-${color}-${size}` (lowercase) — the checkout `product` value
+  design: string;
+  designLabel: string;
+  color: string;
+  colorLabel: string;
+  colorHex: string;
+  size: ShirtSize;
+  syncVariantId: number;
+  price: string; // "40.00" — every size/color of a given design is the same price
+  frontImage: string;
+  backImage: string;
+}
+
+interface ShirtDesignColorRow {
+  design: string;
+  designLabel: string;
+  color: string;
+  colorLabel: string;
+  colorHex: string;
+  frontImage: string;
+  backImage: string;
+  price: string;
+  // [S, M, L, XL, 2XL, 3XL, 4XL] — same order as SHIRT_SIZES
+  sizeSyncVariantIds: number[];
+}
+
+const SHIRT_DESIGN_COLORS: ShirtDesignColorRow[] = [
+  {
+    design: "dad-est",
+    designLabel: "DAD EST. 2026",
+    color: "black",
+    colorLabel: "Black",
+    colorHex: "#141414",
+    frontImage: "/images/shirts/shirt-black-front.png",
+    backImage: "/images/shirts/shirt-black-back.png",
+    price: "40.00",
+    // Printful sync_product 455805171 ("DUDELA Shirt")
+    sizeSyncVariantIds: [5440054361, 5440054362, 5440054363, 5440054364, 5440054365, 5440054366, 5440054367],
+  },
+  {
+    design: "dad-est",
+    designLabel: "DAD EST. 2026",
+    color: "ivory",
+    colorLabel: "Ivory",
+    colorHex: "#e9dfc7",
+    frontImage: "/images/shirts/shirt-ivory-front.png",
+    backImage: "/images/shirts/shirt-ivory-back.png",
+    price: "40.00",
+    // Printful sync_product 455805870 ("Dudela Shirt - Ivory")
+    sizeSyncVariantIds: [5440059834, 5440059835, 5440059836, 5440059837, 5440059838, 5440059839, 5440059840],
+  },
+];
+
+export const SHIRT_CATALOG: ShirtVariant[] = SHIRT_DESIGN_COLORS.flatMap((row) =>
+  SHIRT_SIZES.map((size, i) => ({
+    key: `shirt-${row.design}-${row.color}-${size.toLowerCase()}`,
+    design: row.design,
+    designLabel: row.designLabel,
+    color: row.color,
+    colorLabel: row.colorLabel,
+    colorHex: row.colorHex,
+    size,
+    syncVariantId: row.sizeSyncVariantIds[i],
+    price: row.price,
+    frontImage: row.frontImage,
+    backImage: row.backImage,
+  }))
+);
+
+export function getShirtVariant(key: string): ShirtVariant | undefined {
+  return SHIRT_CATALOG.find((s) => s.key === key);
+}
+
+// Readable label for receipts/internal notification emails — e.g.
+// "Dudela Shirt — DAD EST. 2026, Black, Size M"
+export function shirtLabel(v: ShirtVariant): string {
+  return `Dudela Shirt — ${v.designLabel}, ${v.colorLabel}, Size ${v.size}`;
+}
+
 export interface PrintfulRecipient {
   name: string;
   address1: string;

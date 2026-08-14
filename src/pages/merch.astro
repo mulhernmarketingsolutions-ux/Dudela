@@ -7,7 +7,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import { getAuthedMember } from "../lib/auth";
-import { HAT_CATALOG, type HatVariant, type Design } from "../lib/printful";
+import { HAT_CATALOG, type HatVariant, type Design, SHIRT_CATALOG } from "../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
 
@@ -92,10 +92,57 @@ const designs = (Object.keys(DESIGN_INFO) as Design[]).map((dkey) => {
   };
 });
 
+// SHIRTS — a clean color × size cross product (no filtering needed the way
+// hats need thread-vs-cap-color filtering), grouped by `design` so a second
+// shirt design (already planned) just needs a SHIRT_DESIGN_INFO entry and a
+// SHIRT_CATALOG row in lib/printful.ts, not a rewrite of this page.
+const SHIRT_DESIGN_INFO: Record<string, { title: string; tagline: string }> = {
+  "dad-est": {
+    title: "DAD EST. 2026",
+    tagline: `A clean "DAD EST. 2026" chest hit up front, the DUDELA fist-bump wordmark across the back.`,
+  },
+};
+const SHIRT_COLOR_ORDER = ["black", "ivory"];
+
+const shirtDesignKeys = [...new Set(SHIRT_CATALOG.map((v) => v.design))];
+const shirtDesigns = shirtDesignKeys.map((dkey) => {
+  const variants = SHIRT_CATALOG.filter((v) => v.design === dkey);
+  const colors = SHIRT_COLOR_ORDER.filter((c) => variants.some((v) => v.color === c)).map((c) => {
+    const sample = variants.find((v) => v.color === c)!;
+    return { key: c, label: sample.colorLabel, hex: sample.colorHex };
+  });
+
+  const clientVariants = variants.map((v) => ({
+    key: v.key,
+    color: v.color,
+    colorLabel: v.colorLabel,
+    colorHex: v.colorHex,
+    size: v.size,
+    front: v.frontImage,
+    back: v.backImage,
+    price: v.price,
+  }));
+
+  const first =
+    clientVariants.find((v) => v.color === colors[0]?.key && v.size === "M") || clientVariants[0];
+
+  const info = SHIRT_DESIGN_INFO[dkey] || { title: dkey, tagline: "" };
+
+  return {
+    key: dkey,
+    title: info.title,
+    tagline: info.tagline,
+    colors,
+    sizes: variants.map((v) => v.size).filter((s, i, arr) => arr.indexOf(s) === i),
+    variants: clientVariants,
+    first,
+  };
+});
+
 const url = new URL(Astro.request.url);
 const canceled = url.searchParams.get("purchase") === "canceled";
 ---
-<BaseLayout title="Dudela Hats — Merch" description="Two designs, three thread colors, an optional side add-on — $38, free shipping. Made to order and shipped straight to your door.">
+<BaseLayout title="Dudela Merch — Hats & Shirts" description="Hats and shirts, made to order and shipped straight to your door. Free shipping.">
   <Nav isAuthed={!!member} />
 
   <section class="hero section-dark">
@@ -175,6 +222,66 @@ const canceled = url.searchParams.get("purchase") === "canceled";
           <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
         </div>
       ))}
+    </div>
+  </section>
+
+  <section class="colors section-light shirts-section">
+    <div class="container">
+      <div class="section-divider">
+        <h2>The Dudela shirt.</h2>
+        <p class="section-sub">Comfort Colors heavyweight tee — front chest hit, full back print. $40, free shipping, made to order.</p>
+      </div>
+      <div class="colors-grid">
+        {shirtDesigns.map((d) => (
+          <div class="design-card shirt-card" data-design={d.key}>
+            <div class="design-media">
+              <div class="mockup-pair">
+                <img class="mockup-photo" data-photo-front src={d.first.front} alt={`Dudela Shirt — ${d.title}, front`} />
+                <img class="mockup-photo" data-photo-back src={d.first.back} alt={`Dudela Shirt — ${d.title}, back`} />
+              </div>
+            </div>
+            <div class="design-body">
+              <h3>{d.title}</h3>
+              <p class="design-tagline">{d.tagline}</p>
+
+              <div class="selector">
+                <span class="selector-label">Color</span>
+                <div class="color-swatches" role="group" aria-label={`${d.title} color`} data-shirt-colors>
+                  {d.colors.map((c, i) => (
+                    <button
+                      type="button"
+                      class={`swatch${i === 0 ? " active" : ""}`}
+                      style={`--swatch: ${c.hex}; --swatch2: ${c.hex}`}
+                      title={c.label}
+                      aria-label={c.label}
+                      data-shirt-color={c.key}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div class="selector">
+                <span class="selector-label">Size</span>
+                <div class="size-options" role="group" aria-label={`${d.title} size`} data-shirt-sizes>
+                  {d.sizes.map((s) => (
+                    <button type="button" class={`size-btn${s === "M" ? " active" : ""}`} data-shirt-size={s}>{s}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div class="color-meta">
+                <span class="price" data-price>${Math.round(parseFloat(d.first.price))}</span>
+                <span class="variant-name" data-variant-name>{d.first.colorLabel}, {d.first.size}</span>
+              </div>
+              <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
+                Buy Now — ${Math.round(parseFloat(d.first.price))}
+              </a>
+            </div>
+
+            <script type="application/json" data-shirt-catalog set:html={JSON.stringify(d)} />
+          </div>
+        ))}
+      </div>
     </div>
   </section>
 
@@ -349,6 +456,97 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const DEFAULT_COLOR_SLUG = "dark-green-natural";
     const startingOptions = variantsForThread(state.thread).filter((v) => v.addon === state.addon);
     state.color = (startingOptions.find((v) => v.color === DEFAULT_COLOR_SLUG) || startingOptions[0])?.color || "";
+    render();
+  });
+
+  // Shirt cards — same pattern as hat cards above but simpler: color and
+  // size are a full cross product (no filtering), no add-on, and the two
+  // mockup photos are front/back instead of front/angled-left.
+  interface ShirtCardVariant {
+    key: string;
+    color: string;
+    colorLabel: string;
+    colorHex: string;
+    size: string;
+    front: string;
+    back: string;
+    price: string;
+  }
+  interface ShirtCardCatalog {
+    title: string;
+    colors: Array<{ key: string; label: string; hex: string }>;
+    sizes: string[];
+    variants: ShirtCardVariant[];
+  }
+
+  document.querySelectorAll<HTMLElement>(".shirt-card").forEach((card) => {
+    const catalogScript = card.querySelector<HTMLScriptElement>("[data-shirt-catalog]");
+    if (!catalogScript?.textContent) return;
+    const catalog: ShirtCardCatalog = JSON.parse(catalogScript.textContent);
+
+    const photoFront = card.querySelector<HTMLImageElement>("[data-photo-front]");
+    const photoBack = card.querySelector<HTMLImageElement>("[data-photo-back]");
+    const colorContainer = card.querySelector<HTMLElement>("[data-shirt-colors]");
+    const sizeContainer = card.querySelector<HTMLElement>("[data-shirt-sizes]");
+    const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
+    const priceEl = card.querySelector<HTMLElement>("[data-price]");
+    const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
+    if (!photoFront || !photoBack || !colorContainer || !sizeContainer || !variantName || !priceEl || !buyBtn) return;
+
+    catalog.variants.forEach((v) => {
+      new Image().src = v.front;
+      new Image().src = v.back;
+    });
+
+    const state = { color: catalog.colors[0]?.key || "", size: "M" };
+
+    function currentVariant(): ShirtCardVariant | undefined {
+      return catalog.variants.find((v) => v.color === state.color && v.size === state.size);
+    }
+
+    function render() {
+      colorContainer!.querySelectorAll<HTMLButtonElement>("[data-shirt-color]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.shirtColor === state.color);
+      });
+      sizeContainer!.querySelectorAll<HTMLButtonElement>("[data-shirt-size]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.shirtSize === state.size);
+      });
+
+      const variant = currentVariant();
+      if (!variant || !photoFront || !photoBack || !variantName || !priceEl || !buyBtn) return;
+
+      photoFront.classList.add("is-swapping");
+      photoBack.classList.add("is-swapping");
+      window.setTimeout(() => {
+        photoFront.src = variant.front;
+        photoFront.alt = `Dudela Shirt — ${catalog.title}, ${variant.colorLabel}, front`;
+        photoBack.src = variant.back;
+        photoBack.alt = `Dudela Shirt — ${catalog.title}, ${variant.colorLabel}, back`;
+        photoFront.classList.remove("is-swapping");
+        photoBack.classList.remove("is-swapping");
+      }, 120);
+
+      variantName.textContent = `${variant.colorLabel}, ${variant.size}`;
+      const priceLabel = `$${Math.round(parseFloat(variant.price))}`;
+      priceEl.textContent = priceLabel;
+      buyBtn.textContent = `Buy Now — ${priceLabel}`;
+      buyBtn.href = `/api/create-checkout-session?product=${variant.key}`;
+    }
+
+    colorContainer.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-shirt-color]");
+      if (!btn) return;
+      state.color = btn.dataset.shirtColor || state.color;
+      render();
+    });
+
+    sizeContainer.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-shirt-size]");
+      if (!btn) return;
+      state.size = btn.dataset.shirtSize || state.size;
+      render();
+    });
+
     render();
   });
 </script>
@@ -628,6 +826,53 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     .colors-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+  }
+
+  /* Shirt section — reuses most .design-card/.colors-grid styling above;
+     only new pieces are the section heading and the size-picker buttons
+     (hats don't have a size selector). */
+  .shirts-section {
+    padding-top: 0;
+  }
+  .section-divider {
+    max-width: 60ch;
+    margin: 0 0 2.25rem;
+  }
+  .section-divider h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    margin: 0 0 0.6rem;
+    color: var(--text-on-light);
+  }
+  .section-sub {
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+  .size-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .size-btn {
+    min-width: 2.5rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border-light);
+    background: var(--bg-light-raised);
+    color: var(--text-on-light);
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .size-btn:hover {
+    border-color: var(--forest-800);
+  }
+  .size-btn.active {
+    border-color: var(--forest-800);
+    background: var(--forest-800);
+    color: var(--cream-100);
   }
 </style>
 

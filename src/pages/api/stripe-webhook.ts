@@ -9,7 +9,15 @@ import {
   claimWebhookEvent,
 } from "../../lib/db";
 import { getGoogleAccessToken, appendSheetRow, GOOGLE_SCOPES } from "../../lib/google";
-import { createPrintfulOrder, getHatVariant, HAT_CATALOG, hatLabel } from "../../lib/printful";
+import {
+  createPrintfulOrder,
+  getHatVariant,
+  HAT_CATALOG,
+  hatLabel,
+  getShirtVariant,
+  SHIRT_CATALOG,
+  shirtLabel,
+} from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
 
 export const prerender = false;
@@ -57,6 +65,13 @@ export const PRODUCTS: Record<
       // separate Stripe line item (see create-checkout-session.ts), but the
       // receipt copy should still show what was actually charged.
       { name: hatLabel(hat), price: hat.addon ? "$39" : "$38", isMerch: true },
+    ])
+  ),
+  // Every buyable shirt — see lib/printful.ts SHIRT_CATALOG.
+  ...Object.fromEntries(
+    SHIRT_CATALOG.map((shirt) => [
+      shirt.key,
+      { name: shirtLabel(shirt), price: `$${Math.round(parseFloat(shirt.price))}`, isMerch: true },
     ])
   ),
 };
@@ -272,12 +287,17 @@ export async function POST({ request, locals }: APIContext) {
         // References the pre-built sync product directly via sync_variant_id — no
         // catalog placements/thread options to get right at order time, since all
         // of that is already baked into the Sync Product in Printful's dashboard.
+        // `color` is really "which HAT_CATALOG or SHIRT_CATALOG key" (metadata field
+        // name is a holdover from when hats were the only merch product) — check
+        // both catalogs since one Stripe `product` key never matches both.
         const hatVariant = getHatVariant(color);
+        const shirtVariant = hatVariant ? undefined : getShirtVariant(color);
+        const syncVariantId = hatVariant?.syncVariantId ?? shirtVariant?.syncVariantId;
         const recipient = extractPrintfulRecipient(session, name, email);
-        if (hatVariant && recipient) {
+        if (syncVariantId && recipient) {
           try {
             await createPrintfulOrder(env, {
-              syncVariantId: hatVariant.syncVariantId,
+              syncVariantId,
               recipient,
               externalId: session.id,
             });
@@ -292,7 +312,7 @@ export async function POST({ request, locals }: APIContext) {
             console.error(`Printful order creation failed [${name}]: ${message || "(empty message)"}`, { stack });
           }
         } else {
-          console.error(`Skipped Printful order for session ${session.id}: hatVariant=${!!hatVariant} recipient=${!!recipient}`);
+          console.error(`Skipped Printful order for session ${session.id}: syncVariantId=${!!syncVariantId} recipient=${!!recipient}`);
         }
 
         // Also logged to the shared Sheet's "Merch Orders" tab as a human-readable

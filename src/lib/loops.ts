@@ -8,7 +8,7 @@
 // automations inside Loops — build one workflow per eventName below in the
 // Loops dashboard (Workflows → New → "Event" trigger).
 
-import { HAT_CATALOG } from "./printful";
+import { HAT_CATALOG, SHIRT_CATALOG } from "./printful";
 
 export interface LoopsEnv {
   LOOPS_API_KEY: string;
@@ -47,6 +47,12 @@ export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: str
   // this comment already warns about, just from a different cause.
   ...Object.fromEntries(
     HAT_CATALOG.map((hat) => [hat.key, { eventName: "purchase-hat", userGroup: "Customer – Hat" }])
+  ),
+  // Same reasoning as HAT_CATALOG above, generated from SHIRT_CATALOG
+  // (lib/printful.ts) so a new shirt design/color never silently falls
+  // through un-tagged the way the old hardcoded hat list once did.
+  ...Object.fromEntries(
+    SHIRT_CATALOG.map((shirt) => [shirt.key, { eventName: "purchase-shirt", userGroup: "Customer – Shirt" }])
   ),
 };
 

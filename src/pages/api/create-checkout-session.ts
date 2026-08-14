@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
 import { countMerchOrders } from "../../lib/db";
 import { getAuthedMember } from "../../lib/auth";
-import { HAT_CATALOG, getHatVariant } from "../../lib/printful";
+import { HAT_CATALOG, getHatVariant, SHIRT_CATALOG, shirtLabel } from "../../lib/printful";
 
 export const prerender = false;
 
@@ -17,7 +17,13 @@ export const prerender = false;
 const PRODUCTS: Record<
   string,
   {
-    priceEnvVar: string;
+    // Exactly one of these is set. priceEnvVar = a pre-created Stripe Price
+    // object (id stored as a Cloudflare env var, see lib/stripe.ts).
+    // priceData = inline Stripe price_data, used for shirts so a new
+    // variant doesn't need a hand-created Stripe Price + env var (see
+    // SHIRT_CATALOG below — 14 variants would mean 14 price env vars).
+    priceEnvVar?: string;
+    priceData?: { name: string; unitAmountCents: number };
     returnPath: string;
     thankYouPath: string;
     mode: "payment" | "subscription";
@@ -60,6 +66,25 @@ const PRODUCTS: Record<
       },
     ])
   ),
+  // Every buyable shirt — see lib/printful.ts SHIRT_CATALOG. Priced via
+  // inline priceData rather than a Stripe Price env var per variant (see
+  // the PRODUCTS type comment above).
+  ...Object.fromEntries(
+    SHIRT_CATALOG.map((shirt) => [
+      shirt.key,
+      {
+        priceData: {
+          name: shirtLabel(shirt),
+          unitAmountCents: Math.round(parseFloat(shirt.price) * 100),
+        },
+        returnPath: "/merch",
+        thankYouPath: "/merch/thank-you",
+        mode: "payment" as const,
+        shipping: true,
+        merchColor: shirt.key,
+      },
+    ])
+  ),
 };
 
 export async function GET({ request, locals, cookies }: APIContext) {
@@ -83,9 +108,15 @@ export async function GET({ request, locals, cookies }: APIContext) {
     return new Response(`Unknown product "${product}"`, { status: 400 });
   }
 
-  const priceId = env[productConfig.priceEnvVar];
-  if (!priceId) {
-    console.error(`Missing env var ${productConfig.priceEnvVar} for product "${product}"`);
+  let priceId: string | undefined;
+  if (productConfig.priceEnvVar) {
+    priceId = env[productConfig.priceEnvVar];
+    if (!priceId) {
+      console.error(`Missing env var ${productConfig.priceEnvVar} for product "${product}"`);
+      return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
+    }
+  } else if (!productConfig.priceData) {
+    console.error(`Product "${product}" has neither priceEnvVar nor priceData configured`);
     return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
   }
 
@@ -117,6 +148,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
   try {
     const session = await createCheckoutSession(env, {
       priceId,
+      priceData: productConfig.priceData,
       mode: productConfig.mode,
       successUrl: `${origin}${productConfig.thankYouPath}`,
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,

@@ -25,7 +25,13 @@ function toFormBody(params: Record<string, string>): string {
 export async function createCheckoutSession(
   env: StripeEnv,
   opts: {
-    priceId: string;
+    // Exactly one of priceId (a pre-created Stripe Price object) or
+    // priceData (inline price_data) must be given for the main line item.
+    // priceData exists so a new product line (shirts) doesn't need a
+    // hand-created Stripe Price + env var per variant — same technique
+    // already used below for the hat add-on's extraLineItem.
+    priceId?: string;
+    priceData?: { name: string; unitAmountCents: number };
     successUrl: string;
     cancelUrl: string;
     customerEmail?: string;
@@ -65,11 +71,19 @@ export async function createCheckoutSession(
   const mode = opts.mode || "payment";
   const params: Record<string, string> = {
     mode,
-    "line_items[0][price]": opts.priceId,
     "line_items[0][quantity]": "1",
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
+  if (opts.priceId) {
+    params["line_items[0][price]"] = opts.priceId;
+  } else if (opts.priceData) {
+    params["line_items[0][price_data][currency]"] = "usd";
+    params["line_items[0][price_data][unit_amount]"] = String(opts.priceData.unitAmountCents);
+    params["line_items[0][price_data][product_data][name]"] = opts.priceData.name;
+  } else {
+    throw new Error("createCheckoutSession requires either priceId or priceData");
+  }
   if (opts.extraLineItem) {
     params["line_items[1][price_data][currency]"] = "usd";
     params["line_items[1][price_data][unit_amount]"] = String(opts.extraLineItem.unitAmountCents);
