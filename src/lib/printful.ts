@@ -531,10 +531,19 @@ export function getHatVariant(key: string): HatVariant | undefined {
 }
 
 // Readable label for receipts/internal notification emails — e.g.
-// "Dudela Hat — The Classic, Black / Natural Bill (Rust Orange Stitching, Dude² Dad Add-On)"
+// "Dudela Hat — The Classic, Black / Natural Bill (Rust Orange Stitching, Dude to Dad Stitch)"
 export function hatLabel(v: HatVariant): string {
-  const addonPart = v.addon ? ", Dude² Dad Add-On" : "";
+  const addonPart = v.addon ? ", Dude to Dad Stitch" : "";
   return `Dudela Hat — ${v.designLabel}, ${v.colorLabel} (${v.threadLabel} Stitching${addonPart})`;
+}
+
+// "38.00" for a plain hat, "39.00" with the Dude to Dad side-stitch add-on
+// (+$1). Not read anywhere yet as the literal Stripe charge (checkout adds
+// the $1 as its own line item — see create-checkout-session.ts), but kept
+// accurate here since it's the one place that documents the real per-variant
+// price, and receipt copy (stripe-webhook.ts PRODUCTS) derives from it.
+export function hatPrice(v: HatVariant): string {
+  return v.addon ? "39.00" : "38.00";
 }
 
 export interface PrintfulRecipient {

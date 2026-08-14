@@ -53,6 +53,13 @@ export async function createCheckoutSession(
     // Subscriptions already generate invoices automatically, so this only
     // matters (and is only passed) for one-time purchases.
     invoiceCreation?: boolean;
+    // Optional second line item priced inline via Stripe's price_data
+    // instead of a pre-created Price object — used for the $1 Dude to Dad
+    // add-on surcharge so it doesn't need its own Stripe Price ID per hat
+    // variant (28 variants × 2 add-on states would mean maintaining twice as
+    // many price env vars for a flat $1 bump). Shows up as its own line item
+    // at Stripe Checkout, e.g. "Dudela Hat — $38" + "Dude to Dad Stitch — $1".
+    extraLineItem?: { name: string; unitAmountCents: number };
   }
 ) {
   const mode = opts.mode || "payment";
@@ -63,6 +70,12 @@ export async function createCheckoutSession(
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
+  if (opts.extraLineItem) {
+    params["line_items[1][price_data][currency]"] = "usd";
+    params["line_items[1][price_data][unit_amount]"] = String(opts.extraLineItem.unitAmountCents);
+    params["line_items[1][price_data][product_data][name]"] = opts.extraLineItem.name;
+    params["line_items[1][quantity]"] = "1";
+  }
   // Stripe rejects a session that sets both `customer` and `customer_email` —
   // prefer the known customer id so the purchase attaches to their existing
   // record instead of spinning up a new disconnected guest customer.

@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
 import { countMerchOrders } from "../../lib/db";
 import { getAuthedMember } from "../../lib/auth";
-import { HAT_CATALOG } from "../../lib/printful";
+import { HAT_CATALOG, getHatVariant } from "../../lib/printful";
 
 export const prerender = false;
 
@@ -107,6 +107,13 @@ export async function GET({ request, locals, cookies }: APIContext) {
     }
   }
 
+  // The $1 Dude to Dad side-stitch add-on is its own Stripe line item (see
+  // lib/stripe.ts) rather than a separate $39 Price object per hat variant —
+  // added here, not baked into priceId, so the base hat price stays a single
+  // shared Stripe Price across all 28 variants.
+  const hatVariant = productConfig.merchColor ? getHatVariant(productConfig.merchColor) : undefined;
+  const extraLineItem = hatVariant?.addon ? { name: 'Dude to Dad Stitch', unitAmountCents: 100 } : undefined;
+
   try {
     const session = await createCheckoutSession(env, {
       priceId,
@@ -122,6 +129,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
       // it actually shows up in the Billing Portal's invoice history instead
       // of being an invisible PaymentIntent the portal has nothing to display.
       invoiceCreation: productConfig.mode === "payment",
+      extraLineItem,
     });
 
     return new Response(null, {

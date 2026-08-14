@@ -51,7 +51,13 @@ export const PRODUCTS: Record<
   // hand-typed so this can never drift out of sync with what's actually
   // buyable on /merch.
   ...Object.fromEntries(
-    HAT_CATALOG.map((hat) => [hat.key, { name: hatLabel(hat), price: "$38", isMerch: true }])
+    HAT_CATALOG.map((hat) => [
+      hat.key,
+      // $39 for Dude to Dad Stitch variants — the $1 add-on surcharge is a
+      // separate Stripe line item (see create-checkout-session.ts), but the
+      // receipt copy should still show what was actually charged.
+      { name: hatLabel(hat), price: hat.addon ? "$39" : "$38", isMerch: true },
+    ])
   ),
 };
 

@@ -103,8 +103,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <p class="eyebrow">Merch</p>
       <h1>The Dudela hat.</h1>
       <p class="hero-sub">
-        Two designs, three thread colors, a cap color to match, and an optional "Dude² Dad" side
-        add-on — $38, free shipping. Every hat is made to order and shipped straight to your door.
+        Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side
+        stitch — $38, free shipping. Every hat is made to order and shipped straight to your door.
       </p>
 
       {!member && (
@@ -158,17 +158,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <button type="button" class="addon-toggle" data-addon-toggle aria-pressed="false">
               <span class="addon-toggle-switch" aria-hidden="true"></span>
               <span class="addon-toggle-text">
-                <span class="addon-toggle-title">+ "Dude² Dad" side stitch</span>
-                <span class="addon-toggle-sub">A little extra flex on the side — once you go dude², you don't go back.</span>
+                <span class="addon-toggle-title">+ "Dude to Dad" stitch <span class="addon-toggle-price">+$1</span></span>
+                <span class="addon-toggle-sub">A little extra flex on the side — proof you made the leap.</span>
               </span>
             </button>
 
             <div class="color-meta">
-              <span class="price">$38</span>
+              <span class="price" data-price>{d.first.addon ? "$39" : "$38"}</span>
               <span class="variant-name" data-variant-name>{d.first.colorLabel}</span>
             </div>
             <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
-              Buy Now — $38
+              Buy Now — {d.first.addon ? "$39" : "$38"}
             </a>
           </div>
 
@@ -247,8 +247,9 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const colorContainer = card.querySelector<HTMLElement>("[data-color-swatches]");
     const addonToggle = card.querySelector<HTMLButtonElement>("[data-addon-toggle]");
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
+    const priceEl = card.querySelector<HTMLElement>("[data-price]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
-    if (!photoFront || !photoLeft || !colorContainer || !addonToggle || !variantName || !buyBtn) return;
+    if (!photoFront || !photoLeft || !colorContainer || !addonToggle || !variantName || !priceEl || !buyBtn) return;
 
     // Preload every real mockup photo for this card up front so swapping
     // thread/color/add-on never shows a half-loaded image or a network
@@ -303,7 +304,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       renderColorSwatches();
 
       const variant = currentVariant();
-      if (!variant || !photoFront || !photoLeft || !variantName || !buyBtn) return;
+      if (!variant || !photoFront || !photoLeft || !variantName || !priceEl || !buyBtn) return;
 
       photoFront.classList.add("is-swapping");
       photoLeft.classList.add("is-swapping");
@@ -321,6 +322,9 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       }, 120);
 
       variantName.textContent = variant.colorLabel;
+      const priceLabel = variant.addon ? "$39" : "$38";
+      priceEl.textContent = priceLabel;
+      buyBtn.textContent = `Buy Now — ${priceLabel}`;
       buyBtn.href = `/api/create-checkout-session?product=${variant.key}`;
     }
 
@@ -544,6 +548,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--text-on-light);
+  }
+  .addon-toggle-price {
+    font-weight: 600;
+    color: var(--forest-800);
+    margin-left: 0.15rem;
   }
   .addon-toggle-sub {
     font-size: 0.78rem;
