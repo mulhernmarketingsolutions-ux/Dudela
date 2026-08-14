@@ -41,7 +41,19 @@ export const prerender = false;
 // never drift out of sync with what a real customer actually gets.
 export const PRODUCTS: Record<
   string,
-  { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean }
+  {
+    name: string;
+    price: string;
+    isSubscription?: boolean;
+    fileName?: string;
+    url?: string;
+    isMerch?: boolean;
+    // Relative /images/... path — resolved to an absolute thedudelaco.com
+    // URL in receiptEmailHtml/notifyEmailHtml, same reasoning as
+    // create-checkout-session.ts's priceData.image (email clients need a
+    // real https URL, they don't run relative to the site).
+    image?: string;
+  }
 > = {
   "prep-kit": {
     name: "The Dudela Prep Kit",
@@ -65,14 +77,14 @@ export const PRODUCTS: Record<
       // $39 for Dude to Dad Stitch variants — the $1 add-on surcharge is a
       // separate Stripe line item (see create-checkout-session.ts), but the
       // receipt copy should still show what was actually charged.
-      { name: hatLabel(hat), price: hat.addon ? "$39" : "$38", isMerch: true },
+      { name: hatLabel(hat), price: hat.addon ? "$39" : "$38", isMerch: true, image: hat.frontImage },
     ])
   ),
   // Every buyable shirt — see lib/printful.ts SHIRT_CATALOG.
   ...Object.fromEntries(
     SHIRT_CATALOG.map((shirt) => [
       shirt.key,
-      { name: shirtLabel(shirt), price: `$${Math.round(parseFloat(shirt.price))}`, isMerch: true },
+      { name: shirtLabel(shirt), price: `$${Math.round(parseFloat(shirt.price))}`, isMerch: true, image: shirt.frontImage },
     ])
   ),
 };
@@ -130,15 +142,30 @@ function emailShell(innerHtml: string) {
   `;
 }
 
+// Relative /images/... catalog path -> absolute https URL, since email
+// clients (unlike the site itself) can't resolve a relative path.
+function absoluteImageUrl(image?: string): string | null {
+  if (!image) return null;
+  return image.startsWith("http") ? image : `https://thedudelaco.com${image}`;
+}
+
 export function receiptEmailHtml(
   name: string,
-  product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean }
+  product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean; image?: string }
 ) {
   const firstName = name ? name.split(" ")[0] : "there";
 
   if (product.isMerch) {
+    const imgUrl = absoluteImageUrl(product.image);
+    const thumbBlock = imgUrl
+      ? `
+      <div style="text-align:center;margin:0 0 22px;">
+        <img src="${imgUrl}" alt="${product.name}" style="width:180px;height:auto;border-radius:10px;display:inline-block;" />
+      </div>`
+      : "";
     return emailShell(`
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+      ${thumbBlock}
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
         You're in — thanks for grabbing a <strong>${product.name}</strong> (${product.price}). Here's your receipt.
       </p>
@@ -185,12 +212,40 @@ export function receiptEmailHtml(
   `);
 }
 
-function notifyEmailHtml(opts: { email: string; name: string; product: string; amount: string; event: string }) {
+// Internal "someone just bought something" email to John/Mike (NOTIFY_EMAIL)
+// — sent with replyTo set to the buyer's own email, so hitting Reply sends a
+// personal thank-you straight to them with zero extra steps. productLabel/
+// image/shipping are only relevant for merch orders (undefined for the Prep
+// Kit / Spit-Up Society, which fall back to the plain product key).
+function notifyEmailHtml(opts: {
+  email: string;
+  name: string;
+  product: string;
+  productLabel?: string;
+  amount: string;
+  event: string;
+  image?: string;
+  shippingName?: string | null;
+  shippingAddress?: string | null;
+}) {
+  const imgUrl = absoluteImageUrl(opts.image);
+  const thumbBlock = imgUrl
+    ? `<img src="${imgUrl}" alt="" style="width:110px;height:auto;border-radius:8px;display:block;margin:0 0 14px;" />`
+    : "";
+  const shippingBlock =
+    opts.shippingName || opts.shippingAddress
+      ? `<p style="margin:10px 0 0;">Shipping to: ${opts.shippingName || ""}${
+          opts.shippingAddress ? `<br/>${opts.shippingAddress}` : ""
+        }</p>`
+      : "";
   return `
     <div style="font-family: sans-serif; color: #1c2319; max-width: 480px;">
-      <p><strong>${opts.event}:</strong> ${opts.product}${opts.amount ? ` (${opts.amount})` : ""}</p>
-      <p>Name: ${opts.name || "(not given)"}<br/>
+      ${thumbBlock}
+      <p style="margin:0;"><strong>${opts.event}:</strong> ${opts.productLabel || opts.product}${opts.amount ? ` (${opts.amount})` : ""}</p>
+      <p style="margin:10px 0 0;">Name: ${opts.name || "(not given)"}<br/>
       Email: ${opts.email}</p>
+      ${shippingBlock}
+      <p style="margin:16px 0 0;color:#5c6350;font-size:13px;">Hit reply to send them a thank-you — this goes straight to their inbox.</p>
     </div>
   `;
 }
@@ -243,6 +298,11 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       const productInfo = PRODUCTS[product] || { name: product, price: amountTotal };
+      // Hoisted out of the isMerch block below so the internal notify email
+      // (sent further down, after both branches) can include shipping
+      // details for merch orders without re-parsing the session.
+      let shippingName: string | null = null;
+      let shippingAddress: string | null = null;
 
       // Membership products (Spit-Up Society, and any future recurring product) get a
       // row in D1 so they can log into the gated member area via magic link. One-time
@@ -262,7 +322,7 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       if (productInfo.isMerch) {
-        const { name: shippingName, address: shippingAddress } = extractShippingDetails(session);
+        ({ name: shippingName, address: shippingAddress } = extractShippingDetails(session));
         const color = session.metadata?.color || "unknown";
 
         // D1 is the operational record — it's what the live "X of 10 left" count on
@@ -353,13 +413,17 @@ export async function POST({ request, locals }: APIContext) {
         try {
           await sendEmail(env, {
             to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
-            subject: `New ${productInfo.isSubscription ? "member" : "purchase"} — ${product} — ${email}`,
+            subject: `New ${productInfo.isSubscription ? "member" : "purchase"} — ${productInfo.name} — ${email}`,
             html: notifyEmailHtml({
               email,
               name,
               product,
+              productLabel: productInfo.name,
               amount: amountTotal,
               event: productInfo.isSubscription ? "New subscriber" : "New purchase",
+              image: productInfo.image,
+              shippingName,
+              shippingAddress,
             }),
             replyTo: email,
           });

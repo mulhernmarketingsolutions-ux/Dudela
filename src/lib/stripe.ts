@@ -31,7 +31,7 @@ export async function createCheckoutSession(
     // hand-created Stripe Price + env var per variant — same technique
     // already used below for the hat add-on's extraLineItem.
     priceId?: string;
-    priceData?: { name: string; unitAmountCents: number };
+    priceData?: { name: string; unitAmountCents: number; images?: string[] };
     successUrl: string;
     cancelUrl: string;
     customerEmail?: string;
@@ -81,6 +81,13 @@ export async function createCheckoutSession(
     params["line_items[0][price_data][currency]"] = "usd";
     params["line_items[0][price_data][unit_amount]"] = String(opts.priceData.unitAmountCents);
     params["line_items[0][price_data][product_data][name]"] = opts.priceData.name;
+    // Shows the real product photo on Stripe's hosted Checkout page and on
+    // the resulting receipt/invoice — must be a publicly reachable https
+    // URL (Stripe fetches it itself), so callers pass an absolute
+    // thedudelaco.com URL, not a relative /images/... path.
+    opts.priceData.images?.forEach((img, i) => {
+      params[`line_items[0][price_data][product_data][images][${i}]`] = img;
+    });
   } else {
     throw new Error("createCheckoutSession requires either priceId or priceData");
   }
