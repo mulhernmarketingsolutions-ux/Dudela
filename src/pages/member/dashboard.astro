@@ -20,17 +20,38 @@ if (!member) {
 // getMerchOrdersByEmail's comment in lib/db.ts for why it's email-matched
 // rather than a member_id column). `color` is really "which HAT_CATALOG or
 // SHIRT_CATALOG key", a holdover from when hats were the only merch
-// product — resolve it to a real product label the same way the Stripe
-// webhook's receipt copy does, so this can't drift out of sync with what
-// the buyer actually bought.
+// product — resolve it to the real variant the same way the Stripe webhook's
+// receipt copy does (getHatVariant/getShirtVariant), so the thumbnail,
+// title, and "Order again" link can't drift out of sync with what the buyer
+// actually bought. Title/subtitle are split out (rather than reusing the
+// long single-line hatLabel()/shirtLabel() strings) so the card can show a
+// short product name with the color/size/stitching detail underneath it,
+// like a real order history line item.
 const merchOrders = await getMerchOrdersByEmail(env, member.email);
 const orders = merchOrders.map((o) => {
   const hat = getHatVariant(o.color);
   const shirt = hat ? undefined : getShirtVariant(o.color);
-  const label = hat ? hatLabel(hat) : shirt ? shirtLabel(shirt) : o.color;
+
+  let title = o.color;
+  let subtitle = "";
+  let image: string | null = null;
+  let reorderHref = "/merch";
+
+  if (hat) {
+    title = hat.designLabel;
+    subtitle = `${hat.colorLabel} · ${hat.threadLabel} Stitching${hat.addon ? " · Dude to Dad Stitch" : ""}`;
+    image = hat.frontImage;
+    reorderHref = "/merch#hats";
+  } else if (shirt) {
+    title = `${shirt.designLabel} Shirt`;
+    subtitle = `${shirt.colorLabel} · Size ${shirt.size}`;
+    image = shirt.frontImage;
+    reorderHref = "/merch#shirts";
+  }
+
   const price = typeof o.amount_total === "number" ? `$${(o.amount_total / 100).toFixed(2)}` : null;
   const dateLabel = new Date(o.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  return { id: o.id, label, price, dateLabel };
+  return { id: o.id, title, subtitle, image, price, dateLabel, reorderHref };
 });
 
 const firstName = member.name ? member.name.split(" ")[0] : "there";
@@ -202,11 +223,22 @@ const ICONS = {
         <ul class="orders-list">
           {orders.map((o) => (
             <li class="order-row">
-              <span class="order-label">{o.label}</span>
-              <span class="order-meta">
+              <div class="order-thumb">
+                {o.image ? (
+                  <img src={o.image} alt={o.title} loading="lazy" />
+                ) : (
+                  <div class="order-thumb-fallback" aria-hidden="true">D</div>
+                )}
+              </div>
+              <div class="order-info">
+                <p class="order-title">{o.title}</p>
+                {o.subtitle && <p class="order-subtitle">{o.subtitle}</p>}
+                <p class="order-date">{o.dateLabel}</p>
+              </div>
+              <div class="order-actions">
                 {o.price && <span class="order-price">{o.price}</span>}
-                <span class="order-date">{o.dateLabel}</span>
-              </span>
+                <a href={o.reorderHref} class="order-again-btn">Order again →</a>
+              </div>
             </li>
           ))}
         </ul>
@@ -578,40 +610,93 @@ const ICONS = {
     list-style: none;
     margin: 0;
     padding: 0;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
   }
   .order-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 1rem;
-    padding: 0.9rem 1.1rem;
+    padding: 0.9rem;
     background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s ease;
   }
-  .order-row + .order-row {
-    border-top: 1px solid var(--border-light);
+  .order-row:hover {
+    border-color: var(--amber-500);
   }
-  .order-label {
-    font-size: 0.9rem;
-    color: var(--text-on-light);
-  }
-  .order-meta {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
+  .order-thumb {
     flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--forest-700);
+  }
+  .order-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .order-thumb-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--amber-500);
+  }
+  .order-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .order-title {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    color: var(--text-on-light);
+    margin: 0 0 0.15rem;
+  }
+  .order-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .order-date {
+    font-size: 0.76rem;
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+  .order-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
   }
   .order-price {
     font-weight: 700;
     color: var(--forest-800);
     font-size: 0.9rem;
   }
-  .order-date {
-    font-size: 0.8rem;
-    color: var(--text-on-light-muted);
+  .order-again-btn {
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--rust-600);
+    text-decoration: none;
     white-space: nowrap;
+  }
+  .order-again-btn:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .orders-empty {
     color: var(--text-on-light-muted);
@@ -620,6 +705,18 @@ const ICONS = {
   .orders-empty a {
     color: var(--rust-600);
     font-weight: 600;
+  }
+  @media (max-width: 480px) {
+    .order-row {
+      flex-wrap: wrap;
+    }
+    .order-actions {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-left: 80px;
+    }
   }
   .logout-row {
     margin-top: 2.5rem;
