@@ -45,6 +45,18 @@ export async function GET({ request, locals, cookies }: APIContext) {
     return new Response(text, { status: res.status, headers: { "Content-Type": "application/json" } });
   }
 
+  // ?printfiles=<catalog_product_id> — the print area dimensions (width/height,
+  // dpi) for every placement a product supports (front/back/etc for a
+  // t-shirt) — needed to build a mockup-generator files[] position the same
+  // way FRONT_AREA/LEFT_AREA were sourced for the caps, instead of guessing.
+  if (url.searchParams.get("printfiles")) {
+    const res = await fetch(`https://api.printful.com/mockup-generator/printfiles/${url.searchParams.get("printfiles")}`, {
+      headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { "Content-Type": "application/json" } });
+  }
+
   if (url.searchParams.get("styles") === "1") {
     const res = await fetch("https://api.printful.com/v2/catalog-products/952/mockup-styles", {
       headers: { Authorization: `Bearer ${env.PRINTFUL_API_KEY}` },
