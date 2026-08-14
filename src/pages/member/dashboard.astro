@@ -7,12 +7,31 @@ import Footer from "../../components/Footer.astro";
 import { getAuthedMember } from "../../lib/auth";
 import { getEmbed } from "../../lib/embed";
 import { NEXT_CALL } from "../../lib/next-call";
+import { getMerchOrdersByEmail } from "../../lib/db";
+import { getHatVariant, hatLabel, getShirtVariant, shirtLabel } from "../../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
 const member = await getAuthedMember(Astro.cookies, env);
 if (!member) {
   return Astro.redirect("/member/login");
 }
+
+// "Your Orders" — every hat/shirt purchase tied to this email (see
+// getMerchOrdersByEmail's comment in lib/db.ts for why it's email-matched
+// rather than a member_id column). `color` is really "which HAT_CATALOG or
+// SHIRT_CATALOG key", a holdover from when hats were the only merch
+// product — resolve it to a real product label the same way the Stripe
+// webhook's receipt copy does, so this can't drift out of sync with what
+// the buyer actually bought.
+const merchOrders = await getMerchOrdersByEmail(env, member.email);
+const orders = merchOrders.map((o) => {
+  const hat = getHatVariant(o.color);
+  const shirt = hat ? undefined : getShirtVariant(o.color);
+  const label = hat ? hatLabel(hat) : shirt ? shirtLabel(shirt) : o.color;
+  const price = typeof o.amount_total === "number" ? `$${(o.amount_total / 100).toFixed(2)}` : null;
+  const dateLabel = new Date(o.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return { id: o.id, label, price, dateLabel };
+});
 
 const firstName = member.name ? member.name.split(" ")[0] : "there";
 const error = Astro.url.searchParams.get("error");
@@ -176,6 +195,27 @@ const ICONS = {
     </div>
 
     {errorMessage && <p class="dash-error container">{errorMessage}</p>}
+
+    <div class="container orders-section">
+      <h2 class="orders-heading">Your Orders</h2>
+      {orders.length > 0 ? (
+        <ul class="orders-list">
+          {orders.map((o) => (
+            <li class="order-row">
+              <span class="order-label">{o.label}</span>
+              <span class="order-meta">
+                {o.price && <span class="order-price">{o.price}</span>}
+                <span class="order-date">{o.dateLabel}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="orders-empty">
+          Nothing yet — <a href="/merch">check out the hats &amp; shirts →</a>
+        </p>
+      )}
+    </div>
 
     <div class="container logout-row">
       <a href="/api/auth/logout" class="logout-link">Log out</a>
@@ -525,6 +565,61 @@ const ICONS = {
     margin-top: 1.5rem;
     color: var(--rust-600);
     font-size: 0.9rem;
+  }
+  .orders-section {
+    margin-top: 2.5rem;
+  }
+  .orders-heading {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin: 0 0 0.9rem;
+  }
+  .orders-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .order-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--bg-light-raised);
+  }
+  .order-row + .order-row {
+    border-top: 1px solid var(--border-light);
+  }
+  .order-label {
+    font-size: 0.9rem;
+    color: var(--text-on-light);
+  }
+  .order-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+  .order-price {
+    font-weight: 700;
+    color: var(--forest-800);
+    font-size: 0.9rem;
+  }
+  .order-date {
+    font-size: 0.8rem;
+    color: var(--text-on-light-muted);
+    white-space: nowrap;
+  }
+  .orders-empty {
+    color: var(--text-on-light-muted);
+    font-size: 0.9rem;
+  }
+  .orders-empty a {
+    color: var(--rust-600);
+    font-weight: 600;
   }
   .logout-row {
     margin-top: 2.5rem;

@@ -346,6 +346,23 @@ export async function countMerchOrders(env: DbEnv, color: string): Promise<numbe
 // Called from the Stripe webhook on checkout.session.completed for a hat
 // product. INSERT OR IGNORE on session_id means a redelivered webhook event
 // for the same session is a harmless no-op instead of a duplicate order.
+// Powers the "Your Orders" section on /member/dashboard. Matched by email
+// rather than a member_id foreign key — merch_orders predates any concept
+// of linking a purchase to a member row (buyers don't have to be logged in
+// or be a Society member to buy a hat/shirt), and email is already the one
+// piece of data every order has that a logged-in member also has. Good
+// enough for a presale-scale order volume; revisit with a real member_id
+// column + backfill if merch volume ever grows enough to make email
+// mismatches (typos, different address used at checkout) a real problem.
+export async function getMerchOrdersByEmail(env: DbEnv, email: string, limit = 25): Promise<MerchOrder[]> {
+  const res = await env.DB.prepare(
+    `SELECT * FROM merch_orders WHERE email = ? ORDER BY created_at DESC LIMIT ?`
+  )
+    .bind(email.trim().toLowerCase(), limit)
+    .all<MerchOrder>();
+  return res.results ?? [];
+}
+
 export async function createMerchOrder(
   env: DbEnv,
   opts: {
