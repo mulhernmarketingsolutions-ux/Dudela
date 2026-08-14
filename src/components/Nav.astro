@@ -5,6 +5,11 @@
 // entry point, not the multi-person "Circle" icon used in the dashboard.
 const ICONS = {
   user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  // Plain mic capsule + stand, built from basic shapes rather than a
+  // copy-pasted icon-set path — same stroke-based look as the user glyph
+  // above (round caps/joins, currentColor), just simple enough to not need
+  // exact source data.
+  mic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>`,
 };
 
 // Optional — only pages that already resolved the visitor's session via
@@ -70,6 +75,17 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
            link stays inside the mobile menu too — this doesn't replace it,
            just gives it a visible entry point on small screens. -->
       <a href={accountHref} class="mobile-member-icon" aria-label={accountLabel} set:html={ICONS.user} />
+      <!-- Branded voicemail entry point — replaces the old SpeakPipe
+           floating tab, which used to render on every page and, on mobile,
+           could sit right on top of /merch's checkout bar. This is a plain
+           nav button instead of another floating element: it's on the
+           already-fixed header, so it can't ever overlap page content the
+           way a separately-floating widget could. Links to /voicemail
+           ("Ask Another Dad"), the one page that actually loads the real
+           SpeakPipe recorder now (see BaseLayout's showVoicemailWidget
+           prop). Icon-only + tooltip on desktop to match the compact
+           member icon next to it; full label inside the mobile menu. -->
+      <a href="/voicemail" class="voicemail-link" aria-label="Leave a voicemail" title="Leave a voicemail" set:html={ICONS.mic} />
       <!-- Points straight at the $5/mo Spit-Up Society signup, not the
            full pricing ladder — "Join" sitting next to "Member Login"
            reads as "become a member," and the Society is the membership
@@ -242,6 +258,33 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
      would just duplicate it right next to its own twin. */
   .nav.menu-open .mobile-member-icon {
     display: none;
+  }
+  /* Branded voicemail button — icon-only with a tooltip, same footprint as
+     .mobile-member-icon next to it, but with its own amber ring so it
+     reads as a distinct call-to-action rather than blending into the
+     plain nav icons. Visible at every width (no breakpoint toggling the
+     way member-link/mobile-member-icon swap for each other) since it
+     doesn't have a text-label counterpart to hand off to on desktop. */
+  .voicemail-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--amber-500);
+    color: var(--amber-500);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .voicemail-link:hover {
+    background: var(--amber-500);
+    color: var(--forest-900, #12180f);
+  }
+  .voicemail-link :global(svg) {
+    width: 17px;
+    height: 17px;
+    display: block;
   }
   .mobile-member-btn {
     display: flex;
