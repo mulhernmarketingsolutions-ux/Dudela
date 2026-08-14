@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { isAdminAuthed } from "../../../lib/auth";
-import { createPrintfulOrder, getHatVariant, HAT_CATALOG } from "../../../lib/printful";
+import { createPrintfulOrder, getHatVariant, HAT_CATALOG, shortExternalId } from "../../../lib/printful";
 import { sendEmail } from "../../../lib/email";
 import { PRODUCTS, receiptEmailHtml } from "../stripe-webhook";
 
@@ -67,7 +67,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
     email: testEmail,
   };
 
-  const externalId = `admin-test-${hat.key}-${Date.now()}`;
+  const externalId = await shortExternalId(`admin-test-${hat.key}-${Date.now()}`);
 
   let printfulResult;
   try {

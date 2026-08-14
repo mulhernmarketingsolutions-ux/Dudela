@@ -17,6 +17,7 @@ import {
   getShirtVariant,
   SHIRT_CATALOG,
   shirtLabel,
+  shortExternalId,
 } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
 
@@ -299,7 +300,7 @@ export async function POST({ request, locals }: APIContext) {
             await createPrintfulOrder(env, {
               syncVariantId,
               recipient,
-              externalId: session.id,
+              externalId: await shortExternalId(session.id),
             });
           } catch (err) {
             // Logged as separate fields (not just the Error object) because the

@@ -668,9 +668,35 @@ export interface PrintfulRecipient {
 // updates the existing order for that external_id instead of rejecting a
 // duplicate, so this doesn't need its own duplicate-detection logic.
 //
-// v1 has no character limit on external_id (unlike v2's 32-char cap), so the
-// raw Stripe session id is used directly — easy to cross-reference in
-// Printful's dashboard against the Stripe dashboard.
+// CORRECTION (2026-08-13): the claim below that "v1 has no character limit"
+// was wrong and caused every single order — hat and shirt, test and real —
+// to fail with Printful's "Invalid External ID specified" 400. Printful's
+// own docs (developers.printful.com/docs/#Orders-create, "External ID"
+// section) are explicit: external_id is capped at 32 characters and may
+// only contain digits, Latin letters, dashes and underscores — this applies
+// to v1 too, not just v2. The raw Stripe session id (`cs_live_...`, ~66
+// chars) blew past that on every real webhook order, and
+// `admin-test-${key}-${timestamp}` blew past it on every admin test-order
+// call. Callers must now build external_id via shortExternalId() below
+// instead of passing a raw id straight through.
+// Printful caps external_id at 32 characters (digits, Latin letters, dashes,
+// underscores only — see the correction above createPrintfulOrder). Anything
+// short enough and clean enough to fit is passed through as-is (readable in
+// the Printful dashboard); anything longer or containing other characters
+// (Stripe session ids like "cs_live_...", or "admin-test-<key>-<timestamp>"
+// strings) is hashed down to a 32-char hex id instead. Hashing is
+// deterministic — the same input always produces the same output — so
+// update_existing=true still dedupes a redelivered Stripe webhook onto the
+// same Printful order rather than creating a duplicate.
+export async function shortExternalId(raw: string): Promise<string> {
+  if (raw.length <= 32 && /^[A-Za-z0-9_-]+$/.test(raw)) return raw;
+  const bytes = new TextEncoder().encode(raw);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 32);
+}
+
 export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: {

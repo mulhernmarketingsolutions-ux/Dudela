@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { isAdminAuthed } from "../../../lib/auth";
-import { createPrintfulOrder, getShirtVariant, SHIRT_CATALOG } from "../../../lib/printful";
+import { createPrintfulOrder, getShirtVariant, SHIRT_CATALOG, shortExternalId } from "../../../lib/printful";
 import { sendEmail } from "../../../lib/email";
 import { PRODUCTS, receiptEmailHtml } from "../stripe-webhook";
 
@@ -66,7 +66,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
     email: testEmail,
   };
 
-  const externalId = `admin-test-${shirt.key}-${Date.now()}`;
+  const externalId = await shortExternalId(`admin-test-${shirt.key}-${Date.now()}`);
 
   let printfulResult;
   try {
