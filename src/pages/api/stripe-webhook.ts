@@ -121,7 +121,10 @@ function extractPrintfulRecipient(session: any, name: string, email: string) {
   };
 }
 
-function emailShell(innerHtml: string) {
+// Exported so /api/printful-webhook.ts's tracking email can reuse the exact
+// same branded shell instead of a second hand-typed copy of the header/
+// footer markup drifting out of sync with it.
+export function emailShell(innerHtml: string) {
   return `
     <div style="background:#12180f;padding:40px 16px;font-family:Arial,Helvetica,sans-serif;">
       <div style="max-width:460px;margin:0 auto;background:#f5efe3;border-radius:14px;overflow:hidden;">
@@ -351,48 +354,29 @@ export async function POST({ request, locals }: APIContext) {
         const halfAmount =
           typeof session.amount_total === "number" ? Math.round(session.amount_total / 2) : undefined;
 
-        // Two merch_orders rows (one per item) so each still counts toward
-        // its own color's scarcity cap and both show up separately in
-        // "Your Orders" — merch_orders.session_id is UNIQUE (normally one
-        // row per Stripe session), so each row gets a deterministic suffix
-        // instead of the bare session id. Deterministic means a redelivered
-        // webhook event still resolves to the same two ids, so INSERT OR
-        // IGNORE still dedupes a retry instead of creating duplicates.
-        try {
-          await createMerchOrder(env, {
-            sessionId: `${session.id}::hat`,
-            color: hatKey,
-            email,
-            name,
-            shippingName: shippingName || undefined,
-            shippingAddress: shippingAddress || undefined,
-            amountTotal: halfAmount,
-          });
-          await createMerchOrder(env, {
-            sessionId: `${session.id}::shirt`,
-            color: shirtKey,
-            email,
-            name,
-            shippingName: shippingName || undefined,
-            shippingAddress: shippingAddress || undefined,
-            amountTotal: halfAmount,
-          });
-        } catch (err) {
-          console.error("Bundle merch order insert failed:", err);
-        }
-
-        // One Printful order with BOTH items (extraSyncVariantIds) so a
-        // bundle buyer gets one shipment/package instead of two separate
-        // orders — see the createPrintfulOrder comment in lib/printful.ts.
+        // Printful order created BEFORE the merch_orders insert (unlike the
+        // single-item branch below, until it's also flipped) so the real
+        // Printful order id is available to store on both rows — that id is
+        // what lets /api/printful-webhook.ts's package_shipped handler find
+        // this order later and send a real tracking email. One combined
+        // Printful order with BOTH items (extraSyncVariantIds) so a bundle
+        // buyer gets ONE order to track instead of two — whether that
+        // resolves to one physical package or splits into a "partial"
+        // multi-shipment (Printful's own status for when items in one order
+        // are produced on different lines/timelines, e.g. embroidery vs. DTG
+        // print) isn't something we control or promise; see the
+        // createPrintfulOrder comment in lib/printful.ts.
         const recipient = extractPrintfulRecipient(session, name, email);
+        let bundlePrintfulOrderId: number | undefined;
         if (bundleHatVariant && bundleShirtVariant && recipient) {
           try {
-            await createPrintfulOrder(env, {
+            const result = await createPrintfulOrder(env, {
               syncVariantId: bundleHatVariant.syncVariantId,
               extraSyncVariantIds: [bundleShirtVariant.syncVariantId],
               recipient,
               externalId: await shortExternalId(session.id),
             });
+            bundlePrintfulOrderId = result.id;
           } catch (err) {
             const errName = err instanceof Error ? err.name : typeof err;
             const message = err instanceof Error ? err.message : String(err);
@@ -403,6 +387,39 @@ export async function POST({ request, locals }: APIContext) {
           console.error(
             `Skipped bundle Printful order for session ${session.id}: hat=${!!bundleHatVariant} shirt=${!!bundleShirtVariant} recipient=${!!recipient}`
           );
+        }
+
+        // Two merch_orders rows (one per item) so each still counts toward
+        // its own color's scarcity cap and both show up separately in
+        // "Your Orders" — merch_orders.session_id is UNIQUE (normally one
+        // row per Stripe session), so each row gets a deterministic suffix
+        // instead of the bare session id. Deterministic means a redelivered
+        // webhook event still resolves to the same two ids, so INSERT OR
+        // IGNORE still dedupes a retry instead of creating duplicates. Both
+        // rows share the same printful_order_id since it's one combined order.
+        try {
+          await createMerchOrder(env, {
+            sessionId: `${session.id}::hat`,
+            color: hatKey,
+            email,
+            name,
+            shippingName: shippingName || undefined,
+            shippingAddress: shippingAddress || undefined,
+            amountTotal: halfAmount,
+            printfulOrderId: bundlePrintfulOrderId,
+          });
+          await createMerchOrder(env, {
+            sessionId: `${session.id}::shirt`,
+            color: shirtKey,
+            email,
+            name,
+            shippingName: shippingName || undefined,
+            shippingAddress: shippingAddress || undefined,
+            amountTotal: halfAmount,
+            printfulOrderId: bundlePrintfulOrderId,
+          });
+        } catch (err) {
+          console.error("Bundle merch order insert failed:", err);
         }
 
         if (isFirstDelivery) {
@@ -425,26 +442,11 @@ export async function POST({ request, locals }: APIContext) {
         ({ name: shippingName, address: shippingAddress } = extractShippingDetails(session));
         const color = session.metadata?.color || "unknown";
 
-        // D1 is the operational record — it's what the live "X of 10 left" count on
-        // /merch and the presale cap check in create-checkout-session.ts actually read.
-        try {
-          await createMerchOrder(env, {
-            sessionId: session.id,
-            color,
-            email,
-            name,
-            shippingName: shippingName || undefined,
-            shippingAddress: shippingAddress || undefined,
-            amountTotal: typeof session.amount_total === "number" ? session.amount_total : undefined,
-          });
-        } catch (err) {
-          console.error("Merch order insert failed:", err);
-        }
-
-        // Places the real order with Printful — this is what makes fulfillment fully
-        // automatic (no hand-packing/shipping on John's end). Requires a real shipping
-        // address; if Stripe didn't collect one for some reason, this logs an error and
-        // falls through rather than throwing, so the buyer's receipt/records still go out.
+        // Printful order created BEFORE the merch_orders insert below so the
+        // real Printful order id can be stored on that row — that id is what
+        // lets /api/printful-webhook.ts's package_shipped handler find this
+        // order later and send a real tracking email, instead of the receipt
+        // copy's "we'll email you when it ships" promise going unfulfilled.
         // References the pre-built sync product directly via sync_variant_id — no
         // catalog placements/thread options to get right at order time, since all
         // of that is already baked into the Sync Product in Printful's dashboard.
@@ -455,13 +457,15 @@ export async function POST({ request, locals }: APIContext) {
         const shirtVariant = hatVariant ? undefined : getShirtVariant(color);
         const syncVariantId = hatVariant?.syncVariantId ?? shirtVariant?.syncVariantId;
         const recipient = extractPrintfulRecipient(session, name, email);
+        let printfulOrderId: number | undefined;
         if (syncVariantId && recipient) {
           try {
-            await createPrintfulOrder(env, {
+            const result = await createPrintfulOrder(env, {
               syncVariantId,
               recipient,
               externalId: await shortExternalId(session.id),
             });
+            printfulOrderId = result.id;
           } catch (err) {
             // Logged as separate fields (not just the Error object) because the
             // default console.error(prefix, err) formatting was showing up with an
@@ -474,6 +478,23 @@ export async function POST({ request, locals }: APIContext) {
           }
         } else {
           console.error(`Skipped Printful order for session ${session.id}: syncVariantId=${!!syncVariantId} recipient=${!!recipient}`);
+        }
+
+        // D1 is the operational record — it's what the live "X of 10 left" count on
+        // /merch and the presale cap check in create-checkout-session.ts actually read.
+        try {
+          await createMerchOrder(env, {
+            sessionId: session.id,
+            color,
+            email,
+            name,
+            shippingName: shippingName || undefined,
+            shippingAddress: shippingAddress || undefined,
+            amountTotal: typeof session.amount_total === "number" ? session.amount_total : undefined,
+            printfulOrderId,
+          });
+        } catch (err) {
+          console.error("Merch order insert failed:", err);
         }
 
         // Also logged to the shared Sheet's "Merch Orders" tab as a human-readable

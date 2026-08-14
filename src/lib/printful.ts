@@ -713,10 +713,14 @@ export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: {
     syncVariantId: number;
-    // Extra items to include in the SAME Printful order (and therefore the
-    // same shipment/package) as syncVariantId above — used for the
-    // hat+shirt bundle, so a bundle buyer gets one box instead of two
-    // separate orders/shipments. Empty/omitted for every other (single-item)
+    // Extra items to include in the SAME Printful order as syncVariantId
+    // above — used for the hat+shirt bundle, so a bundle buyer gets one
+    // Printful order/one Stripe charge instead of two separate orders.
+    // Whether that also means one physical package isn't guaranteed —
+    // Printful can still split one order into multiple shipments (their
+    // "partial" status) if items are produced on different lines/timelines,
+    // e.g. embroidery vs. DTG print — so this is "simpler to track," not
+    // "ships in one box." Empty/omitted for every other (single-item)
     // purchase, which is why syncVariantId above stays a required single
     // value rather than folding everything into one items[] array — it
     // keeps every existing single-item caller (real webhook orders, the

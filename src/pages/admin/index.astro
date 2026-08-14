@@ -74,6 +74,19 @@ if (!authed) {
           <li><a href="/api/admin/mockups-shirt" target="_blank" rel="noopener">Shirt mockup regeneration tool</a> — same pattern, superseded by the real Printful dashboard renders currently live on /merch.</li>
         </ul>
       </div>
+
+      <div class="panel">
+        <h2>Shipping tracking emails</h2>
+        <p class="panel-sub">
+          One-time setup so buyers get a real Dudela-branded email with tracking info when their order ships
+          (Printful fires a webhook to us; before this existed, the receipt's "we'll email you when it ships" line wasn't backed by anything).
+          Requires the <code>PRINTFUL_WEBHOOK_TOKEN</code> secret to be set first — run
+          <code>wrangler secret put PRINTFUL_WEBHOOK_TOKEN</code> (any random string) if it isn't yet.
+        </p>
+        <ul class="tool-list">
+          <li><a href="/api/admin/printful-webhook-setup" target="_blank" rel="noopener">Register this site with Printful</a> — safe to re-run any time the URL or token changes.</li>
+        </ul>
+      </div>
     </div>
   </section>
 </BaseLayout>

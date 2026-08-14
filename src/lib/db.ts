@@ -328,6 +328,13 @@ export interface MerchOrder {
   shipping_name: string | null;
   shipping_address: string | null;
   amount_total: number | null;
+  // Printful's own order id (opts.printfulOrderId below) — set right after
+  // createPrintfulOrder returns, so /api/printful-webhook.ts can look back
+  // from a package_shipped event to the buyer's email/name and send a real
+  // tracking email. Null for any order where the Printful order call failed
+  // (already logged separately) or for rows inserted before this column
+  // existed (migrations/0006).
+  printful_order_id: number | null;
   created_at: string;
 }
 
@@ -363,6 +370,19 @@ export async function getMerchOrdersByEmail(env: DbEnv, email: string, limit = 2
   return res.results ?? [];
 }
 
+// Powers /api/printful-webhook.ts's package_shipped handler — looks back
+// from Printful's own order id (in the webhook payload) to every
+// merch_orders row tied to it, so the tracking email can be addressed to
+// the right buyer and list every item in that order (a bundle order has
+// two rows sharing one printful_order_id, since it's one combined Printful
+// order — see the isBundle branch in stripe-webhook.ts).
+export async function getMerchOrdersByPrintfulOrderId(env: DbEnv, printfulOrderId: number): Promise<MerchOrder[]> {
+  const res = await env.DB.prepare(`SELECT * FROM merch_orders WHERE printful_order_id = ?`)
+    .bind(printfulOrderId)
+    .all<MerchOrder>();
+  return res.results ?? [];
+}
+
 export async function createMerchOrder(
   env: DbEnv,
   opts: {
@@ -373,12 +393,13 @@ export async function createMerchOrder(
     shippingName?: string;
     shippingAddress?: string;
     amountTotal?: number;
+    printfulOrderId?: number;
   }
 ): Promise<void> {
   const id = crypto.randomUUID();
   await env.DB.prepare(
-    `INSERT OR IGNORE INTO merch_orders (id, session_id, color, email, name, shipping_name, shipping_address, amount_total, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT OR IGNORE INTO merch_orders (id, session_id, color, email, name, shipping_name, shipping_address, amount_total, printful_order_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -389,6 +410,7 @@ export async function createMerchOrder(
       opts.shippingName || null,
       opts.shippingAddress || null,
       opts.amountTotal ?? null,
+      opts.printfulOrderId ?? null,
       new Date().toISOString()
     )
     .run();
