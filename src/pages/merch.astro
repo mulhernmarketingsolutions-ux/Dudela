@@ -923,12 +923,12 @@ const canceled = url.searchParams.get("purchase") === "canceled";
      hat + shirt the cards below currently have selected. Stays out of the
      way (translated off-screen) until updateBundleBar() in the script above
      has real data to show, which in practice is immediately on load.
-     z-index is CSS's actual maximum (2147483647) — the site's SpeakPipe
-     voicemail widget (loaded in BaseLayout.astro) sets itself to 2147483645,
-     one shy of max, and on short/mobile viewports its vertically-centered
-     position can reach down into this bar's territory. This guarantees the
-     checkout button always wins that fight and stays clickable; see the
-     separate mobile-only override for the widget itself further down. */
+     z-index is CSS's actual maximum (2147483647) — originally set this high
+     because the SpeakPipe voicemail widget (2147483645) could cover this
+     bar's buy button on short/mobile viewports. That widget no longer loads
+     on this page at all (BaseLayout's showVoicemailWidget prop now scopes
+     it to /voicemail only), but there's no real cost to leaving this bar at
+     the actual max — cheap insurance against the next thing that floats. */
   .bundle-bar {
     position: fixed;
     left: 0;

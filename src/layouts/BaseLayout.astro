@@ -4,10 +4,19 @@ import "../styles/tokens.css";
 export interface Props {
   title?: string;
   description?: string;
+  // The SpeakPipe voicemail tab used to float on every single page — easy
+  // to stumble into (it covered the checkout button on mobile /merch, see
+  // merch.astro's bundle-bar z-index comment) and easy to forget it was
+  // even there otherwise. Now it only renders where it's actually the
+  // point: /voicemail ("Ask Another Dad"), which every other page already
+  // links to directly (Footer, start-here, member/ask) instead of relying
+  // on people noticing a floating tab.
+  showVoicemailWidget?: boolean;
 }
 const {
   title = "Dudela — Turning Dudes Into Dads",
   description = "Fatherhood doesn't come with instructions. Dudela is the roadmap, the community, and the confidence system for dads getting ready to become who their family needs.",
+  showVoicemailWidget = false,
 } = Astro.props;
 
 const ogImageUrl = new URL("/og-image.jpg", Astro.site ?? Astro.url).toString();
@@ -56,14 +65,17 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toStri
   <body>
     <slot />
 
-    <!-- SpeakPipe — same voicemail widget used on the live site. Renders its
-         own floating tab; no container div needed. -->
-    <script
-      is:inline
-      type="text/javascript"
-      src="https://www.speakpipe.com/loader/h06rk7j4thx5m863wodhtbetbdi6pl2n.js"
-      async
-    ></script>
+    {showVoicemailWidget && (
+      <!-- SpeakPipe — same voicemail widget used on the live site. Renders
+           its own floating tab; no container div needed. Only loaded here,
+           on /voicemail — see the showVoicemailWidget prop comment above. -->
+      <script
+        is:inline
+        type="text/javascript"
+        src="https://www.speakpipe.com/loader/h06rk7j4thx5m863wodhtbetbdi6pl2n.js"
+        async
+      ></script>
+    )}
 
   </body>
 </html>
