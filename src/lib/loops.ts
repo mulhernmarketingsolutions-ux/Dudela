@@ -23,6 +23,15 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
   // "hat-waitlist" removed — merch.astro no longer has a waitlist form (real
   // buy buttons + Stripe checkout replaced it), so nothing posts this magnet
   // value anymore. Hat purchases are tracked via PURCHASE_EVENTS below instead.
+  //
+  // The Turn is a screened, high-ticket 1:1 offer, not a free-magnet signup —
+  // it reuses this same sendLoopsEvent plumbing (see api/turn-application.ts)
+  // rather than a new code path, but gets its own tag so it never gets swept
+  // into the standard top-of-funnel nurture sequence built for free-guide
+  // leads. Build a dedicated "New Turn Application" workflow in the Loops
+  // dashboard for this eventName — it should notify John/Mike-facing content
+  // if anything, not pitch the applicant more free content.
+  "turn-application": { eventName: "turn-application", userGroup: "Applicant – The Turn" },
 };
 
 // Maps each Stripe `product` value (see create-checkout-session.ts) to the Loops event

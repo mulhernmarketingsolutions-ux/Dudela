@@ -95,7 +95,7 @@ const stages = [
     label: "6 Months",
     mission: "You're not new at this anymore. Keep going.",
     free: [{ title: "When to Prioritize Yourself as a Dad", type: "Episode" }],
-    paid: [{ title: "1:1 Coaching", price: "$1,000+/mo" }],
+    paid: [{ title: "The Turn", price: "$2,000 + $1,000/mo" }],
   },
   {
     id: "first-birthday",
@@ -115,8 +115,11 @@ function paidHref(title) {
   if (title.includes("Prep Kit")) return "/kit";
   if (title.includes("Workshop")) return "/workshop";
   if (title.includes("Spit-Up Society")) return "/join/spit-up-society";
+  // Checked before the generic "Cohort" match below so "Sleep Coaching
+  // Cohort" doesn't get swept into the old #cohort anchor either — it's
+  // its own separate (Coming Soon) offer, not The Turn.
+  if (title === "The Turn") return "/turn";
   if (title.includes("Cohort")) return "/join#cohort";
-  if (title.includes("Coaching")) return "/join#coaching";
   return "/join";
 }
 function iconKind(type) {

@@ -1,0 +1,678 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+// Real client testimonials (summarized from direct conversations, Aug 2026).
+// Nick/Shelah's is from his wife, not the client himself — kept as its own
+// card since "watched it happen from the outside" is a different, valuable
+// kind of proof than a client's own words.
+const testimonials = [
+  {
+    quote:
+      "Before working with Dudela, I was scared and honestly had no idea what kind of dad I was going to be. They helped me put language around something I had never really thought about before: I actually got to decide what kind of dad I wanted to become. That completely changed the way I approached becoming a father.",
+    name: "Jason",
+    role: "First-time dad, Colorado",
+    shift: { before: "“Who am I going to be?”", after: "“I get to choose the dad I become.”" },
+  },
+  {
+    quote:
+      "I did not want to feel like a side character in my own home. I wanted to be an active, engaged, educated dad who understood what was happening and had a real role in raising and developing my kids. Dudela helped me step into that role with a lot more confidence and intention.",
+    name: "Christian",
+    role: "Dad of two, California",
+    shift: { before: "“Where do I fit?”", after: "“I have an active role in this family.”" },
+    featured: true,
+  },
+  {
+    quote:
+      "Nick walked with Dudela for a few months around the birth of our first child, and I got to watch something change in him. He became more confident, more engaged, and more excited about being a dad. It felt like I was watching him light up and become the man and father I always knew was in there.",
+    name: "Shelah",
+    role: "Wife of a Turn client, Ohio",
+    shift: { before: "“Can he actually do this?”", after: "“He's becoming the father his family needs.”" },
+  },
+];
+---
+<BaseLayout
+  title="The Turn — 1:1 Fatherhood Coaching with John & Mike — Dudela"
+  description="A 6-8 week 1:1 onboarding with John and Mike, then ongoing monthly support through your first year. Real access to two dads who've been where you are — not a course, not a community post."
+>
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">The Turn &middot; 1:1 with John &amp; Mike</p>
+        <h1>The turn from scared to steady doesn't happen by accident.</h1>
+        <p class="hero-sub">
+          A 6-8 week 1:1 onboarding, then ongoing monthly support through your first year. Not a
+          course. Not another PDF. Direct, personal access to two dads who've done the hard parts
+          already — NICU stays, emergency C-sections, the whole thing — and now spend their time
+          walking other dads through it.
+        </p>
+        <div class="hero-actions">
+          <a href="#apply" class="btn btn-primary">Apply for The Turn</a>
+          <a href="#pricing" class="btn btn-ghost hero-ghost">See pricing &darr;</a>
+        </div>
+        <p class="hero-micro">$2,000 to start &middot; $1,000/mo ongoing &middot; month-to-month, no contract</p>
+      </div>
+      <div class="hero-photo">
+        <img src="/images/IMG_6645.jpeg" alt="John with his daughter" />
+      </div>
+    </div>
+  </section>
+
+  <section class="why section-light">
+    <div class="container why-grid">
+      <div>
+        <p class="eyebrow">Why The Turn Exists</p>
+        <h2>Most dads don't need more information. They need someone walking next to them.</h2>
+        <p class="body-text">
+          You've probably already read the guides. Maybe you've got the Prep Kit. That's the
+          content layer — useful, but it stops at the page. The Turn is the part after that: a
+          real relationship with John and Mike, built around your actual situation, not a generic
+          curriculum you scroll past.
+        </p>
+        <p class="body-text">
+          John's wife Viv had a high-risk twin pregnancy and a month in the NICU. Mike's wife
+          Abigail had an emergency C-section that rewrote their birth plan in ninety seconds.
+          Neither of them felt ready either — that's exactly why this exists. <a href="/about">Read the full story &rarr;</a>
+        </p>
+        <div class="founders-row">
+          <div class="founder-mini">
+            <img src="/images/founder-john.jpg" alt="John Mulhern" />
+            <span>John Mulhern</span>
+          </div>
+          <div class="founder-mini">
+            <img src="/images/founder-mike.jpg" alt="Mike Colander" />
+            <span>Mike Colander</span>
+          </div>
+        </div>
+      </div>
+      <div class="why-stat-card">
+        <p class="why-stat-num">16</p>
+        <p class="why-stat-label">
+          Total active clients John and Mike take on between them, at any given time. This isn't
+          manufactured scarcity — it's the real number of guys two people can actually show up for.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="shift section-dark">
+    <div class="container">
+      <p class="eyebrow">The Turn, In Three Words</p>
+      <h2>Scared dude &rarr; steady dad.</h2>
+      <div class="shift-grid">
+        {testimonials.map((t) => (
+          <div class="shift-card">
+            <p class="shift-before">{t.shift.before}</p>
+            <span class="shift-arrow" aria-hidden="true">&darr;</span>
+            <p class="shift-after">{t.shift.after}</p>
+            <p class="shift-name">— {t.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="proof section-light">
+    <div class="container">
+      <p class="eyebrow">Dads (and one very honest wife) who've done this</p>
+      <div class="proof-featured-row">
+        {testimonials
+          .filter((t) => t.featured)
+          .map((t) => (
+            <blockquote class="quote-featured">
+              <span class="quote-mark" aria-hidden="true">&ldquo;</span>
+              <p>&ldquo;{t.quote}&rdquo;</p>
+              <cite>{t.name} <span>&middot; {t.role}</span></cite>
+            </blockquote>
+          ))}
+        <div class="proof-photo">
+          <img src="/images/mike-riley-face-to-face.png" alt="A dad face to face with his son" />
+        </div>
+      </div>
+      <div class="quote-grid">
+        {testimonials
+          .filter((t) => !t.featured)
+          .map((t) => (
+            <blockquote>
+              <p>&ldquo;{t.quote}&rdquo;</p>
+              <cite>{t.name} <span>&middot; {t.role}</span></cite>
+            </blockquote>
+          ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing section-dark" id="pricing">
+    <div class="container">
+      <p class="eyebrow">How It Works</p>
+      <h2>Two phases. No contract past the first.</h2>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <span class="pricing-tag">Phase 1</span>
+          <h3>The Onboarding</h3>
+          <p class="pricing-amount">$2,000 <span>one time</span></p>
+          <p class="pricing-desc">
+            6-8 weeks, 1:1 with John and Mike. This is where the actual turn happens — working
+            through who you want to be as a dad and husband, what's actually coming, and how to
+            walk into it steady instead of scrambling.
+          </p>
+        </div>
+        <div class="pricing-card featured">
+          <span class="pricing-tag">Phase 2</span>
+          <h3>Ongoing Support</h3>
+          <p class="pricing-amount">$1,000 <span>/month</span></p>
+          <p class="pricing-desc">
+            After onboarding, continued 1:1 access through pregnancy, birth, and year one.
+            Month-to-month — no long-term contract. Stay as long as it's useful, no longer.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="apply section-light" id="apply">
+    <div class="container apply-inner">
+      <p class="eyebrow">Apply</p>
+      <h2>This isn't an instant checkout.</h2>
+      <p class="body-text apply-sub">
+        Because John and Mike personally take on every single client, this starts with a short
+        application, not a buy button. Tell us where you're at — we read every one of these
+        ourselves and reply personally, usually within a couple of days, to set up a call and see
+        if it's a real fit.
+      </p>
+
+      <form class="apply-form" id="turn-form">
+        <input type="hidden" name="source" value="/turn" />
+        <div class="form-row">
+          <label>
+            Name
+            <input type="text" name="name" required />
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Phone <span class="optional">(optional)</span>
+            <input type="tel" name="phone" />
+          </label>
+          <label>
+            Due date, or your kid's current age
+            <input type="text" name="stage" placeholder="e.g. Due in November, or 4 months old" />
+          </label>
+        </div>
+        <label class="form-full">
+          What's going on? Why now?
+          <textarea name="context" rows="4" placeholder="A few sentences on where you're at and what's making you reach out."></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary apply-submit">Apply for The Turn</button>
+        <p id="turn-form-status" class="form-status"></p>
+      </form>
+
+      <div id="turn-form-confirm" class="apply-confirm" style="display:none;">
+        <p class="confirm-headline">You're in the queue.</p>
+        <p class="body-text">
+          John or Mike will personally read this and reply within a couple of days to set up a
+          call. In the meantime, if you want a sense of how we think, the <a href="/podcast">podcast</a>
+          and the <a href="/kit">Prep Kit</a> are both good places to look.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq section-dark">
+    <div class="container">
+      <p class="eyebrow">Common Questions</p>
+      <div class="faq-grid">
+        <div class="faq-item">
+          <h3>Is this therapy?</h3>
+          <p>No. This is coaching and mentorship from two dads who've been through it — not a clinical or medical service. If something needs a licensed professional, we'll say so directly.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What happens after the 6-8 weeks?</h3>
+          <p>You decide whether to continue into ongoing monthly support. No pressure either way — some guys need the onboarding and are set, others want someone in their corner through year one.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can I cancel the ongoing part?</h3>
+          <p>Yes. Month-to-month, no contract, cancel anytime. The only commitment is the 6-8 week onboarding itself.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What if it's not a fit?</h3>
+          <p>That's exactly what the call before enrolling is for. We'd rather tell you honestly than take your money for something that isn't right.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+
+  <script>
+    const form = document.getElementById("turn-form") as HTMLFormElement | null;
+    const status = document.getElementById("turn-form-status") as HTMLParagraphElement | null;
+    const confirm = document.getElementById("turn-form-confirm") as HTMLDivElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Sending…";
+      try {
+        const res = await fetch("/api/turn-application", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "";
+          form.style.display = "none";
+          if (confirm) confirm.style.display = "block";
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  </script>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero-copy {
+    max-width: 680px;
+  }
+  .hero-photo {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    min-height: 320px;
+  }
+  .hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  @media (min-width: 960px) {
+    .hero-grid {
+      grid-template-columns: 1.15fr 1fr;
+    }
+    .hero-photo {
+      min-height: 460px;
+    }
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.08;
+    margin: 0.6rem 0 1.25rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 56ch;
+    margin: 0 0 1.75rem;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .hero-ghost {
+    color: var(--cream-100);
+  }
+  .hero-micro {
+    color: var(--text-on-dark-muted);
+    font-size: 0.85rem;
+    margin-top: 1.25rem;
+  }
+
+  .why {
+    padding: var(--space-6) 0;
+  }
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .why h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 1.1rem;
+    max-width: 20ch;
+  }
+  .body-text {
+    color: var(--text-on-light-muted);
+    max-width: 58ch;
+    line-height: 1.7;
+  }
+  .body-text a {
+    color: var(--rust-600);
+    font-weight: 600;
+  }
+  .founders-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+  }
+  .founder-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .founder-mini img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .founder-mini span {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .why-stat-card {
+    background: var(--forest-900);
+    color: var(--cream-100);
+    border-radius: var(--radius-md);
+    padding: 2.25rem;
+  }
+  .why-stat-num {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--amber-500);
+    margin: 0 0 0.75rem;
+  }
+  .why-stat-label {
+    color: var(--text-on-dark-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .shift {
+    padding: var(--space-6) 0;
+  }
+  .shift h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+    margin: 0.5rem 0 2.5rem;
+  }
+  .shift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  .shift-card {
+    background: var(--forest-700);
+    border: 1px solid var(--forest-600);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    text-align: center;
+  }
+  .shift-before {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--text-on-dark-muted);
+    margin: 0 0 0.5rem;
+  }
+  .shift-arrow {
+    display: block;
+    color: var(--amber-500);
+    font-size: 1.3rem;
+    margin: 0.4rem 0;
+  }
+  .shift-after {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--cream-100);
+    margin: 0.5rem 0 1rem;
+  }
+  .shift-name {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--amber-500);
+    margin: 0;
+  }
+
+  .proof {
+    padding: var(--space-6) 0;
+  }
+  .proof-featured-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+    margin: 2rem 0 1.5rem;
+  }
+  .proof-photo {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    min-height: 260px;
+  }
+  .proof-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+  @media (min-width: 860px) {
+    .proof-featured-row {
+      grid-template-columns: 1.4fr 1fr;
+    }
+  }
+  .quote-featured {
+    margin: 0;
+    padding: 3rem;
+    position: relative;
+    border: 1px solid var(--rust-600);
+    border-radius: var(--radius-md);
+    background: var(--bg-light-raised);
+  }
+  .quote-mark {
+    position: absolute;
+    top: -1.5rem;
+    left: 1.75rem;
+    font-family: var(--font-display);
+    font-size: 8rem;
+    line-height: 1;
+    color: var(--amber-500);
+    opacity: 0.18;
+    pointer-events: none;
+  }
+  .quote-featured p {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    line-height: 1.45;
+    max-width: 46ch;
+    margin: 0 0 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+  .quote-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  .quote-grid blockquote {
+    margin: 0;
+    padding: 1.75rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-light-raised);
+    border: 1px solid var(--border-light);
+  }
+  .quote-grid p {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+  }
+  cite {
+    font-family: var(--font-label);
+    font-style: normal;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  cite span {
+    font-weight: 400;
+    opacity: 0.65;
+  }
+
+  .pricing {
+    padding: var(--space-6) 0;
+  }
+  .pricing h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+    margin: 0.5rem 0 2.5rem;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .pricing-card {
+    background: var(--forest-700);
+    border: 1px solid var(--forest-600);
+    border-radius: var(--radius-md);
+    padding: 2.5rem;
+  }
+  .pricing-card.featured {
+    border-color: var(--amber-500);
+  }
+  .pricing-tag {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--amber-500);
+  }
+  .pricing-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    margin: 0.6rem 0 0.75rem;
+  }
+  .pricing-amount {
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    color: var(--cream-100);
+    margin: 0 0 1rem;
+  }
+  .pricing-amount span {
+    font-size: 1rem;
+    font-family: var(--font-sans);
+    color: var(--text-on-dark-muted);
+  }
+  .pricing-desc {
+    color: var(--text-on-dark-muted);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .apply {
+    padding: var(--space-6) 0;
+  }
+  .apply-inner {
+    max-width: 640px;
+  }
+  .apply h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .apply-sub {
+    margin-bottom: 2.25rem;
+  }
+  .apply-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+  @media (min-width: 640px) {
+    .form-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .apply-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-on-light-muted);
+  }
+  .optional {
+    opacity: 0.6;
+    font-weight: 400;
+  }
+  .apply-form input,
+  .apply-form textarea {
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: var(--white);
+    color: var(--text-on-light);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    resize: vertical;
+  }
+  .apply-submit {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+  }
+  .form-status {
+    color: var(--text-on-light-muted);
+    font-size: 0.9rem;
+    min-height: 1.2em;
+  }
+  .apply-confirm {
+    margin-top: 1rem;
+  }
+  .confirm-headline {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--rust-600);
+    margin: 0 0 0.75rem;
+  }
+
+  .faq {
+    padding: var(--space-6) 0;
+  }
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .faq-item h3 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+  }
+  .faq-item p {
+    color: var(--text-on-dark-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+</style>
