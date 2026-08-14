@@ -554,37 +554,34 @@ export function hatPrice(v: HatVariant): string {
 // size really is fully buyable, a clean cross product. So instead of
 // hand-typing every variant block like HAT_CATALOG, SHIRT_CATALOG is
 // generated from one row per (color, year) — each row's sizeSyncVariantIds
-// is meant to be the real, verified S→4XL sync_variant_id list read
-// directly from /api/admin/printful-debug?id=<sync_product_id> for that
-// row's Sync Product, not assumed/guessed.
-//
-// *** 2024–2027 ROWS ARE PLACEHOLDERS — SEE "TODO: REAL SYNC VARIANT IDS" ***
-// John published 8 new sync products in Printful (2 colors × 4 "EST. year"
-// designs) but pulling their real sync_variant_ids requires being logged
-// into /admin/login, which the agent can't do on his behalf. Until those
-// numbers are swapped in below, PLACEHOLDER_SYNC_VARIANT_IDS (all 0) makes
-// every 2024–2027 variant's syncVariantId falsy on purpose — both
-// stripe-webhook.ts's single-item path (`if (syncVariantId && recipient)`)
-// and its bundle path (`if (bundleHatVariant?.syncVariantId && ...)`)
-// already skip placing a Printful order when the id is falsy and log an
-// error instead, so a real customer can still check out (Stripe charges
-// fine — price doesn't depend on syncVariantId) but no bogus Printful order
-// gets attempted with a fake id. Swap in the real ids as soon as they're
-// available; don't ship this to real customers with the placeholders still
-// in place, since a paid order with a skipped Printful order needs manual
-// fulfillment.
-
+// is the real, verified S→4XL sync_variant_id list read directly from
+// /api/admin/printful-debug?all=1 for that row's Sync Product, not
+// assumed/guessed (see SHIRT_SYNC_VARIANT_IDS below).
 export type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
 export const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
 export type ShirtYear = "2024" | "2025" | "2026" | "2027";
 export const SHIRT_YEARS: ShirtYear[] = ["2024", "2025", "2026", "2027"];
 
-// TODO: REAL SYNC VARIANT IDS — replace with the true S→4XL ids for each of
-// the 8 new 2024–2027 sync products once available (see block comment
-// above). All-zero on purpose so downstream order-creation code treats them
-// as "not orderable yet" instead of silently hitting Printful with junk ids.
-const PLACEHOLDER_SYNC_VARIANT_IDS: number[] = [0, 0, 0, 0, 0, 0, 0];
+// Real S→4XL sync_variant_id lists, read from /api/admin/printful-debug?all=1
+// on 2026-08-14. Each of the 8 (color, year) sync products below returns its
+// variants in the same fixed order every time (verified — every year for a
+// given color shares the exact same catalog_variant_id sequence, e.g. Black
+// is always 15114,15115,15116,15117,15118,16326,17500 and Ivory is always
+// 16523,16524,16525,16526,16527,16528,17507 — the last id in each list jumps
+// noticeably higher than the rest, consistent with 4XL having been added to
+// Printful's catalog later than S–3XL), so index 0..6 reliably maps to
+// SHIRT_SIZES' S..4XL order.
+const SHIRT_SYNC_VARIANT_IDS: Record<string, number[]> = {
+  "black-2024": [5441021900, 5441021901, 5441021902, 5441021903, 5441021904, 5441021905, 5441021906],
+  "black-2025": [5441025638, 5441025639, 5441025640, 5441025641, 5441025642, 5441025643, 5441025644],
+  "black-2026": [5441004732, 5441004733, 5441004734, 5441004735, 5441004736, 5441004737, 5441004738],
+  "black-2027": [5441026510, 5441026511, 5441026512, 5441026513, 5441026514, 5441026515, 5441026516],
+  "ivory-2024": [5441028829, 5441028830, 5441028831, 5441028832, 5441028833, 5441028834, 5441028835],
+  "ivory-2025": [5441029476, 5441029477, 5441029478, 5441029479, 5441029480, 5441029481, 5441029482],
+  "ivory-2026": [5441030461, 5441030462, 5441030463, 5441030464, 5441030465, 5441030466, 5441030467],
+  "ivory-2027": [5441031325, 5441031326, 5441031327, 5441031328, 5441031329, 5441031330, 5441031331],
+};
 
 export interface ShirtVariant {
   key: string; // `shirt-${design}-${color}-${year}-${size}` (lowercase) — the checkout `product` value
@@ -641,7 +638,7 @@ const SHIRT_DESIGN_COLORS: ShirtDesignColorYearRow[] = SHIRT_COLORS.flatMap(({ c
     backImage: `/images/shirts/shirt-${color}-${year}-back.png`,
     logoDetailImage: `/images/shirts/shirt-${color}-${year}-logo-detail.png`,
     price: "40.00",
-    sizeSyncVariantIds: PLACEHOLDER_SYNC_VARIANT_IDS,
+    sizeSyncVariantIds: SHIRT_SYNC_VARIANT_IDS[`${color}-${year}`] || [0, 0, 0, 0, 0, 0, 0],
   }))
 );
 
