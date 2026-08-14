@@ -3,6 +3,18 @@ import { isAdminAuthed } from "../../../lib/auth";
 
 export const prerender = false;
 
+// SUPERSEDED as the source of the live public/images/shirts/*.png files
+// (2026-08-13): the front position/size this script guesses below turned out
+// wrong — real placement is a small left-chest hit, not centered — the same
+// class of bug the Rookie hat hit earlier. Rather than re-guess new numbers,
+// the live front/back photos were pulled directly from Printful's dashboard
+// "Choose mockups" export (Products → DUDELA Shirt / Ivory → Edit design →
+// Basic mockups → Download all mockups), which renders using the product's
+// real saved placement — no guessing required. This script is kept around
+// as a working reference for the async create-task/poll flow and for
+// regenerating FLAT/ghost-style images if ever needed, but is not what's
+// live on /merch today.
+//
 // Sibling to mockups.ts, kept as a separate file rather than extending that
 // one — shirts are DTG prints (front/back placements, catalog product 586)
 // with completely different area math than the caps' embroidery placements,

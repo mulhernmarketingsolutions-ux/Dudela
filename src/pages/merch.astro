@@ -148,11 +148,16 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Merch</p>
-      <h1>The Dudela hat.</h1>
+      <h1>Dudela gear.</h1>
       <p class="hero-sub">
-        Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side
-        stitch — $38, free shipping. Every hat is made to order and shipped straight to your door.
+        Hats and shirts, made to order and shipped straight to your door. Free shipping, no
+        restocks to wait on.
       </p>
+
+      <div class="product-nav" role="group" aria-label="Jump to product">
+        <a href="#hats" class="product-nav-link">Hats — from $38</a>
+        <a href="#shirts" class="product-nav-link">Shirts — $40</a>
+      </div>
 
       {!member && (
         <p class="login-nudge">
@@ -162,13 +167,18 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       )}
 
       {canceled && (
-        <p class="notice">Checkout was canceled — nothing was charged. Pick your hat below whenever you're ready.</p>
+        <p class="notice">Checkout was canceled — nothing was charged. Pick your gear below whenever you're ready.</p>
       )}
     </div>
   </section>
 
-  <section class="colors section-light">
-    <div class="container colors-grid">
+  <section id="hats" class="colors section-light">
+    <div class="container">
+      <div class="section-divider">
+        <h2>The Dudela hat.</h2>
+        <p class="section-sub">Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side stitch — $38, free shipping.</p>
+      </div>
+      <div class="colors-grid">
       {designs.map((d) => (
         <div class="design-card" data-design={d.key}>
           <div class="design-media">
@@ -222,10 +232,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
           <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
         </div>
       ))}
+      </div>
     </div>
   </section>
 
-  <section class="colors section-light shirts-section">
+  <section id="shirts" class="colors section-light shirts-section">
     <div class="container">
       <div class="section-divider">
         <h2>The Dudela shirt.</h2>
@@ -289,19 +300,19 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     <div class="container perks-grid">
       <div>
         <span class="perk-index">01</span>
-        <h3>$38, free shipping</h3>
-        <p>No shipping fees, no minimums. Just the hat, straight to your door.</p>
+        <h3>Free shipping</h3>
+        <p>No shipping fees, no minimums, on hats or shirts. Just your gear, straight to your door.</p>
       </div>
       <div>
         <span class="perk-index">02</span>
         <h3>Made to order</h3>
-        <p>Every hat is made when you order it — no waiting on restocks, no "sold out."</p>
+        <p>Every piece is made when you order it — no waiting on restocks, no "sold out."</p>
       </div>
       <div>
         <span class="perk-index">03</span>
         <h3>Tag us when it lands</h3>
         <p>
-          When your hat shows up, tag <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">@the_dudela_official</a>
+          When your gear shows up, tag <a href="https://instagram.com/the_dudela_official" target="_blank" rel="noopener">@the_dudela_official</a>
           — we repost our favorites.
         </p>
       </div>
@@ -566,6 +577,28 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .hero-sub {
     color: var(--text-on-dark-muted);
     max-width: 52ch;
+  }
+  .product-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .product-nav-link {
+    display: inline-block;
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid var(--amber-500);
+    color: var(--amber-500);
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .product-nav-link:hover {
+    background: var(--amber-500);
+    color: var(--forest-900, #12180f);
   }
   .notice {
     margin-top: 1.25rem;
