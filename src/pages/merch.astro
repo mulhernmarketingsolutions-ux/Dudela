@@ -221,25 +221,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <div class="design-body">
               <h3 data-shirt-title>{d.title} {d.first.year}</h3>
               <p class="design-tagline">{d.tagline}</p>
-              <button type="button" class="details-link" data-open-details="shirt">Material, fit &amp; sizing ›</button>
-
-              <div class="logo-detail" data-logo-detail-wrap>
-                <button type="button" class="logo-detail-toggle" data-logo-detail-toggle aria-expanded="false">
-                  See the design up close ›
-                </button>
-                <div class="logo-detail-popover" data-logo-detail-popover hidden>
-                  <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} ${d.first.year} logo, up close`} />
-                </div>
-              </div>
-
-              <div class="selector">
-                <span class="selector-label">Year</span>
-                <div class="size-options" role="group" aria-label={`${d.title} year`} data-shirt-years>
-                  {d.years.map((y) => (
-                    <button type="button" class={`size-btn${y === d.first.year ? " active" : ""}`} data-shirt-year={y}>{y}</button>
-                  ))}
-                </div>
-              </div>
 
               <div class="selector">
                 <span class="selector-label">Color</span>
@@ -253,6 +234,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
                       aria-label={c.label}
                       data-shirt-color={c.key}
                     />
+                  ))}
+                </div>
+              </div>
+
+              <div class="selector">
+                <span class="selector-label">Year</span>
+                <div class="year-options" role="group" aria-label={`${d.title} year`} data-shirt-years>
+                  {d.years.map((y) => (
+                    <button type="button" class={`year-btn${y === d.first.year ? " active" : ""}`} data-shirt-year={y}>&apos;{y.slice(2)}</button>
                   ))}
                 </div>
               </div>
@@ -273,6 +263,29 @@ const canceled = url.searchParams.get("purchase") === "canceled";
               <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
                 Buy Now — ${Math.round(parseFloat(d.first.price))}
               </a>
+
+              <div class="detail-links">
+                <button type="button" class="detail-chip" data-open-details="shirt">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="8" cy="8" r="6.25"/>
+                    <line x1="8" y1="7.2" x2="8" y2="11"/>
+                    <circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/>
+                  </svg>
+                  Material, fit &amp; sizing
+                </button>
+                <div class="logo-detail" data-logo-detail-wrap>
+                  <button type="button" class="detail-chip" data-logo-detail-toggle aria-expanded="false">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+                      <circle cx="6.8" cy="6.8" r="4.3"/>
+                      <line x1="10.1" y1="10.1" x2="14" y2="14"/>
+                    </svg>
+                    See the design up close
+                  </button>
+                  <div class="logo-detail-popover" data-logo-detail-popover hidden>
+                    <img class="logo-detail-img" data-logo-detail src={d.first.logoDetail} alt={`${d.title} ${d.first.year} logo, up close`} />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <script type="application/json" data-shirt-catalog set:html={JSON.stringify(d)} />
@@ -300,7 +313,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
           <div class="design-body">
             <h3>{d.title}</h3>
             <p class="design-tagline">{d.tagline}</p>
-            <button type="button" class="details-link" data-open-details="hat">Material &amp; fit ›</button>
 
             <div class="selector">
               <span class="selector-label">Thread color</span>
@@ -338,6 +350,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
               Buy Now — {d.first.addon ? "$39" : "$38"}
             </a>
+
+            <div class="detail-links">
+              <button type="button" class="detail-chip" data-open-details="hat">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+                  <circle cx="8" cy="8" r="6.25"/>
+                  <line x1="8" y1="7.2" x2="8" y2="11"/>
+                  <circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none"/>
+                </svg>
+                Material &amp; fit
+              </button>
+            </div>
           </div>
 
           <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
@@ -1359,39 +1382,24 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     transform-origin: 85% 55%;
   }
   /* A tight crop of the real chest-logo print file — collapsed behind a
-     small toggle by default (a persistent thumbnail sitting in every card
-     whether or not anyone wanted it felt like clutter) and shown on demand
-     as a popover anchored to the toggle. */
+     small icon chip by default (a persistent thumbnail sitting in every
+     card whether or not anyone wanted it felt like clutter) and shown on
+     demand as a popover anchored to the chip. Lives inside .detail-links
+     at the bottom of the card now, alongside the Material/fit chip — see
+     that block below. */
   .logo-detail {
     position: relative;
-    margin: 0 0 1.1rem;
-  }
-  .logo-detail-toggle {
-    display: inline-block;
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--forest-800);
-    font-family: var(--font-label);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    cursor: pointer;
-  }
-  .logo-detail-toggle:hover {
-    color: var(--amber-500);
   }
   .logo-detail-popover {
     position: absolute;
-    top: calc(100% + 0.6rem);
+    bottom: calc(100% + 0.6rem);
     left: 0;
     z-index: 5;
     padding: 0.6rem;
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.18);
   }
   .logo-detail-img {
     display: block;
@@ -1404,21 +1412,35 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-size: 0.85rem;
     margin: 0 0 1.1rem;
   }
-  .details-link {
-    display: inline-block;
+  /* Small, muted icon+text row at the very bottom of the card — used to be
+     two underlined text links sitting right under the tagline, competing
+     with the actual selectors for attention before you'd even picked
+     anything. Demoted to secondary, out of the way, after the buy button. */
+  .detail-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.1rem;
+    margin-top: 0.9rem;
+  }
+  .detail-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     background: none;
     border: none;
     padding: 0;
-    margin: -0.6rem 0 1.1rem;
-    color: var(--forest-800);
+    color: var(--text-on-light-muted);
     font-family: var(--font-label);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    font-size: 0.72rem;
+    font-weight: 600;
     cursor: pointer;
   }
-  .details-link:hover {
+  .detail-chip svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+  .detail-chip:hover {
     color: var(--amber-500);
   }
   .selector {
@@ -1657,6 +1679,39 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     border-color: var(--forest-800);
     background: var(--forest-800);
     color: var(--cream-100);
+  }
+  /* Year picker — deliberately NOT styled like .size-btn. Sitting right next
+     to the size buttons in the same square, dark-active style made it read
+     as "just more sizes" instead of "which print you get" — a completely
+     different kind of choice. Pill-shaped with the brand amber as its active
+     color (same accent used for prices/CTAs) ties it to "this changes the
+     design," while size stays the neutral dark square. Short '24/'25/'26/'27
+     labels reinforce that these are years, not garment specs. */
+  .year-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .year-btn {
+    min-width: 2.5rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    border: 2px solid var(--border-light);
+    background: var(--bg-light-raised);
+    color: var(--text-on-light);
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .year-btn:hover {
+    border-color: var(--amber-500);
+  }
+  .year-btn.active {
+    border-color: var(--amber-500);
+    background: var(--amber-500);
+    color: var(--forest-900, #141c10);
   }
 
   /* Product Details & Sizing — one shared native <dialog>, content panels
