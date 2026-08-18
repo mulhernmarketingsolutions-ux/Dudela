@@ -5,9 +5,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // the Prep Kit checkout (own Stripe checkout, see /api/create-checkout-session)
 // and the Taking Cara Babies sleep affiliate link.
 const links = [
-  { label: "Join the Spit-Up Society", sub: "First LIVE call with us: August 4th", href: "/join/spit-up-society", tag: "$5/mo", primary: true },
+  // "First LIVE call with us: August 4th" used to be hardcoded here — same
+  // stale-date liability next-call.ts's own comment warns about (this page
+  // is prerendered and doesn't rebuild when the call date moves). Swapped
+  // to the cadence instead, same fix already applied to Huddle.astro and
+  // /join/spit-up-society's hero.
+  { label: "Join the Spit-Up Society", sub: "Live Q&A calls, twice a month", href: "/join/spit-up-society", tag: "$5/mo", primary: true },
   { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free" },
   { label: "The Dudela Prep Kit", href: "/api/create-checkout-session?product=prep-kit", tag: "$37" },
+  { label: "Steady Dad: Before Birth Workshop", href: "/workshop", tag: "$100" },
+  { label: "Steady Dad Cohort", href: "/cohort", tag: "Waitlist" },
+  // The highest-value offer on the site had no path from the link-in-bio
+  // page at all — cold social traffic could reach everything up through
+  // the Cohort but never discover 1:1 coaching exists.
+  { label: "The Turn — 1:1 Coaching", sub: "With John & Mike", href: "/turn", tag: "$1,800" },
   { label: "Taking Cara Babies", sub: "The sleep resource we recommend to every dad", href: "https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC", tag: null, external: true },
   { label: "The Dudela Podcast", href: "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ", tag: null, external: true },
   { label: "Leave Us a Voicemail", href: "/voicemail", tag: null },

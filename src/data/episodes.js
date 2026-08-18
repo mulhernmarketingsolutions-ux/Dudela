@@ -33,7 +33,10 @@ export const APPLE_URL = "https://podcasts.apple.com/us/podcast/the-dudela-podca
 // Used to number the homepage's episode-row ghost numerals counting DOWN
 // from the real episode number (30, 29, 28...) instead of counting up from
 // 01 regardless of how many episodes have actually aired.
-export const TOTAL_EPISODES = 30;
+// Bumped to 31 on 2026-08-18 for "Trying should be the fun part, right?" —
+// assumed sequential (30 was confirmed, this is the next one published);
+// worth a quick sanity check against Apple's count next time you're in there.
+export const TOTAL_EPISODES = 31;
 
 // Shared slug helper — used both to give each episode row on /podcast a
 // stable anchor id, and by the Roadmap to deep-link straight to the right
@@ -46,6 +49,16 @@ export function slugify(title) {
 }
 
 export const episodes = [
+  // Published 2026-08-18, confirmed live on the show's Podbean feed just
+  // before this entry was added. Apple link intentionally left unset — new
+  // episodes take a bit to show up in Apple's public catalog/lookup API, and
+  // this one was only minutes old when checked. Falls back to the show-level
+  // APPLE_URL until the real per-episode link exists. `downloads` is a
+  // placeholder — Podbean doesn't expose a download count on the public show
+  // page, and this was written without access to the Podbean admin dashboard
+  // (the file's usual authoritative source per the header comment). Update
+  // once you've got the real number from there.
+  { title: "Trying should be the fun part, right?", date: "2026-08-18", downloads: 0, link: "https://thedudelapodcast.podbean.com/e/trying/", apple: null },
   // Apple link intentionally left unset — checked Apple's public iTunes
   // Lookup API on 2026-07-28 and this episode still isn't in the public
   // catalog yet (only shows through the 7/14 episode). The Podcasts Connect

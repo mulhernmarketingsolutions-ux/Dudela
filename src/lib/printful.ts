@@ -31,6 +31,24 @@ export interface PrintfulEnv {
 
 const PRINTFUL_API = "https://api.printful.com";
 
+// Printful's own cost breakdown for an order, returned as string-typed
+// numbers (e.g. "12.95") on the POST /orders response once calculated. This
+// is what Printful actually charges the store — the real cost-of-goods
+// number, distinct from the retail price the buyer paid at Stripe checkout.
+export interface PrintfulOrderCosts {
+  currency: string;
+  subtotal: string;
+  discount?: string;
+  shipping: string;
+  digitization?: string;
+  additional_fee?: string;
+  fulfillment_fee?: string;
+  retail_delivery_fee?: string;
+  tax?: string;
+  vat?: string;
+  total: string;
+}
+
 export type Design = "classic" | "rookie";
 export type Thread = "white" | "orange" | "black";
 
@@ -752,7 +770,7 @@ export async function createPrintfulOrder(
     // always omit this (default true).
     confirm?: boolean;
   }
-): Promise<{ id: number; status: string }> {
+): Promise<{ id: number; status: string; costs?: PrintfulOrderCosts }> {
   const confirm = opts.confirm ?? true;
 
   const body = {
@@ -776,7 +794,13 @@ export async function createPrintfulOrder(
       body: JSON.stringify(body),
     });
     if (res.ok) {
-      const data = (await res.json()) as { result: { id: number; status: string } };
+      // `result.costs` is what Printful actually bills the store for this
+      // order (subtotal + shipping + fulfillment fee + tax, as string-typed
+      // numbers) — the real cost-of-goods figure, not the retail price the
+      // buyer paid. Captured here so callers (stripe-webhook.ts) can log
+      // revenue-minus-cost = profit per order without hand-maintaining a
+      // separate cost table that would drift from Printful's real pricing.
+      const data = (await res.json()) as { result: { id: number; status: string; costs?: PrintfulOrderCosts } };
       return data.result;
     }
     lastErr = `${res.status} ${await res.text()}`;

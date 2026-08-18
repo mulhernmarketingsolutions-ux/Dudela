@@ -317,7 +317,7 @@ export async function getCommunityNoteByMemberId(env: DbEnv, memberId: string): 
   return row ?? null;
 }
 
-// --- Merch presale orders (hat colorways, scarcity cap) ---
+// --- Merch orders (hat/shirt colorways) ---
 
 export interface MerchOrder {
   id: string;
@@ -338,11 +338,9 @@ export interface MerchOrder {
   created_at: string;
 }
 
-// Presale scarcity: 10 units per colorway. Checked before creating a Stripe
-// Checkout Session (create-checkout-session.ts) so we never sell more than
-// exist, and again isn't re-checked in the webhook — session_id's UNIQUE
-// constraint is what actually prevents a double-sell on a Stripe retry, this
-// count is just the "is this color sold out" gate for new checkouts.
+// No longer used to gate checkout (removed 2026-08-16 — every hat/shirt is
+// print-to-order through Printful, so there's no fixed stock to sell out
+// of). Left in place as a handy per-color count for reporting/spot-checks.
 export async function countMerchOrders(env: DbEnv, color: string): Promise<number> {
   const row = await env.DB.prepare("SELECT COUNT(*) as n FROM merch_orders WHERE color = ?")
     .bind(color)

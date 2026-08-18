@@ -1,6 +1,5 @@
 import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
-import { countMerchOrders } from "../../lib/db";
 import { getAuthedMember } from "../../lib/auth";
 import { HAT_CATALOG, getHatVariant, hatLabel, SHIRT_CATALOG, getShirtVariant, shirtLabel } from "../../lib/printful";
 
@@ -33,10 +32,12 @@ const PRODUCTS: Record<
     mode: "payment" | "subscription";
     // Physical goods need a shipping address collected at Stripe checkout.
     shipping?: boolean;
-    // Presale scarcity: this colorway's cap in merch_orders (see lib/db.ts).
-    // Only set on the 3 hat products — undefined means "no cap, don't check."
+    // Which HAT_CATALOG/SHIRT_CATALOG key this is — used to look up the addon
+    // surcharge and to stamp Stripe metadata.color for the webhook. No cap
+    // enforcement anymore: everything ships print-to-order from Printful, so
+    // there's no fixed inventory to sell out of (see lib/db.ts's
+    // countMerchOrders comment for the removed presale-cap history).
     merchColor?: string;
-    merchCap?: number;
   }
 > = {
   "prep-kit": {
@@ -142,21 +143,9 @@ export async function GET({ request, locals, cookies }: APIContext) {
     return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
   }
 
-  // Presale scarcity check — block new checkouts once a colorway hits its cap.
-  // This is a "don't open checkout at all" gate, not the source of truth for
-  // preventing a double-sell on a race (that's session_id's UNIQUE constraint
-  // in merch_orders, enforced in the webhook) — good enough for a presale at
-  // this volume, where two people buying the literal last hat in the same
-  // second is a real possibility we're fine handling by refunding one.
-  if (productConfig.merchColor && productConfig.merchCap) {
-    const sold = await countMerchOrders(env, productConfig.merchColor);
-    if (sold >= productConfig.merchCap) {
-      return new Response(null, {
-        status: 302,
-        headers: { Location: `${origin}${productConfig.returnPath}?sold_out=${productConfig.merchColor}` },
-      });
-    }
-  }
+  // No scarcity/sold-out gate here — every hat and shirt is print-to-order
+  // through Printful (no fixed stock to run out of), so checkout stays open
+  // for any catalog variant at any volume.
 
   // The $1 Dude to Dad side-stitch add-on is its own Stripe line item (see
   // lib/stripe.ts) rather than a separate $39 Price object per hat variant —

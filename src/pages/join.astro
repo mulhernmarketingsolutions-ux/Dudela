@@ -74,7 +74,7 @@ const ladder = [
   <section class="ladder section-light">
     <div class="container">
       {ladder.map((item, i) => (
-        <div class="ladder-row" id={item.slug}>
+        <div class="ladder-row" class:list={{ "ladder-row-featured": item.slug === "the-turn" }} id={item.slug}>
           <div class="ladder-step">
             <span class="ladder-index">{String(i + 1).padStart(2, "0")}</span>
             <span class="ladder-badge">{item.step}</span>
@@ -129,6 +129,27 @@ const ladder = [
   }
   .ladder-row:first-child {
     padding-top: 0;
+  }
+  /* The Turn is the highest-value offer on the ladder, but was previously
+     styled identically to the $5/mo membership row above it — same weight
+     as everything else. Footer.astro already gives Turn its own highlighted
+     treatment; this brings the one page that's meant to compare every tier
+     side by side into line with that, instead of flattening it back down. */
+  .ladder-row-featured {
+    background: var(--bg-light-raised);
+    border: 1px solid var(--amber-500);
+    border-radius: var(--radius-md);
+    padding: 2rem 1.75rem;
+    margin: 0.5rem 0;
+  }
+  .ladder-row-featured .ladder-index,
+  .ladder-row-featured .ladder-price {
+    color: var(--amber-500);
+  }
+  .ladder-row-featured .ladder-badge {
+    background: var(--amber-500);
+    border-color: var(--amber-500);
+    color: var(--black);
   }
   .ladder-step {
     display: flex;

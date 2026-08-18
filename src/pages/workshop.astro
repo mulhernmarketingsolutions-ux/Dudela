@@ -68,6 +68,12 @@ import Footer from "../components/Footer.astro";
       <div><h3>90 minutes</h3><p>Focused, live, no fluff — built around the same framework as everything else we make.</p></div>
       <div><h3>$100</h3><p>One session. No subscription. Pricing and exact dates confirmed when the cohort opens.</p></div>
     </div>
+    <div class="container">
+      <p class="turn-note">
+        Don't want to wait for the Fall cohort, or want it more personal than a group session?
+        <a href="/turn">John and Mike also work 1:1 &rarr;</a>
+      </p>
+    </div>
   </section>
 
   <Footer />
@@ -148,5 +154,18 @@ import Footer from "../components/Footer.astro";
     color: var(--text-on-light-muted);
     margin: 0;
     font-size: 0.92rem;
+  }
+  .turn-note {
+    margin-top: 2rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--border-light);
+    font-family: var(--font-label);
+    font-size: 0.9rem;
+    color: var(--text-on-light-muted);
+    text-align: center;
+  }
+  .turn-note a {
+    color: var(--rust-600);
+    font-weight: 700;
   }
 </style>

@@ -58,6 +58,21 @@ const platforms = [
     </div>
   </section>
 
+  <section class="podcast-cta section-dark">
+    <div class="container podcast-cta-inner">
+      <p class="eyebrow">What's Next</p>
+      <h2>Enough listening. What do you actually need right now?</h2>
+      <p class="body-text">
+        If you're just getting started, the free guide is the place to go. If you want real,
+        1:1 access to John and Mike instead of another episode, that's The Turn.
+      </p>
+      <div class="podcast-cta-actions">
+        <a href="/guide" class="btn btn-ghost podcast-cta-ghost">Get the Free Dad Prep Guide</a>
+        <a href="/turn" class="btn btn-primary">Apply for The Turn</a>
+      </div>
+    </div>
+  </section>
+
   <Footer />
 </BaseLayout>
 
@@ -167,5 +182,31 @@ const platforms = [
     margin-top: 1.5rem;
     font-size: 0.8rem;
     color: var(--text-on-light-muted);
+  }
+  .podcast-cta {
+    padding: var(--space-6) 0;
+    text-align: center;
+  }
+  .podcast-cta-inner {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .podcast-cta h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .podcast-cta .body-text {
+    color: var(--text-on-dark-muted);
+    margin: 0 auto 1.75rem;
+  }
+  .podcast-cta-actions {
+    display: flex;
+    gap: 0.9rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .podcast-cta-ghost {
+    color: var(--cream-100);
   }
 </style>

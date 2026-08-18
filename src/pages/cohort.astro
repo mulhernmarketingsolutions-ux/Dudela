@@ -58,6 +58,10 @@ const seatsLeft = Math.max(MIN_SEATS, STARTING_SEATS - Math.max(0, weeksElapsed)
           <a href="/guide" class="btn btn-ghost">Get the Free Dad Prep Guide</a>
           <a href="/kit" class="btn btn-ghost">Get the Prep Kit</a>
         </div>
+        <p class="turn-note">
+          Not able to wait for October, or want something more personal than a group?
+          <a href="/turn">John and Mike also work 1:1 &rarr;</a>
+        </p>
       </div>
     </div>
   </section>
@@ -179,6 +183,16 @@ const seatsLeft = Math.max(MIN_SEATS, STARTING_SEATS - Math.max(0, weeksElapsed)
   }
   .resources-row .btn-ghost {
     color: var(--cream-100);
+  }
+  .turn-note {
+    margin-top: 1.25rem;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-on-dark-muted);
+  }
+  .turn-note a {
+    color: var(--amber-500);
+    font-weight: 700;
   }
   .details {
     padding: var(--space-6) 0;

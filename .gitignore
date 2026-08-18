@@ -3,5 +3,6 @@ dist/
 .astro/
 .wrangler/
 .DS_Store
+.dev.vars
 public/images/*.mov
 Dudela 15 Things.pdf

@@ -59,6 +59,12 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
            membership instead of this overview. -->
       <a href="/join">Pricing</a>
       <a href="/about">About</a>
+      <!-- The Turn had no site-wide entry point at all before this — only
+           reachable via the Footer or by clicking deep into the Roadmap's
+           "6 Months" stage. It's the highest-value offer on the site, so it
+           gets its own nav slot like everything else, not just a mention
+           buried in the pricing ladder. -->
+      <a href="/turn" class="nav-turn-link">The Turn</a>
     </nav>
 
     <div class="nav-right">
@@ -107,6 +113,7 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
     <a href="/merch">Merch</a>
     <a href="/join">Pricing</a>
     <a href="/about">About</a>
+    <a href="/turn" class="nav-turn-link">The Turn</a>
     <!-- Only one button belongs inside the open menu. Join already sits
          pinned in nav-right (z-index above this overlay), so it stays
          visible the whole time the menu is open — no need to duplicate it
@@ -209,6 +216,18 @@ const accountLabel = isAuthed ? "My Account" : "Member Login";
   }
   .links a:hover {
     opacity: 0.7;
+  }
+  /* Amber matches the "highlight" treatment used everywhere else on the site
+     for The Turn (Footer's footer-highlight, the roadmap's paid-resource
+     styling) — same visual language, so it reads as the standout offer here
+     too instead of blending into the other plain nav links. */
+  .links a.nav-turn-link,
+  .mobile-menu a.nav-turn-link {
+    color: var(--amber-500);
+    font-weight: 700;
+  }
+  .links a.nav-turn-link:hover {
+    opacity: 0.85;
   }
   .nav-right {
     display: flex;
