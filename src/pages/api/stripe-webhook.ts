@@ -39,22 +39,31 @@ export const prerender = false;
 // send the exact real receipt copy for a spot-check — reusing this instead
 // of a second hand-typed copy of the same email means the test tool can
 // never drift out of sync with what a real customer actually gets.
-export const PRODUCTS: Record<
-  string,
-  {
-    name: string;
-    price: string;
-    isSubscription?: boolean;
-    fileName?: string;
-    url?: string;
-    isMerch?: boolean;
-    // Relative /images/... path — resolved to an absolute thedudelaco.com
-    // URL in receiptEmailHtml/notifyEmailHtml, same reasoning as
-    // create-checkout-session.ts's priceData.image (email clients need a
-    // real https URL, they don't run relative to the site).
-    image?: string;
-  }
-> = {
+// Shared shape for both the fixed PRODUCTS catalog below and the bundle
+// branch's hand-built object in the webhook handler — declared once so
+// TypeScript checks both against the exact same type instead of inferring a
+// narrower union from each object literal (which used to make fields added
+// only on one branch, like isBundle/items, invisible to code that reads
+// `productInfo.X` without knowing which branch produced it).
+type ProductInfo = {
+  name: string;
+  price: string;
+  isSubscription?: boolean;
+  fileName?: string;
+  url?: string;
+  isMerch?: boolean;
+  isBundle?: boolean;
+  // Relative /images/... path — resolved to an absolute thedudelaco.com
+  // URL in receiptEmailHtml/notifyEmailHtml, same reasoning as
+  // create-checkout-session.ts's priceData.image (email clients need a
+  // real https URL, they don't run relative to the site).
+  image?: string;
+  // Bundle orders only: both items broken out separately so the receipt/
+  // notify emails can show each product's own photo, not just one.
+  items?: { name: string; image?: string }[];
+};
+
+export const PRODUCTS: Record<string, ProductInfo> = {
   "prep-kit": {
     name: "The Dudela Prep Kit",
     price: "$37",
@@ -152,28 +161,63 @@ function absoluteImageUrl(image?: string): string | null {
   return image.startsWith("http") ? image : `https://thedudelaco.com${image}`;
 }
 
-export function receiptEmailHtml(
-  name: string,
-  product: { name: string; price: string; isSubscription?: boolean; fileName?: string; url?: string; isMerch?: boolean; image?: string }
-) {
+// Printful's costs.total (see lib/printful.ts PrintfulOrderCosts) is what
+// Printful actually bills the store for an order — dollars-and-cents string,
+// same shape as everywhere else costs are handled here. Returns cents so it
+// can be diffed directly against Stripe's amount_total (also cents) for a
+// profit figure, or undefined if Printful hadn't finished calculating costs
+// (rare, but the order-creation retry loop already handles that race).
+function printfulCostCents(costs?: { total?: string }): number | undefined {
+  const n = costs?.total ? parseFloat(costs.total) : NaN;
+  return Number.isFinite(n) ? Math.round(n * 100) : undefined;
+}
+
+export function receiptEmailHtml(name: string, product: ProductInfo) {
   const firstName = name ? name.split(" ")[0] : "there";
 
   if (product.isMerch) {
-    const imgUrl = absoluteImageUrl(product.image);
-    const thumbBlock = imgUrl
-      ? `
+    const items = product.items && product.items.length > 0 ? product.items : [{ name: product.name, image: product.image }];
+
+    const imagesBlock =
+      items.length > 1
+        ? `
+      <table role="presentation" width="100%" style="margin:0 0 22px;border-collapse:collapse;">
+        <tr>
+          ${items
+            .map((item) => {
+              const imgUrl = absoluteImageUrl(item.image);
+              return `<td style="width:50%;text-align:center;padding:0 8px;vertical-align:top;">
+                ${
+                  imgUrl
+                    ? `<img src="${imgUrl}" alt="${item.name}" style="width:140px;height:auto;border-radius:10px;display:inline-block;" />`
+                    : ""
+                }
+                <p style="color:#1c2319;font-size:13px;line-height:1.4;margin:8px 0 0;">${item.name}</p>
+              </td>`;
+            })
+            .join("")}
+        </tr>
+      </table>`
+        : absoluteImageUrl(items[0].image)
+          ? `
       <div style="text-align:center;margin:0 0 22px;">
-        <img src="${imgUrl}" alt="${product.name}" style="width:180px;height:auto;border-radius:10px;display:inline-block;" />
+        <img src="${absoluteImageUrl(items[0].image)}" alt="${items[0].name}" style="width:180px;height:auto;border-radius:10px;display:inline-block;" />
       </div>`
-      : "";
+          : "";
+
+    const introCopy =
+      items.length > 1
+        ? `Thanks for grabbing the <strong>Bundle &amp; Save</strong> (${product.price}) — here's what's headed your way:`
+        : `Thanks for grabbing a <strong>${product.name}</strong> (${product.price}) — here's your receipt.`;
+
     return emailShell(`
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
-      ${thumbBlock}
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-        You're in — thanks for grabbing a <strong>${product.name}</strong> (${product.price}). Here's your receipt.
+        ${introCopy}
       </p>
+      ${imagesBlock}
       <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-        Yours is made to order, so it'll take a little longer than a normal shipment — we'll email you the second it's on its way.
+        Made to order, so it'll take a little longer than a normal shipment — we'll email you the second it's on its way.
       </p>
       <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
     `);
@@ -208,11 +252,25 @@ export function receiptEmailHtml(
   return emailShell(`
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-      You're in — thanks for grabbing <strong>${product.name}</strong> (${product.price}). This receipt confirms your purchase.
+      Thanks for grabbing <strong>${product.name}</strong> (${product.price}) — this receipt confirms your purchase.
     </p>
     ${deliveryBlock}
     <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
   `);
+}
+
+// Short, warm subject line per product type. Deliberately does NOT include
+// the full product name/variant string — for a bundle that string is "Bundle
+// — Dudela Hat — The Rookie, Dark Green / Natural Bill (Rust Orange
+// Stitching, Dude to Dad Stitch) + Dudela Shirt — DAD EST. 2024, Black, Size
+// L", which reads like a database dump in an inbox and gets truncated by
+// most mail clients anyway. The full details still show inside the email
+// body, where there's room to do it justice.
+function receiptSubject(product: { name: string; isSubscription?: boolean; isBundle?: boolean; isMerch?: boolean }): string {
+  if (product.isSubscription) return "Welcome to the Spit-Up Society!";
+  if (product.isBundle) return "Your Dudela bundle is confirmed!";
+  if (product.isMerch) return "Your Dudela order is confirmed!";
+  return `Your ${product.name} is here!`;
 }
 
 // Internal "someone just bought something" email to John/Mike (NOTIFY_EMAIL)
@@ -228,13 +286,31 @@ function notifyEmailHtml(opts: {
   amount: string;
   event: string;
   image?: string;
+  // Bundle orders: both items' photos, so John/Mike see the whole order at
+  // a glance instead of just the hat.
+  items?: { name: string; image?: string }[];
   shippingName?: string | null;
   shippingAddress?: string | null;
 }) {
-  const imgUrl = absoluteImageUrl(opts.image);
-  const thumbBlock = imgUrl
-    ? `<img src="${imgUrl}" alt="" style="width:110px;height:auto;border-radius:8px;display:block;margin:0 0 14px;" />`
-    : "";
+  const items = opts.items && opts.items.length > 0 ? opts.items : opts.image ? [{ name: "", image: opts.image }] : [];
+  const thumbBlock =
+    items.length > 1
+      ? `<div style="margin:0 0 14px;">
+          ${items
+            .map((item) => {
+              const imgUrl = absoluteImageUrl(item.image);
+              return imgUrl
+                ? `<img src="${imgUrl}" alt="${item.name}" style="width:90px;height:auto;border-radius:8px;display:inline-block;margin-right:8px;" />`
+                : "";
+            })
+            .join("")}
+        </div>`
+      : (() => {
+          const imgUrl = absoluteImageUrl(items[0]?.image);
+          return imgUrl
+            ? `<img src="${imgUrl}" alt="" style="width:110px;height:auto;border-radius:8px;display:block;margin:0 0 14px;" />`
+            : "";
+        })();
   const shippingBlock =
     opts.shippingName || opts.shippingAddress
       ? `<p style="margin:10px 0 0;">Shipping to: ${opts.shippingName || ""}${
@@ -270,6 +346,17 @@ export async function POST({ request, locals }: APIContext) {
   } catch (err) {
     return new Response("Invalid payload", { status: 400 });
   }
+
+  // Stripe stamps every event with livemode: false when it came from a Test
+  // Mode checkout (test API keys + a test card, e.g. 4242 4242 4242 4242) —
+  // that's the ONLY reliable way to tell a real purchase from a full
+  // pipeline test, since a test-mode session otherwise looks identical to a
+  // real one by the time it reaches this webhook. Used below to (a) never
+  // let a test purchase place a real, billed Printful order — confirm:false
+  // instead, same free-draft behavior as /api/admin/test-hat-order — and
+  // (b) label the receipt/notify emails and Sheet row so a test run can
+  // never be mistaken for real revenue.
+  const isTestMode = event.livemode === false;
 
   // Stripe redelivers the SAME event id on automatic retries, and clicking
   // "Resend" in the Stripe dashboard also redelivers the identical event id
@@ -308,7 +395,7 @@ export async function POST({ request, locals }: APIContext) {
       const isBundle = product === "bundle";
       const bundleHatVariant = isBundle ? getHatVariant(session.metadata?.hatColor || "") : undefined;
       const bundleShirtVariant = isBundle ? getShirtVariant(session.metadata?.shirtColor || "") : undefined;
-      const productInfo = isBundle
+      const productInfo: ProductInfo = isBundle
         ? {
             name:
               bundleHatVariant && bundleShirtVariant
@@ -316,7 +403,19 @@ export async function POST({ request, locals }: APIContext) {
                 : "Dudela Bundle",
             price: amountTotal,
             isMerch: true,
+            isBundle: true,
             image: bundleHatVariant?.frontImage,
+            // Both items broken out separately (not just the combined `name`
+            // string above) so the receipt/notify emails can show each
+            // product's own photo — a bundle buyer should see both the hat
+            // AND the shirt they're getting, not just the hat.
+            items:
+              bundleHatVariant && bundleShirtVariant
+                ? [
+                    { name: hatLabel(bundleHatVariant), image: bundleHatVariant.frontImage },
+                    { name: shirtLabel(bundleShirtVariant), image: bundleShirtVariant.frontImage },
+                  ]
+                : undefined,
           }
         : PRODUCTS[product] || { name: product, price: amountTotal };
       // Hoisted out of the isMerch/isBundle blocks below so the internal notify
@@ -368,6 +467,7 @@ export async function POST({ request, locals }: APIContext) {
         // createPrintfulOrder comment in lib/printful.ts.
         const recipient = extractPrintfulRecipient(session, name, email);
         let bundlePrintfulOrderId: number | undefined;
+        let bundleCostCents: number | undefined;
         if (bundleHatVariant?.syncVariantId && bundleShirtVariant?.syncVariantId && recipient) {
           try {
             const result = await createPrintfulOrder(env, {
@@ -375,8 +475,14 @@ export async function POST({ request, locals }: APIContext) {
               extraSyncVariantIds: [bundleShirtVariant.syncVariantId],
               recipient,
               externalId: await shortExternalId(session.id),
+              // Test-mode Stripe event → leave as a free unconfirmed draft
+              // (same behavior as /api/admin/test-hat-order) instead of a
+              // real, billed Printful order. Omitted (defaults to true) for
+              // real events, unchanged from before.
+              confirm: isTestMode ? false : undefined,
             });
             bundlePrintfulOrderId = result.id;
+            bundleCostCents = printfulCostCents(result.costs);
           } catch (err) {
             const errName = err instanceof Error ? err.name : typeof err;
             const message = err instanceof Error ? err.message : String(err);
@@ -389,9 +495,8 @@ export async function POST({ request, locals }: APIContext) {
           );
         }
 
-        // Two merch_orders rows (one per item) so each still counts toward
-        // its own color's scarcity cap and both show up separately in
-        // "Your Orders" — merch_orders.session_id is UNIQUE (normally one
+        // Two merch_orders rows (one per item) so each shows up separately
+        // in "Your Orders" — merch_orders.session_id is UNIQUE (normally one
         // row per Stripe session), so each row gets a deterministic suffix
         // instead of the bare session id. Deterministic means a redelivered
         // webhook event still resolves to the same two ids, so INSERT OR
@@ -425,7 +530,7 @@ export async function POST({ request, locals }: APIContext) {
         if (isFirstDelivery) {
           try {
             const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
-            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:G", [
+            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:J", [
               new Date().toISOString(),
               name,
               email,
@@ -433,6 +538,11 @@ export async function POST({ request, locals }: APIContext) {
               shippingName || "",
               shippingAddress || "",
               amountTotal,
+              bundleCostCents !== undefined ? `$${(bundleCostCents / 100).toFixed(2)}` : "",
+              bundleCostCents !== undefined && typeof session.amount_total === "number"
+                ? `$${((session.amount_total - bundleCostCents) / 100).toFixed(2)}`
+                : "",
+              isTestMode ? "TEST" : "",
             ]);
           } catch (err) {
             console.error("Bundle order sheet log failed:", err);
@@ -458,14 +568,20 @@ export async function POST({ request, locals }: APIContext) {
         const syncVariantId = hatVariant?.syncVariantId ?? shirtVariant?.syncVariantId;
         const recipient = extractPrintfulRecipient(session, name, email);
         let printfulOrderId: number | undefined;
+        let itemCostCents: number | undefined;
         if (syncVariantId && recipient) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId,
               recipient,
               externalId: await shortExternalId(session.id),
+              // See the isTestMode comment near the top of this handler —
+              // a Stripe test-mode purchase must never place a real, billed
+              // Printful order. Omitted (defaults to true) for real events.
+              confirm: isTestMode ? false : undefined,
             });
             printfulOrderId = result.id;
+            itemCostCents = printfulCostCents(result.costs);
           } catch (err) {
             // Logged as separate fields (not just the Error object) because the
             // default console.error(prefix, err) formatting was showing up with an
@@ -480,8 +596,8 @@ export async function POST({ request, locals }: APIContext) {
           console.error(`Skipped Printful order for session ${session.id}: syncVariantId=${!!syncVariantId} recipient=${!!recipient}`);
         }
 
-        // D1 is the operational record — it's what the live "X of 10 left" count on
-        // /merch and the presale cap check in create-checkout-session.ts actually read.
+        // D1 is the operational record for this order (powers "Your Orders" on
+        // /member/dashboard and merch-shipped tracking emails).
         try {
           await createMerchOrder(env, {
             sessionId: session.id,
@@ -499,13 +615,16 @@ export async function POST({ request, locals }: APIContext) {
 
         // Also logged to the shared Sheet's "Merch Orders" tab as a human-readable
         // backup record — Printful is now the source of truth for fulfillment, but
-        // having a scannable list of name/color/address here is still useful for
-        // spot-checking that orders actually went through. Gated by isFirstDelivery
-        // so a redelivered event doesn't append a duplicate row every retry.
+        // having a scannable list of name/color/address/cost/profit here is still
+        // useful for spot-checking orders and watching margin as sales come in.
+        // Columns H/I/J (Cost/Profit/Test) added 2026-08-16 — add those headers to
+        // the sheet once by hand; append only ever writes values, never headers.
+        // Gated by isFirstDelivery so a redelivered event doesn't append a
+        // duplicate row every retry.
         if (isFirstDelivery) {
           try {
             const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
-            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:G", [
+            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:J", [
               new Date().toISOString(),
               name,
               email,
@@ -513,6 +632,11 @@ export async function POST({ request, locals }: APIContext) {
               shippingName || "",
               shippingAddress || "",
               amountTotal,
+              itemCostCents !== undefined ? `$${(itemCostCents / 100).toFixed(2)}` : "",
+              itemCostCents !== undefined && typeof session.amount_total === "number"
+                ? `$${((session.amount_total - itemCostCents) / 100).toFixed(2)}`
+                : "",
+              isTestMode ? "TEST" : "",
             ]);
           } catch (err) {
             console.error("Merch order sheet log failed:", err);
@@ -521,10 +645,15 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       if (isFirstDelivery) {
+        // [TEST] prefix on both emails whenever this came from a Stripe
+        // test-mode purchase — same convention /api/admin/test-hat-order
+        // already uses — so a real receipt/notification is never confused
+        // with a pipeline test run.
+        const subjectPrefix = isTestMode ? "[TEST] " : "";
         try {
           await sendEmail(env, {
             to: email,
-            subject: `You're in — ${productInfo.name} receipt`,
+            subject: `${subjectPrefix}${receiptSubject(productInfo)}`,
             html: receiptEmailHtml(name, productInfo),
           });
         } catch (err) {
@@ -534,7 +663,10 @@ export async function POST({ request, locals }: APIContext) {
         try {
           await sendEmail(env, {
             to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
-            subject: `New ${productInfo.isSubscription ? "member" : "purchase"} — ${productInfo.name} — ${email}`,
+            // Kept short (no full product name/variant string) same reasoning
+            // as receiptSubject above — the body already has the full
+            // productLabel plus, for bundles, both item photos.
+            subject: `${subjectPrefix}New ${productInfo.isSubscription ? "member" : "purchase"} — ${email}`,
             html: notifyEmailHtml({
               email,
               name,
@@ -543,6 +675,7 @@ export async function POST({ request, locals }: APIContext) {
               amount: amountTotal,
               event: productInfo.isSubscription ? "New subscriber" : "New purchase",
               image: productInfo.image,
+              items: productInfo.items,
               shippingName,
               shippingAddress,
             }),
