@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { episodes, slugify, SPOTIFY_URL, YOUTUBE_URL, APPLE_URL } from "../data/episodes.js";
+import { episodes, slugify, SPOTIFY_URL, YOUTUBE_URL, APPLE_URL, TOTAL_EPISODES } from "../data/episodes.js";
 
 function formatDate(d) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -35,11 +35,18 @@ const platforms = [
   <section class="episode-list section-light">
     <div class="container">
       <div class="episodes">
-        {episodes.map((ep) => (
+        {episodes.map((ep, i) => (
           <div class="episode-row" id={slugify(ep.title)}>
             <img src={ep.img} alt={ep.title} class="episode-thumb" loading="lazy" />
             <div class="episode-info">
-              <h3>{ep.title}</h3>
+              {/* Counts DOWN from the real, confirmed episode number
+                  (TOTAL_EPISODES) by this row's position in the newest-first
+                  array — same math as the homepage's ghost numeral. Accurate
+                  for the recent episodes; older rows may drift by a few
+                  since this file is missing several early, never-transcribed
+                  episodes (see the header comment above the `episodes`
+                  export) — accepted tradeoff per 2026-08-18 conversation. */}
+              <h3>Episode {TOTAL_EPISODES - i}: {ep.title}</h3>
               <p class="episode-date">{formatDate(ep.date)}</p>
               <div class="episode-links">
                 <a href={ep.link} target="_blank" rel="noopener" class="listen-link">Podbean</a>
