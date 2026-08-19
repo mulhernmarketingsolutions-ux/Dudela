@@ -18,6 +18,15 @@ export interface LoopsEnv {
 // Keep this in sync with the tags in "Dudela Email System & Welcome Sequence.md".
 export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "free-guide": { eventName: "lead-free-guide", userGroup: "Lead – Free Guide" },
+  // These two were missing entirely — sendLoopsEvent() falls back to
+  // LOOPS_EVENTS["newsletter"] for any unmapped magnet, so submitting either
+  // form was silently tagging people "Lead – Newsletter" instead of
+  // segmenting them by which magnet they actually opted into. Found this
+  // while wiring up the Hospital Bag Checklist form; fixing sleep-guide's
+  // mapping here too since it had the exact same gap since it shipped.
+  "sleep-survival-guide": { eventName: "lead-sleep-guide", userGroup: "Lead – Sleep Guide" },
+  "hospital-bag-checklist": { eventName: "lead-hospital-bag-checklist", userGroup: "Lead – Hospital Bag Checklist" },
+  "birth-plan-template": { eventName: "lead-birth-plan-template", userGroup: "Lead – Birth Plan Template" },
   "newsletter": { eventName: "lead-newsletter", userGroup: "Lead – Newsletter" },
   "fall-cohort-waitlist": { eventName: "lead-fall-cohort", userGroup: "Lead – Fall Cohort" },
   "cohort-waitlist": { eventName: "lead-cohort-waitlist", userGroup: "Lead – Steady Dad Cohort" },

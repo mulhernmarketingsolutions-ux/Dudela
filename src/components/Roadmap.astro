@@ -14,7 +14,7 @@ const stages = [
     label: "8 Weeks",
     mission: "The news is real. Now what?",
     free: [
-      { title: "Free Dad Prep Guide", type: "Guide" },
+      { title: "Free Dad Prep Guide", type: "Guide", href: "/guide" },
       { title: "The Emotional Side of Fatherhood Nobody Talks About", type: "Episode" },
     ],
     paid: null,
@@ -41,7 +41,7 @@ const stages = [
     label: "Third Trimester",
     mission: "Pack the bag. Freeze the meals. Ask her how she's really feeling.",
     free: [
-      { title: "Hospital Bag Checklist", type: "Checklist" },
+      { title: "Hospital Bag Checklist", type: "Checklist", href: "/hospital-bag-checklist" },
       { title: "What Should I Focus On Right Now? Pregame for Fatherhood Before Baby Arrives", type: "Episode" },
     ],
     paid: [{ title: "Dudela Prep Kit", price: "$37" }],
@@ -51,7 +51,7 @@ const stages = [
     label: "Hospital",
     mission: "Know exactly what your job is in that room.",
     free: [
-      { title: "Birth Plan Template", type: "Template" },
+      { title: "Birth Plan Template", type: "Template", href: "/birth-plan-template" },
       { title: "What Moms Actually Need From Dads", type: "Episode" },
     ],
     paid: [{ title: "Steady Dad: Before Birth Workshop", price: "$100" }],
@@ -68,7 +68,7 @@ const stages = [
     label: "Sleep Regression",
     mission: "Be steady even when you're exhausted.",
     free: [
-      { title: "Sleep Survival Guide", type: "Guide" },
+      { title: "Sleep Survival Guide", type: "Guide", href: "/sleep-guide" },
       { title: "How to Balance Work and a Newborn Without Losing Your Mind", type: "Episode" },
     ],
     paid: [{ title: "Sleep Coaching Cohort", price: "Coming Soon" }],
@@ -107,7 +107,14 @@ const stages = [
 ];
 
 function freeHref(f) {
-  if (f.type === "Guide") return "/guide";
+  // Prefer an explicit href on the item itself — set this whenever a
+  // dedicated page actually exists for that specific resource. Falling back
+  // to a blanket "all Guides go to /guide" rule (the old behavior) sent
+  // people to the wrong guide (e.g. Sleep Survival Guide -> /guide) and
+  // silently linked not-yet-built guides as if they were live. Anything
+  // without an href here isn't built yet, so it correctly lands on
+  // /resources, which shows it as "Coming Soon".
+  if (f.href) return f.href;
   if (f.type === "Episode") return `/podcast#${slugify(f.title)}`;
   return "/resources";
 }

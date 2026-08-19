@@ -37,6 +37,18 @@ const MAGNETS: Record<string, { subject: string; fileName: string; url: string; 
     url: "https://thedudelaco.com/downloads/dudela-sleep-survival-guide.pdf",
     displayName: "The Sleep Survival Guide",
   },
+  "hospital-bag-checklist": {
+    subject: "Your Hospital Bag Checklist is here",
+    fileName: "Dudela – The Hospital Bag Checklist.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-hospital-bag-checklist.pdf",
+    displayName: "The Hospital Bag Checklist",
+  },
+  "birth-plan-template": {
+    subject: "Your Birth Plan Template is here",
+    fileName: "Dudela – The Birth Plan Template.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-birth-plan-template.pdf",
+    displayName: "The Birth Plan Template",
+  },
 };
 
 // Generic "you're confirmed" copy per magnet, used whenever MAGNETS doesn't have a real

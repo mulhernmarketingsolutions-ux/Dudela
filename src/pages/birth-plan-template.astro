@@ -1,0 +1,184 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+---
+<BaseLayout title="The Birth Plan Template — Dudela" description="Know your job in the room before you're in it. What to decide together, what to tell the care team, and what to do when the plan changes anyway. Free.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">Free Template</p>
+        <h1>The Birth Plan Template</h1>
+        <p class="hero-sub">
+          Know your job in the room before you're in it. What to decide together, what to
+          tell the care team, and what to do when the plan changes anyway.
+        </p>
+        <form class="email-form" id="birth-plan-form">
+          <input type="hidden" name="magnet" value="birth-plan-template" />
+          <input type="hidden" name="source" value="/birth-plan-template" />
+          <input type="email" name="email" placeholder="you@email.com" required />
+          <button type="submit" class="btn btn-primary">Send Me the Template</button>
+        </form>
+        <p id="birth-plan-form-status" class="form-status"></p>
+      </div>
+      <div class="cover-card">
+        <p class="cover-kicker">The Birth Plan Template</p>
+        <p class="cover-title">Know your job<br />in the room<br />before you're in it.</p>
+        <p class="cover-brand">Dudela</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("birth-plan-form") as HTMLFormElement | null;
+    const status = document.getElementById("birth-plan-form-status") as HTMLParagraphElement | null;
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Sending…";
+      try {
+        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "Check your email — the template is on its way.";
+          form.reset();
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+  <section class="whats-inside section-light">
+    <div class="container">
+      <p class="eyebrow">What's inside</p>
+      <div class="inside-grid">
+        <div><h3>Decide together</h3><p>The choices that are easiest to think through calmly, at home — not mid-contraction.</p></div>
+        <div><h3>For the care team</h3><p>One page a nurse will actually read, not five that become background noise.</p></div>
+        <div><h3>If things change</h3><p>Default answers for C-sections, the NICU, and induction — decided before you need them.</p></div>
+        <div><h3>Your actual job</h3><p>What to do in the room once the plan stops matching what's actually happening.</p></div>
+      </div>
+      <p class="body-note">
+        A birth plan isn't a script — it's a conversation you have before the room gets loud.
+        This is the free starting point — the <a href="/kit">Dudela Prep Kit</a> walks the
+        whole hospital stay hour by hour when you're ready for more.
+      </p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 4rem;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+    margin-bottom: 1.75rem;
+  }
+  .email-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    max-width: 460px;
+  }
+  .form-status {
+    color: var(--text-on-dark-muted);
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+    min-height: 1.2em;
+  }
+  .email-form input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-family: var(--font-sans);
+  }
+  .cover-card {
+    background: var(--forest-900);
+    border: 1px solid var(--forest-600);
+    border-radius: var(--radius-md);
+    padding: 2.5rem;
+    aspect-ratio: 4/5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 20px 50px rgba(18, 24, 15, 0.35);
+  }
+  .cover-kicker {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--amber-500);
+    margin: 0;
+  }
+  .cover-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    line-height: 1.2;
+    color: var(--cream-100);
+    margin: 0;
+  }
+  .cover-brand {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    color: var(--text-on-dark-muted);
+    margin: 0;
+  }
+  .whats-inside {
+    padding: var(--space-6) 0;
+  }
+  .inside-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .inside-grid h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+  }
+  .inside-grid p {
+    color: var(--text-on-light-muted);
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  .body-note {
+    max-width: 60ch;
+    color: var(--text-on-light-muted);
+  }
+  .body-note a {
+    color: var(--rust-600);
+  }
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
