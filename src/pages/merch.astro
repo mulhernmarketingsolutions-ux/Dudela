@@ -1624,9 +1624,40 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-weight: 600;
   }
 
-  @media (min-width: 720px) {
-    .colors-grid {
-      grid-template-columns: repeat(2, 1fr);
+  /* Cards used to go 2-up here at 720px+, but that's what left a blank
+     second column next to the lone shirt design (the grid still reserved
+     the slot even with nothing to put in it). Now that each card lays
+     itself out in a full-width row (see the 760px block just below) a
+     single column is the right call regardless of how many designs are in
+     a section — one shirt gets the full width with no empty gap, and two
+     hats simply stack instead of squeezing into half-width columns that
+     wouldn't leave room for the side-by-side layout to work. */
+
+  /* Above ~760px there's room to put the photos and the buy panel side by
+     side instead of stacking them — on a laptop screen the old stacked
+     layout meant scrolling past a full-width image before any of the
+     color/size/price/CTA info came into view, so nothing about a product
+     was visible in one screen at once. Row layout fixes that: the whole
+     card (photo + every control + the Buy button) fits in view together
+     on typical desktop heights. Below 760px there usually isn't enough
+     width left for the info column to stay readable once the photo takes
+     its share, so it stays stacked (the original, still-correct
+     mobile/tablet behavior). Placed after the base .design-card/
+     .design-media/.design-body rules above so it wins the cascade instead
+     of being overridden by them. */
+  @media (min-width: 760px) {
+    .design-card {
+      flex-direction: row;
+      align-items: stretch;
+    }
+    .design-media {
+      width: 46%;
+      flex-shrink: 0;
+      border-bottom: none;
+      border-right: 1px solid var(--border-light);
+    }
+    .design-body {
+      width: 54%;
     }
   }
 
