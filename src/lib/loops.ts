@@ -27,6 +27,7 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
   "sleep-survival-guide": { eventName: "lead-sleep-guide", userGroup: "Lead – Sleep Guide" },
   "hospital-bag-checklist": { eventName: "lead-hospital-bag-checklist", userGroup: "Lead – Hospital Bag Checklist" },
   "birth-plan-template": { eventName: "lead-birth-plan-template", userGroup: "Lead – Birth Plan Template" },
+  "baby-shower-checklist": { eventName: "lead-baby-shower-checklist", userGroup: "Lead – Baby Shower Checklist" },
   "newsletter": { eventName: "lead-newsletter", userGroup: "Lead – Newsletter" },
   "fall-cohort-waitlist": { eventName: "lead-fall-cohort", userGroup: "Lead – Fall Cohort" },
   "cohort-waitlist": { eventName: "lead-cohort-waitlist", userGroup: "Lead – Steady Dad Cohort" },

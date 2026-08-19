@@ -49,6 +49,12 @@ const MAGNETS: Record<string, { subject: string; fileName: string; url: string; 
     url: "https://thedudelaco.com/downloads/dudela-birth-plan-template.pdf",
     displayName: "The Birth Plan Template",
   },
+  "baby-shower-checklist": {
+    subject: "Your Baby Shower Checklist is here",
+    fileName: "Dudela – The Baby Shower Checklist.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-baby-shower-checklist.pdf",
+    displayName: "The Baby Shower Checklist",
+  },
 };
 
 // Generic "you're confirmed" copy per magnet, used whenever MAGNETS doesn't have a real
