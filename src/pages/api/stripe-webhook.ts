@@ -181,15 +181,15 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
     const imagesBlock =
       items.length > 1
         ? `
-      <table role="presentation" width="100%" style="margin:0 0 22px;border-collapse:collapse;">
+      <table role="presentation" width="100%" style="width:100%;margin:0 0 22px;border-collapse:collapse;table-layout:fixed;">
         <tr>
           ${items
             .map((item) => {
               const imgUrl = absoluteImageUrl(item.image);
-              return `<td style="width:50%;text-align:center;padding:0 8px;vertical-align:top;">
+              return `<td style="width:50%;text-align:center;padding:0 6px;vertical-align:top;">
                 ${
                   imgUrl
-                    ? `<img src="${imgUrl}" alt="${item.name}" style="width:140px;height:auto;border-radius:10px;display:inline-block;" />`
+                    ? `<img src="${imgUrl}" alt="${item.name}" width="140" style="width:100%;max-width:140px;height:auto;border-radius:10px;display:inline-block;" />`
                     : ""
                 }
                 <p style="color:#1c2319;font-size:13px;line-height:1.4;margin:8px 0 0;">${item.name}</p>
@@ -201,7 +201,7 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
         : absoluteImageUrl(items[0].image)
           ? `
       <div style="text-align:center;margin:0 0 22px;">
-        <img src="${absoluteImageUrl(items[0].image)}" alt="${items[0].name}" style="width:180px;height:auto;border-radius:10px;display:inline-block;" />
+        <img src="${absoluteImageUrl(items[0].image)}" alt="${items[0].name}" width="180" style="width:180px;max-width:100%;height:auto;border-radius:10px;display:inline-block;" />
       </div>`
           : "";
 
