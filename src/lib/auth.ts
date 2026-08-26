@@ -22,6 +22,7 @@ type CookieJar = {
 export function setSessionCookie(cookies: CookieJar, token: string) {
   cookies.set(SESSION_COOKIE, token, {
     path: "/",
+    domain: ".thedudelaco.com",
     httpOnly: true,
     secure: true,
     sameSite: "lax",
@@ -36,6 +37,7 @@ export function clearSessionCookie(cookies: CookieJar) {
 export function setAdminSessionCookie(cookies: CookieJar, token: string) {
   cookies.set(ADMIN_SESSION_COOKIE, token, {
     path: "/",
+    domain: ".thedudelaco.com",
     httpOnly: true,
     secure: true,
     sameSite: "lax",
