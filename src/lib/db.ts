@@ -449,3 +449,93 @@ export async function createInquiry(
     .run();
   return (await env.DB.prepare("SELECT * FROM inquiries WHERE id = ?").bind(id).first<Inquiry>())!;
 }
+
+// --- Womb Watch reactions + comments ---
+//
+// Three fixed reaction kinds (see REACTION_KINDS in the page) — a member can
+// toggle any/all of them independently on a given episode. Toggling is just
+// "insert if absent, delete if present" against the UNIQUE(post_id,
+// member_id, reaction) constraint from migrations/0007, so no separate
+// "has this member reacted" check is needed before the write.
+
+export interface WombWatchComment {
+  id: string;
+  post_id: string;
+  member_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+}
+
+export async function toggleReaction(
+  env: DbEnv,
+  opts: { postId: string; memberId: string; reaction: string }
+): Promise<{ active: boolean }> {
+  const existing = await env.DB.prepare(
+    "SELECT id FROM womb_watch_reactions WHERE post_id = ? AND member_id = ? AND reaction = ?"
+  )
+    .bind(opts.postId, opts.memberId, opts.reaction)
+    .first<{ id: string }>();
+
+  if (existing) {
+    await env.DB.prepare("DELETE FROM womb_watch_reactions WHERE id = ?").bind(existing.id).run();
+    return { active: false };
+  }
+
+  await env.DB.prepare(
+    `INSERT INTO womb_watch_reactions (id, post_id, member_id, reaction, created_at) VALUES (?, ?, ?, ?, ?)`
+  )
+    .bind(crypto.randomUUID(), opts.postId, opts.memberId, opts.reaction, new Date().toISOString())
+    .run();
+  return { active: true };
+}
+
+// Counts for every reaction kind on one post, e.g. { "been-there": 4, ... }.
+// Called per-post at page render time — post volume is small (episodes, not
+// comments-on-comments), so N small queries beats hand-rolling a dynamic
+// IN-clause for a handful of rows.
+export async function getReactionCounts(env: DbEnv, postId: string): Promise<Record<string, number>> {
+  const res = await env.DB.prepare(
+    "SELECT reaction, COUNT(*) as n FROM womb_watch_reactions WHERE post_id = ? GROUP BY reaction"
+  )
+    .bind(postId)
+    .all<{ reaction: string; n: number }>();
+  const counts: Record<string, number> = {};
+  for (const row of res.results ?? []) counts[row.reaction] = row.n;
+  return counts;
+}
+
+// Which of this member's reactions are currently active on this post, e.g.
+// Set(["been-there", "same-boat"]) — drives the active/highlighted button
+// state so a member sees what they already clicked.
+export async function getMemberReactions(env: DbEnv, postId: string, memberId: string): Promise<Set<string>> {
+  const res = await env.DB.prepare(
+    "SELECT reaction FROM womb_watch_reactions WHERE post_id = ? AND member_id = ?"
+  )
+    .bind(postId, memberId)
+    .all<{ reaction: string }>();
+  return new Set((res.results ?? []).map((r) => r.reaction));
+}
+
+export async function addComment(
+  env: DbEnv,
+  opts: { postId: string; memberId: string; authorName: string; body: string }
+): Promise<WombWatchComment> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO womb_watch_comments (id, post_id, member_id, author_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  )
+    .bind(id, opts.postId, opts.memberId, opts.authorName, opts.body, now)
+    .run();
+  return (await env.DB.prepare("SELECT * FROM womb_watch_comments WHERE id = ?").bind(id).first<WombWatchComment>())!;
+}
+
+export async function listComments(env: DbEnv, postId: string, limit = 100): Promise<WombWatchComment[]> {
+  const res = await env.DB.prepare(
+    "SELECT * FROM womb_watch_comments WHERE post_id = ? ORDER BY created_at ASC LIMIT ?"
+  )
+    .bind(postId, limit)
+    .all<WombWatchComment>();
+  return res.results ?? [];
+}

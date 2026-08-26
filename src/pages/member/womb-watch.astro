@@ -5,7 +5,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import { getAuthedMember } from "../../lib/auth";
-import { listPosts } from "../../lib/db";
+import { listPosts, getReactionCounts, getMemberReactions, listComments } from "../../lib/db";
 import { getEmbed } from "../../lib/embed";
 
 const env = (Astro.locals as any).runtime.env;
@@ -19,8 +19,57 @@ const posts = await listPosts(env, "womb-watch");
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
+function formatShortDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function parseWeekNumber(label: string | null) {
+  if (!label) return null;
+  const m = label.match(/\d+/);
+  return m ? parseInt(m[0], 10) : null;
+}
+function commentCountLabel(n: number) {
+  if (n === 0) return "Be the first to comment";
+  return n === 1 ? "1 comment" : `${n} comments`;
+}
 
-const episodes = posts.map((post) => ({ post, embed: getEmbed(post.video_url) }));
+// Three fixed reaction kinds — keep this list in sync with VALID_REACTIONS
+// in /api/member/womb-watch-react.ts. A member can toggle any/all of them
+// independently per episode.
+const REACTIONS = [
+  { id: "been-there", emoji: "😅", label: "Been there" },
+  { id: "needed-this", emoji: "🙌", label: "Needed this" },
+  { id: "same-boat", emoji: "💪", label: "Same boat" },
+];
+
+// N small DB round-trips per post (counts, my-reactions, comments) rather
+// than one hand-rolled dynamic IN-clause query — post volume here is
+// episodes (currently 5, capped by real pregnancy weeks at ~40), not
+// comments-on-comments, so this stays cheap. Revisit with batched queries
+// if Womb Watch ever needs a real activity-feed scale.
+const episodes = await Promise.all(
+  posts.map(async (post) => {
+    const embed = getEmbed(post.video_url);
+    const weekNumber = parseWeekNumber(post.week_label);
+    const [counts, myReactions, comments] = await Promise.all([
+      getReactionCounts(env, post.id),
+      getMemberReactions(env, post.id, member.id),
+      listComments(env, post.id),
+    ]);
+    return { post, embed, weekNumber, counts, myReactions, comments };
+  })
+);
+
+const TOTAL_WEEKS = 40;
+const byWeek = new Map<number, (typeof episodes)[number]>();
+for (const ep of episodes) {
+  if (ep.weekNumber) byWeek.set(ep.weekNumber, ep);
+}
+const latestWeek = episodes.reduce((max, ep) => (ep.weekNumber && ep.weekNumber > max ? ep.weekNumber : max), 0);
+const progressPct = latestWeek > 0 ? Math.min(100, (latestWeek / TOTAL_WEEKS) * 100) : 0;
+const timelineWeeks = Array.from({ length: TOTAL_WEEKS }, (_, i) => i + 1).map((week) => ({
+  week,
+  episode: byWeek.get(week) || null,
+}));
 
 // Feather-style stroke icons, same pattern as Roadmap.astro — rendered via
 // set:html below since these are raw SVG strings, not components.
@@ -28,96 +77,391 @@ const ICONS = {
   mic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
   doc: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>`,
 };
+
+// Data the client script needs to run the lightbox — id -> playable source.
+// Astro escapes the JSON string fine inside a script tag via set:html since
+// JSON.stringify never emits an unescaped "</script>" for this data shape.
+const episodesData = episodes.map(({ post, embed }) => ({
+  id: post.id,
+  title: post.title,
+  kind: embed?.kind || null,
+  src: embed?.src || null,
+  poster: post.thumbnail_url || null,
+}));
 ---
-<BaseLayout title="Womb Watch — Dudela" description="Coming soon — a behind-the-scenes look at one of our community dads' pregnancy journey, week by week.">
+<BaseLayout
+  title="Womb Watch — Dudela"
+  description="Follow Mike & Abigail's pregnancy week by week — real talk, no script, exclusively for Spit-Up Society members."
+>
   <Nav isAuthed />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Spit-Up Society</p>
+      <span class="segment-tag">🎙️ A Dude Love segment</span>
       <h1>Womb Watch</h1>
       <p class="hero-sub">
-        Coming soon: short check-ins, week by week, from one of our own community dads — what's actually
-        going on with him, his wife, and the pregnancy. Nothing polished, nothing scripted.
+        Week by week, real-time, from one of our own community dads. Mike and Abigail are
+        mid-pregnancy and telling you exactly what's going on — the good, the queasy, the
+        "we're having a girl again." Nothing polished, nothing scripted.
       </p>
+      <p class="hero-note">You're already subscribed — new episodes land in your inbox the second they drop.</p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
     </div>
   </section>
 
-  <section class="posts section-light">
-    <div class="container posts-inner">
-      {episodes.length === 0 && (
+  {episodes.length === 0 ? (
+    <section class="posts section-light">
+      <div class="container posts-inner">
         <p class="empty-state">Nothing posted yet — check back soon.</p>
-      )}
+      </div>
+    </section>
+  ) : (
+    <Fragment>
+      <section class="timeline section-light">
+        <div class="container">
+          <p class="eyebrow">Follow the journey</p>
+          <h2>Week by Week</h2>
+          <p class="timeline-sub">
+            Every episode drops right where it happened in the pregnancy. Scroll the timeline, or
+            just read down below.
+          </p>
 
-      <div class="episode-grid">
-        {episodes.map(({ post, embed }) => (
-          <article class="episode" data-episode>
-            <div class="episode-media" data-media>
-              {embed && embed.kind !== "link" ? (
-                <>
-                  <div class="episode-thumb" data-thumb style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
-                    {!post.thumbnail_url && <div class="thumb-fallback" aria-hidden="true" set:html={ICONS.mic} />}
-                    <button type="button" class="play-btn" data-play aria-label={`Play ${post.title}`} set:html={ICONS.play}>
+          <div class="track-wrap">
+            <div class="track" id="ww-track">
+              <div class="track-line"></div>
+              <div class="track-fill" style={`width:${progressPct}%`}></div>
+              {timelineWeeks.map(({ week, episode }) => {
+                const playable = episode && episode.embed && episode.embed.kind !== "link";
+                const linkOnly = episode && episode.embed && episode.embed.kind === "link";
+                if (episode && playable) {
+                  return (
+                    <button
+                      type="button"
+                      class="stop stop-episode"
+                      data-open-lightbox
+                      data-episode-id={episode.post.id}
+                      aria-label={`Play: ${episode.post.title}`}
+                    >
+                      <span
+                        class="stop-thumb"
+                        style={episode.post.thumbnail_url ? `background-image:url(${episode.post.thumbnail_url})` : ""}
+                      >
+                        {!episode.post.thumbnail_url && <span class="stop-thumb-fallback" set:html={ICONS.mic} />}
+                        <span class="stop-play" set:html={ICONS.play} />
+                      </span>
+                      <span class="stop-week">Wk {week}</span>
                     </button>
-                    {post.week_label && <span class="week-badge">{post.week_label}</span>}
-                  </div>
-                  <div class="episode-embed" data-embed hidden>
-                    {embed.kind === "file" ? (
-                      <video controls preload="none" poster={post.thumbnail_url || undefined} src={embed.src}></video>
+                  );
+                }
+                if (episode && linkOnly) {
+                  return (
+                    <a class="stop stop-episode" href={episode.embed!.src} target="_blank" rel="noopener">
+                      <span class="stop-thumb">
+                        <span class="stop-thumb-fallback" set:html={ICONS.doc} />
+                      </span>
+                      <span class="stop-week">Wk {week}</span>
+                    </a>
+                  );
+                }
+                if (episode) {
+                  return (
+                    <a class="stop stop-episode" href={`#ep-${episode.post.id}`}>
+                      <span class="stop-thumb">
+                        <span class="stop-thumb-fallback" set:html={ICONS.doc} />
+                      </span>
+                      <span class="stop-week">Wk {week}</span>
+                    </a>
+                  );
+                }
+                return (
+                  <span class="stop stop-empty" class:list={{ "stop-past": week <= latestWeek }}>
+                    <span class="stop-dot"></span>
+                    <span class="stop-week">{week}</span>
+                  </span>
+                );
+              })}
+            </div>
+            <div class="track-fade" id="ww-track-fade" aria-hidden="true"></div>
+            <div class="scroll-hint" id="ww-scroll-hint" aria-hidden="true">
+              <span class="scroll-hint-arrow">&rarr;</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="posts section-light">
+        <div class="container posts-inner">
+          <div class="episode-feed">
+            {episodes.map(({ post, embed, counts, myReactions, comments }) => {
+              const playable = embed && embed.kind !== "link";
+              const linkOnly = embed && embed.kind === "link";
+              return (
+                <article class="ep-card" id={`ep-${post.id}`}>
+                  <div class="ep-media">
+                    {playable ? (
+                      <button type="button" class="ep-thumb" data-open-lightbox data-episode-id={post.id} aria-label={`Play ${post.title}`}>
+                        <span class="ep-thumb-img" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
+                          {!post.thumbnail_url && <span class="ep-thumb-fallback" set:html={ICONS.mic} />}
+                        </span>
+                        <span class="ep-play" set:html={ICONS.play} />
+                        {post.week_label && <span class="week-badge">{post.week_label}</span>}
+                      </button>
+                    ) : linkOnly ? (
+                      <a class="ep-thumb ep-thumb-static" href={embed!.src} target="_blank" rel="noopener">
+                        <span class="ep-thumb-img" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
+                          {!post.thumbnail_url && <span class="ep-thumb-fallback" set:html={ICONS.doc} />}
+                        </span>
+                        {post.week_label && <span class="week-badge">{post.week_label}</span>}
+                        <span class="watch-link">Watch here ↗</span>
+                      </a>
                     ) : (
-                      <iframe
-                        src=""
-                        data-src={embed.src}
-                        title={post.title}
-                        loading="lazy"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                      ></iframe>
+                      <div class="ep-thumb ep-thumb-static">
+                        <span class="ep-thumb-img" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
+                          {!post.thumbnail_url && <span class="ep-thumb-fallback" set:html={ICONS.doc} />}
+                        </span>
+                        {post.week_label && <span class="week-badge">{post.week_label}</span>}
+                      </div>
                     )}
                   </div>
-                </>
-              ) : (
-                <div class="episode-thumb no-video" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
-                  {!post.thumbnail_url && <div class="thumb-fallback" aria-hidden="true" set:html={ICONS.doc} />}
-                  {post.week_label && <span class="week-badge">{post.week_label}</span>}
-                  {embed && embed.kind === "link" && (
-                    <a href={embed.src} target="_blank" rel="noopener" class="watch-link">Watch here ↗</a>
-                  )}
-                </div>
-              )}
-            </div>
 
-            <div class="episode-body">
-              <p class="episode-date">{formatDate(post.published_at)}</p>
-              <h2>{post.title}</h2>
-              <div class="post-body">{post.body}</div>
-            </div>
-          </article>
-        ))}
-      </div>
+                  <div class="ep-body">
+                    <p class="ep-date">{formatDate(post.published_at)}</p>
+                    <h2>{post.title}</h2>
+                    <div class="ep-text">{post.body}</div>
+
+                    <div class="ep-reactions" data-reactions data-post-id={post.id}>
+                      <p class="ep-interact-label">How'd this one hit?</p>
+                      <div class="reaction-row">
+                        {REACTIONS.map((r) => (
+                          <button type="button" class="reaction-btn" class:list={{ active: myReactions.has(r.id) }} data-reaction={r.id}>
+                            <span class="reaction-emoji">{r.emoji}</span>
+                            <span class="reaction-label">{r.label}</span>
+                            <span class="reaction-count" data-count>{counts[r.id] || 0}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div class="ep-comments" data-comments>
+                      <p class="ep-interact-label">
+                        Talk about it <span data-comment-count>· {commentCountLabel(comments.length)}</span>
+                      </p>
+                      <div class="comment-list" data-comment-list>
+                        {comments.map((c) => (
+                          <div class="comment">
+                            <span class="comment-author">{c.author_name}</span>
+                            <span class="comment-date">{formatShortDate(c.created_at)}</span>
+                            <p>{c.body}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <form class="comment-form" data-comment-form data-post-id={post.id}>
+                        <textarea placeholder="Relate hard? Got a question for Mike? Drop it here." maxlength="600" required></textarea>
+                        <button type="submit" class="btn btn-primary btn-sm">Post</button>
+                      </form>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </Fragment>
+  )}
+
+  <div class="lightbox" id="ww-lightbox" hidden>
+    <div class="lightbox-backdrop" data-lightbox-close></div>
+    <div class="lightbox-panel">
+      <button type="button" class="lightbox-close" data-lightbox-close aria-label="Close" set:html={ICONS.close}></button>
+      <p class="lightbox-title" id="ww-lightbox-title"></p>
+      <div class="lightbox-video" id="ww-lightbox-video"></div>
     </div>
-  </section>
+  </div>
+
+  <script type="application/json" id="ww-episodes-data" set:html={JSON.stringify(episodesData)} />
 
   <script>
-    // Click-to-play: swap the static thumbnail for a lazy-loaded iframe/video
-    // only when a member actually wants to watch, instead of embedding every
-    // episode's player up front (keeps the page fast for members with a lot
-    // of episodes to scroll past).
-    document.querySelectorAll<HTMLElement>("[data-episode]").forEach((card) => {
-      const playBtn = card.querySelector<HTMLButtonElement>("[data-play]");
-      const thumb = card.querySelector<HTMLElement>("[data-thumb]");
-      const embedWrap = card.querySelector<HTMLElement>("[data-embed]");
-      playBtn?.addEventListener("click", () => {
-        const iframe = embedWrap?.querySelector<HTMLIFrameElement>("iframe[data-src]");
-        if (iframe && !iframe.src) iframe.src = iframe.dataset.src || "";
-        const video = embedWrap?.querySelector<HTMLVideoElement>("video");
-        thumb?.setAttribute("hidden", "");
-        embedWrap?.removeAttribute("hidden");
-        video?.play().catch(() => {});
+    // --- Lightbox: click any thumbnail (timeline or library card) to play,
+    // instead of the old inline-swap that could shove page text out of the
+    // way. A single overlay is reused for every episode rather than one
+    // player per card. ---
+    const episodesData: Array<{ id: string; title: string; kind: string | null; src: string | null; poster: string | null }> =
+      JSON.parse(document.getElementById("ww-episodes-data")?.textContent || "[]");
+    const byId = new Map(episodesData.map((e) => [e.id, e]));
+
+    const lightbox = document.getElementById("ww-lightbox");
+    const lightboxTitle = document.getElementById("ww-lightbox-title");
+    const lightboxVideo = document.getElementById("ww-lightbox-video");
+
+    function openLightbox(id: string) {
+      const ep = byId.get(id);
+      if (!ep || !lightbox || !lightboxTitle || !lightboxVideo) return;
+
+      lightboxTitle.textContent = ep.title;
+      lightboxVideo.innerHTML = "";
+
+      if (ep.kind === "file" && ep.src) {
+        const video = document.createElement("video");
+        video.src = ep.src;
+        video.controls = true;
+        video.autoplay = true;
+        // playsInline (both the property and the attribute) keeps mobile
+        // Safari from hijacking playback into its own native fullscreen
+        // player the instant .play() fires — without it, tapping play
+        // covered the whole screen with an OS chrome that looked broken.
+        video.playsInline = true;
+        video.setAttribute("playsinline", "");
+        if (ep.poster) video.poster = ep.poster;
+        lightboxVideo.appendChild(video);
+      } else if (ep.src) {
+        const iframe = document.createElement("iframe");
+        iframe.src = ep.src;
+        iframe.title = ep.title;
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        lightboxVideo.appendChild(iframe);
+      }
+
+      lightbox.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeLightbox() {
+      if (!lightbox || !lightboxVideo) return;
+      lightbox.hidden = true;
+      lightboxVideo.innerHTML = ""; // stop playback rather than just hiding it
+      document.body.style.overflow = "";
+    }
+
+    document.querySelectorAll<HTMLElement>("[data-open-lightbox]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        const id = el.dataset.episodeId;
+        if (id) openLightbox(id);
       });
     });
+    document.querySelectorAll<HTMLElement>("[data-lightbox-close]").forEach((el) => {
+      el.addEventListener("click", closeLightbox);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeLightbox();
+    });
+
+    // --- Reactions: toggle on click, optimistic count update from the
+    // server's { active } response. ---
+    document.querySelectorAll<HTMLElement>("[data-reactions]").forEach((wrap) => {
+      const postId = wrap.dataset.postId;
+      wrap.querySelectorAll<HTMLButtonElement>("[data-reaction]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const reaction = btn.dataset.reaction;
+          if (!reaction || !postId || btn.disabled) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch("/api/member/womb-watch-react", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ postId, reaction }),
+            });
+            const data = await res.json();
+            if (data.ok) {
+              const countEl = btn.querySelector("[data-count]");
+              if (countEl) {
+                const current = parseInt(countEl.textContent || "0", 10) || 0;
+                countEl.textContent = String(Math.max(0, current + (data.active ? 1 : -1)));
+              }
+              btn.classList.toggle("active", !!data.active);
+            }
+          } catch (err) {
+            console.error("Reaction failed", err);
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+    });
+
+    // --- Comments: post via fetch, append to the list without a reload. ---
+    function escapeHtml(str: string) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    document.querySelectorAll<HTMLFormElement>("[data-comment-form]").forEach((form) => {
+      const postId = form.dataset.postId;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const textarea = form.querySelector<HTMLTextAreaElement>("textarea");
+        const body = textarea?.value.trim();
+        if (!body || !postId) return;
+        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          const res = await fetch("/api/member/womb-watch-comment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId, body }),
+          });
+          const data = await res.json();
+          if (data.ok) {
+            const commentsWrap = form.closest("[data-comments]");
+            const list = commentsWrap?.querySelector("[data-comment-list]");
+            if (list) {
+              const div = document.createElement("div");
+              div.className = "comment";
+              div.innerHTML = `<span class="comment-author">${escapeHtml(data.comment.authorName)}</span><span class="comment-date">${escapeHtml(data.comment.date)}</span><p>${escapeHtml(data.comment.body)}</p>`;
+              list.appendChild(div);
+            }
+            if (textarea) textarea.value = "";
+            const countLabel = commentsWrap?.querySelector("[data-comment-count]");
+            if (countLabel && list) {
+              const n = list.querySelectorAll(".comment").length;
+              countLabel.textContent = "· " + (n === 1 ? "1 comment" : `${n} comments`);
+            }
+          } else {
+            alert(data.error || "Something went wrong. Please try again.");
+          }
+        } catch (err) {
+          console.error("Comment failed", err);
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    });
+
+    // --- Timeline scroll-hint, same one-time "peek" pattern as Roadmap.astro ---
+    const track = document.getElementById("ww-track");
+    const scrollHint = document.getElementById("ww-scroll-hint");
+    const trackFade = document.getElementById("ww-track-fade");
+
+    function hideHint() {
+      scrollHint?.classList.add("hint-hidden");
+      trackFade?.classList.add("hint-hidden");
+    }
+
+    if (track) {
+      if (track.scrollWidth <= track.clientWidth + 4) {
+        hideHint();
+      } else {
+        track.addEventListener(
+          "scroll",
+          () => {
+            hideHint();
+          },
+          { passive: true, once: true }
+        );
+        // Scroll near the current week by default so a member returning
+        // mid-series lands on "now" instead of week 1 every time.
+        const activeStop = track.querySelector(".stop-episode:last-of-type") as HTMLElement | null;
+        if (activeStop) {
+          setTimeout(() => activeStop.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }), 300);
+        }
+      }
+    }
   </script>
 
   <Footer />
@@ -130,13 +474,33 @@ const ICONS = {
   .hero-inner {
     max-width: 640px;
   }
+  .segment-tag {
+    display: inline-block;
+    margin-top: 0.85rem;
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--amber-500);
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+  }
   .hero h1 {
     font-family: var(--font-display);
     font-size: clamp(2.1rem, 4.5vw, 2.9rem);
-    margin: 0.5rem 0 1rem;
+    margin: 0.65rem 0 1rem;
   }
   .hero-sub {
     color: var(--text-on-dark-muted);
+    margin-bottom: 0.9rem;
+  }
+  .hero-note {
+    font-size: 0.88rem;
+    color: var(--amber-500);
+    font-weight: 600;
     margin-bottom: 1.5rem;
   }
   .back-link {
@@ -145,57 +509,230 @@ const ICONS = {
     text-decoration: none;
     font-weight: 600;
   }
+
+  /* --- Timeline --- */
+  .timeline {
+    padding: var(--space-5) 0 var(--space-4);
+  }
+  .timeline h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    margin: 0.4rem 0 0.5rem;
+  }
+  .timeline-sub {
+    color: var(--text-on-light-muted);
+    max-width: 52ch;
+    margin-bottom: 2.25rem;
+  }
+  .track-wrap {
+    position: relative;
+  }
+  .track {
+    position: relative;
+    display: flex;
+    gap: 1.4rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.25rem 1.25rem;
+    scrollbar-width: thin;
+  }
+  .track-line {
+    position: absolute;
+    left: 0.25rem;
+    right: 0.25rem;
+    top: 26px;
+    height: 2px;
+    background: var(--border-light);
+    z-index: 0;
+  }
+  .track-fill {
+    position: absolute;
+    left: 0.25rem;
+    top: 26px;
+    height: 2px;
+    background: var(--amber-500);
+    z-index: 0;
+  }
+  .stop {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 46px;
+    text-decoration: none;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: var(--font-label);
+  }
+  .stop-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bg-light-raised);
+    border: 2px solid var(--border-light);
+  }
+  .stop-past .stop-dot {
+    background: var(--amber-500);
+    border-color: var(--amber-500);
+    opacity: 0.4;
+  }
+  .stop-week {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-on-light-muted);
+  }
+  .stop-episode {
+    min-width: 64px;
+  }
+  .stop-thumb {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--forest-700);
+    border: 2px solid var(--amber-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+  .stop-episode:hover .stop-thumb {
+    transform: scale(1.08);
+  }
+  .stop-thumb-fallback {
+    width: 20px;
+    height: 20px;
+    color: rgba(245, 239, 227, 0.5);
+  }
+  .stop-thumb-fallback :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+  .stop-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 18px;
+    height: 18px;
+    color: #fff;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  }
+  .stop-play :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+  .stop-episode .stop-week {
+    color: var(--text-on-light);
+    font-weight: 800;
+  }
+
+  .track-fade {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 1.25rem;
+    width: 64px;
+    background: linear-gradient(90deg, transparent, var(--bg-light) 80%);
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.35s ease;
+  }
+  .track-fade.hint-hidden {
+    opacity: 0;
+  }
+  .scroll-hint {
+    position: absolute;
+    right: 4px;
+    top: 26px;
+    transform: translate(50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    pointer-events: none;
+    opacity: 1;
+    box-shadow: 0 4px 14px rgba(226, 125, 37, 0.45);
+    transition: opacity 0.35s ease;
+    z-index: 3;
+  }
+  .scroll-hint.hint-hidden {
+    opacity: 0;
+  }
+
+  /* --- Library feed --- */
   .posts {
-    padding: var(--space-5) 0 var(--space-6);
+    padding: var(--space-4) 0 var(--space-6);
   }
   .posts-inner {
-    max-width: 1000px;
+    max-width: 720px;
   }
   .empty-state {
     color: var(--text-on-light-muted);
   }
-  .episode-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+  .episode-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
   }
-  .episode {
+  .ep-card {
     display: flex;
     flex-direction: column;
     background: var(--bg-light-raised);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     overflow: hidden;
+    scroll-margin-top: 6rem;
   }
-  .episode-media {
+  .ep-media {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
     background: var(--forest-800, #1c231a);
   }
-  .episode-thumb {
+  .ep-thumb {
     position: relative;
+    display: block;
     width: 100%;
     height: 100%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+  }
+  .ep-thumb-img {
+    position: absolute;
+    inset: 0;
     background-size: cover;
     background-position: center;
+    background-color: var(--forest-700);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .episode-thumb.no-video {
-    background-color: var(--forest-700);
-  }
-  .thumb-fallback {
+  .ep-thumb-fallback {
     width: 44px;
     height: 44px;
     color: rgba(245, 239, 227, 0.35);
   }
-  .thumb-fallback :global(svg) {
+  .ep-thumb-fallback :global(svg) {
     width: 100%;
     height: 100%;
   }
-  .play-btn {
+  .ep-thumb-static {
+    cursor: default;
+  }
+  .ep-play {
     position: absolute;
     inset: 0;
     margin: auto;
@@ -208,15 +745,15 @@ const ICONS = {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: transform 0.2s ease, background 0.2s ease;
+    pointer-events: none;
   }
-  .play-btn:hover {
+  .ep-thumb:hover .ep-play {
     transform: scale(1.06);
     background: var(--amber-500);
     border-color: var(--amber-500);
   }
-  .play-btn :global(svg) {
+  .ep-play :global(svg) {
     width: 22px;
     height: 22px;
     margin-left: 3px;
@@ -234,6 +771,7 @@ const ICONS = {
     text-transform: uppercase;
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
+    z-index: 1;
   }
   .watch-link {
     position: absolute;
@@ -246,24 +784,11 @@ const ICONS = {
     border-radius: var(--radius-sm);
     font-size: 0.85rem;
     font-weight: 600;
-    text-decoration: none;
   }
-  .episode-embed {
-    width: 100%;
-    height: 100%;
-  }
-  .episode-embed iframe,
-  .episode-embed video {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
-    background: #000;
-  }
-  .episode-body {
+  .ep-body {
     padding: 1.5rem 1.75rem 1.85rem;
   }
-  .episode-date {
+  .ep-date {
     font-family: var(--font-label);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -271,19 +796,210 @@ const ICONS = {
     color: var(--text-on-light-muted);
     margin: 0 0 0.5rem;
   }
-  .episode-body h2 {
+  .ep-body h2 {
     font-family: var(--font-display);
     font-size: 1.4rem;
     margin: 0 0 0.75rem;
   }
-  .post-body {
+  .ep-text {
     color: var(--text-on-light);
     white-space: pre-wrap;
     line-height: 1.7;
+    margin-bottom: 1.5rem;
   }
-  @media (min-width: 720px) {
-    .episode-grid {
-      grid-template-columns: repeat(2, 1fr);
+
+  /* --- Reactions --- */
+  .ep-interact-label {
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.65rem;
+  }
+  .ep-interact-label span {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+  }
+  .ep-reactions {
+    border-top: 1px solid var(--border-light);
+    padding-top: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .reaction-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-on-light);
+    background: var(--bg-light);
+    border: 1.5px solid var(--border-light);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  .reaction-btn:hover {
+    border-color: var(--amber-500);
+    transform: translateY(-1px);
+  }
+  .reaction-btn.active {
+    background: var(--amber-500);
+    border-color: var(--amber-500);
+    color: var(--forest-900);
+  }
+  .reaction-count {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.75;
+  }
+
+  /* --- Comments --- */
+  .ep-comments {
+    border-top: 1px solid var(--border-light);
+    padding-top: 1.25rem;
+  }
+  .comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-bottom: 1.1rem;
+  }
+  .comment {
+    background: var(--bg-light);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+  }
+  .comment-author {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+  }
+  .comment-date {
+    font-size: 0.75rem;
+    color: var(--text-on-light-muted);
+  }
+  .comment p {
+    margin: 0.35rem 0 0;
+    line-height: 1.55;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .comment-form textarea {
+    width: 100%;
+    min-height: 72px;
+    resize: vertical;
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border-light);
+    background: var(--bg-light);
+    color: var(--text-on-light);
+  }
+  .comment-form textarea:focus {
+    outline: none;
+    border-color: var(--amber-500);
+  }
+  .btn-sm {
+    align-self: flex-end;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.85rem;
+  }
+
+  /* --- Lightbox --- */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 12, 8, 0.88);
+  }
+  .lightbox-panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 920px;
+    background: var(--forest-900);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--cream-100);
+    color: var(--forest-900);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+  .lightbox-close :global(svg) {
+    width: 16px;
+    height: 16px;
+  }
+  .lightbox-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--cream-100);
+    margin: 0 0 0.85rem;
+    padding-right: 2rem;
+  }
+  .lightbox-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .lightbox-video :global(video),
+  .lightbox-video :global(iframe) {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    .lightbox {
+      padding: 0;
+    }
+    .lightbox-panel {
+      max-width: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .lightbox-close {
+      top: 0.75rem;
+      right: 0.75rem;
     }
   }
 </style>
