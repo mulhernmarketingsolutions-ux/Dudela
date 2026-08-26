@@ -24,3 +24,12 @@ database_id = "13a7f296-441d-48be-9a54-380a0a816adf"
 [observability.logs]
 enabled = true
 invocation_logs = true
+
+# Womb Watch video storage — private R2 bucket "dudela-womb-watch", created
+# via the Cloudflare dashboard 2026-08-26. Bucket has public access disabled;
+# videos are only reachable through /api/media/[...key], which checks the
+# member session before streaming anything out of it. This is the actual
+# privacy boundary — not a secret URL, an authenticated one.
+[[r2_buckets]]
+binding = "WOMB_WATCH_MEDIA"
+bucket_name = "dudela-womb-watch"
