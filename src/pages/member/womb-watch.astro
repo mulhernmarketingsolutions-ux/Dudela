@@ -31,6 +31,40 @@ function commentCountLabel(n: number) {
   if (n === 0) return "Be the first to comment";
   return n === 1 ? "1 comment" : `${n} comments`;
 }
+// Two-letter monogram for the avatar chips. Comment author names are
+// stored first-name-only (see /api/member/womb-watch-comment.ts), so this
+// is almost always just the first two letters of that name.
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+// Up to 3 most-recent, de-duplicated commenters — powers the little avatar
+// stack on the comment-toggle pill so a card with activity in it visibly
+// shows "people are already here" before anyone clicks to expand.
+function recentAuthors(comments: { author_name: string }[]) {
+  const seen: string[] = [];
+  for (let i = comments.length - 1; i >= 0; i--) {
+    const name = comments[i].author_name;
+    if (!seen.includes(name)) seen.push(name);
+    if (seen.length === 3) break;
+  }
+  return seen;
+}
+// Splits a post body into a punchy lead line (the hook, always shown) and
+// everything after it (collapsed by default behind "Keep reading"). Nothing
+// gets cut — if no sentence break turns up in the first ~160 characters,
+// the whole body just renders as the hook with no toggle at all.
+function splitHook(body: string | null) {
+  const trimmed = (body || "").trim();
+  if (!trimmed) return { hook: "", rest: "" };
+  const match = trimmed.match(/^([\s\S]{0,160}?[.!?])(\s+|$)([\s\S]*)$/);
+  if (match && match[3] && match[3].trim()) {
+    return { hook: match[1].trim(), rest: match[3].trim() };
+  }
+  return { hook: trimmed, rest: "" };
+}
 
 // Three fixed reaction kinds — keep this list in sync with VALID_REACTIONS
 // in /api/member/womb-watch-react.ts. A member can toggle any/all of them
@@ -78,6 +112,9 @@ const ICONS = {
   doc: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>`,
+  chat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+  send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
 };
 
 // Data the client script needs to run the lightbox — id -> playable source.
@@ -100,12 +137,13 @@ const episodesData = episodes.map(({ post, embed }) => ({
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Spit-Up Society</p>
-      <span class="segment-tag">🎙️ A Dude Love segment</span>
+      <span class="segment-tag">🎙️ Straight from co-founder Mike</span>
       <h1>Womb Watch</h1>
       <p class="hero-sub">
-        Week by week, real-time, from one of our own community dads. Mike and Abigail are
-        mid-pregnancy and telling you exactly what's going on — the good, the queasy, the
-        "we're having a girl again." Nothing polished, nothing scripted.
+        Week by week, real-time — from our own co-founder. Mike and Abigail are mid-pregnancy
+        and he's telling you exactly what's going on — the good, the queasy, the "we're having
+        a girl again." He's done this before, and he's still not faking his way through it.
+        Nothing polished, nothing scripted.
       </p>
       <p class="hero-note">You're already subscribed — new episodes land in your inbox the second they drop.</p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
@@ -198,6 +236,9 @@ const episodesData = episodes.map(({ post, embed }) => ({
             {episodes.map(({ post, embed, counts, myReactions, comments }) => {
               const playable = embed && embed.kind !== "link";
               const linkOnly = embed && embed.kind === "link";
+              const { hook, rest } = splitHook(post.body);
+              const restParagraphs = rest ? rest.split(/\n+/).filter(Boolean) : [];
+              const chips = recentAuthors(comments);
               return (
                 <article class="ep-card" id={`ep-${post.id}`}>
                   <div class="ep-media">
@@ -230,37 +271,81 @@ const episodesData = episodes.map(({ post, embed }) => ({
                   <div class="ep-body">
                     <p class="ep-date">{formatDate(post.published_at)}</p>
                     <h2>{post.title}</h2>
-                    <div class="ep-text">{post.body}</div>
 
-                    <div class="ep-reactions" data-reactions data-post-id={post.id}>
-                      <p class="ep-interact-label">How'd this one hit?</p>
-                      <div class="reaction-row">
+                    <div class="ep-text">
+                      <p class="ep-hook">{hook}</p>
+                      {rest && (
+                        <>
+                          <div class="ep-rest" data-ep-rest hidden>
+                            {restParagraphs.map((para) => (
+                              <p>{para}</p>
+                            ))}
+                          </div>
+                          <button type="button" class="ep-toggle" data-ep-toggle>
+                            Keep reading →
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <div class="ep-interact">
+                      <div class="reaction-row" data-reactions data-post-id={post.id}>
                         {REACTIONS.map((r) => (
-                          <button type="button" class="reaction-btn" class:list={{ active: myReactions.has(r.id) }} data-reaction={r.id}>
+                          <button type="button" class="reaction-btn" class:list={{ active: myReactions.has(r.id) }} data-reaction={r.id} title={r.label}>
                             <span class="reaction-emoji">{r.emoji}</span>
                             <span class="reaction-label">{r.label}</span>
                             <span class="reaction-count" data-count>{counts[r.id] || 0}</span>
                           </button>
                         ))}
                       </div>
+
+                      <button
+                        type="button"
+                        class="comment-toggle"
+                        data-comment-toggle
+                        aria-expanded="false"
+                        aria-controls={`comments-${post.id}`}
+                      >
+                        {chips.length > 0 && (
+                          <span class="avatar-stack" aria-hidden="true">
+                            {chips.map((name) => (
+                              <span class="avatar">{initials(name)}</span>
+                            ))}
+                          </span>
+                        )}
+                        <span class="comment-toggle-icon" set:html={ICONS.chat} />
+                        <span data-comment-count>{commentCountLabel(comments.length)}</span>
+                        <span class="comment-toggle-chevron" set:html={ICONS.chevron} />
+                      </button>
                     </div>
 
-                    <div class="ep-comments" data-comments>
-                      <p class="ep-interact-label">
-                        Talk about it <span data-comment-count>· {commentCountLabel(comments.length)}</span>
-                      </p>
-                      <div class="comment-list" data-comment-list>
-                        {comments.map((c) => (
-                          <div class="comment">
-                            <span class="comment-author">{c.author_name}</span>
-                            <span class="comment-date">{formatShortDate(c.created_at)}</span>
-                            <p>{c.body}</p>
-                          </div>
-                        ))}
-                      </div>
+                    <div class="ep-comments" data-comments id={`comments-${post.id}`} hidden>
+                      {comments.length > 0 && (
+                        <div class="comment-list" data-comment-list class:list={{ "is-collapsed": comments.length > 1 }}>
+                          {comments.length > 1 && (
+                            <button type="button" class="comment-expand" data-comment-expand>
+                              See all {comments.length} comments
+                            </button>
+                          )}
+                          {comments.map((c) => (
+                            <div class="comment">
+                              <span class="comment-avatar" aria-hidden="true">{initials(c.author_name)}</span>
+                              <div class="comment-body">
+                                <p class="comment-meta">
+                                  <span class="comment-author">{c.author_name}</span>
+                                  <span class="comment-date">{formatShortDate(c.created_at)}</span>
+                                </p>
+                                <p class="comment-text">{c.body}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <form class="comment-form" data-comment-form data-post-id={post.id}>
                         <textarea placeholder="Relate hard? Got a question for Mike? Drop it here." maxlength="600" required></textarea>
-                        <button type="submit" class="btn btn-primary btn-sm">Post</button>
+                        <button type="submit" class="comment-send" aria-label="Post comment">
+                          <span set:html={ICONS.send} />
+                        </button>
                       </form>
                     </div>
                   </div>
@@ -384,11 +469,51 @@ const episodesData = episodes.map(({ post, embed }) => ({
       });
     });
 
+    // --- "Keep reading" toggle for the long-form part of a description. ---
+    document.querySelectorAll<HTMLButtonElement>("[data-ep-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const rest = btn.closest(".ep-text")?.querySelector<HTMLElement>("[data-ep-rest]");
+        if (!rest) return;
+        const wasHidden = rest.hidden;
+        rest.hidden = !wasHidden;
+        btn.textContent = wasHidden ? "Show less" : "Keep reading →";
+      });
+    });
+
+    // --- Comment panel: collapsed by default so a busy thread doesn't
+    // stretch the card; the pill shows who's already talking. ---
+    document.querySelectorAll<HTMLButtonElement>("[data-comment-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const panel = document.getElementById(btn.getAttribute("aria-controls") || "");
+        if (!panel) return;
+        const wasExpanded = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", String(!wasExpanded));
+        panel.hidden = wasExpanded;
+        if (!wasExpanded) panel.querySelector<HTMLTextAreaElement>("textarea")?.focus();
+      });
+    });
+
+    // --- Comment list: only the latest comment shows by default (the
+    // "peek"); this reveals the rest. ---
+    document.querySelectorAll<HTMLButtonElement>("[data-comment-expand]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        btn.closest(".comment-list")?.classList.remove("is-collapsed");
+        btn.remove();
+      });
+    });
+
     // --- Comments: post via fetch, append to the list without a reload. ---
     function escapeHtml(str: string) {
       const div = document.createElement("div");
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    function initialsClient(name: string) {
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) return "?";
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + parts[1][0]).toUpperCase();
     }
 
     document.querySelectorAll<HTMLFormElement>("[data-comment-form]").forEach((form) => {
@@ -408,19 +533,34 @@ const episodesData = episodes.map(({ post, embed }) => ({
           });
           const data = await res.json();
           if (data.ok) {
+            const card = form.closest(".ep-card");
             const commentsWrap = form.closest("[data-comments]");
-            const list = commentsWrap?.querySelector("[data-comment-list]");
+            let list = commentsWrap?.querySelector<HTMLElement>("[data-comment-list]");
+            if (!list && commentsWrap) {
+              list = document.createElement("div");
+              list.className = "comment-list";
+              list.setAttribute("data-comment-list", "");
+              commentsWrap.insertBefore(list, form);
+            }
             if (list) {
               const div = document.createElement("div");
               div.className = "comment";
-              div.innerHTML = `<span class="comment-author">${escapeHtml(data.comment.authorName)}</span><span class="comment-date">${escapeHtml(data.comment.date)}</span><p>${escapeHtml(data.comment.body)}</p>`;
+              div.innerHTML = `<span class="comment-avatar" aria-hidden="true">${escapeHtml(
+                initialsClient(data.comment.authorName)
+              )}</span><div class="comment-body"><p class="comment-meta"><span class="comment-author">${escapeHtml(
+                data.comment.authorName
+              )}</span><span class="comment-date">${escapeHtml(data.comment.date)}</span></p><p class="comment-text">${escapeHtml(
+                data.comment.body
+              )}</p></div>`;
               list.appendChild(div);
+              const expandBtn = list.querySelector<HTMLButtonElement>("[data-comment-expand]");
+              if (expandBtn) expandBtn.textContent = `See all ${list.querySelectorAll(".comment").length} comments`;
             }
             if (textarea) textarea.value = "";
-            const countLabel = commentsWrap?.querySelector("[data-comment-count]");
-            if (countLabel && list) {
-              const n = list.querySelectorAll(".comment").length;
-              countLabel.textContent = "· " + (n === 1 ? "1 comment" : `${n} comments`);
+            const countLabel = card?.querySelector("[data-comment-count]");
+            if (countLabel) {
+              const n = list?.querySelectorAll(".comment").length || 0;
+              countLabel.textContent = n === 1 ? "1 comment" : `${n} comments`;
             }
           } else {
             alert(data.error || "Something went wrong. Please try again.");
@@ -801,50 +941,79 @@ const episodesData = episodes.map(({ post, embed }) => ({
     font-size: 1.4rem;
     margin: 0 0 0.75rem;
   }
+  /* --- Description: punchy hook always shown, rest collapses --- */
   .ep-text {
+    margin-bottom: 1.35rem;
+  }
+  .ep-hook {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.12rem;
+    line-height: 1.55;
     color: var(--text-on-light);
-    white-space: pre-wrap;
+    border-left: 3px solid var(--amber-500);
+    padding-left: 0.9rem;
+    margin: 0;
+  }
+  .ep-rest {
+    margin-top: 0.9rem;
+    padding-left: 0.9rem;
+    color: var(--text-on-light-muted);
+  }
+  .ep-rest[hidden] {
+    display: none;
+  }
+  .ep-rest p {
     line-height: 1.7;
-    margin-bottom: 1.5rem;
+    margin: 0 0 0.85rem;
+  }
+  .ep-rest p:last-child {
+    margin-bottom: 0;
+  }
+  .ep-toggle {
+    display: inline-block;
+    margin-top: 0.6rem;
+    margin-left: 0.9rem;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--amber-600);
+    cursor: pointer;
+  }
+  .ep-toggle:hover {
+    text-decoration: underline;
   }
 
-  /* --- Reactions --- */
-  .ep-interact-label {
-    font-family: var(--font-label);
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-on-light-muted);
-    margin: 0 0 0.65rem;
-  }
-  .ep-interact-label span {
-    text-transform: none;
-    letter-spacing: normal;
-    font-weight: 500;
-  }
-  .ep-reactions {
+  /* --- Interaction bar: reactions + comment toggle in one compact row --- */
+  .ep-interact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     border-top: 1px solid var(--border-light);
-    padding-top: 1.25rem;
-    margin-bottom: 1.5rem;
+    padding-top: 1.1rem;
   }
   .reaction-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
+    gap: 0.5rem;
   }
   .reaction-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     font-family: var(--font-label);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-on-light);
     background: var(--bg-light);
     border: 1.5px solid var(--border-light);
     border-radius: 999px;
-    padding: 0.45rem 0.9rem;
+    padding: 0.4rem 0.75rem;
     cursor: pointer;
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
   }
@@ -857,26 +1026,134 @@ const episodesData = episodes.map(({ post, embed }) => ({
     border-color: var(--amber-500);
     color: var(--forest-900);
   }
+  .reaction-label {
+    white-space: nowrap;
+  }
   .reaction-count {
     font-variant-numeric: tabular-nums;
     opacity: 0.75;
   }
+  .comment-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-on-light);
+    background: var(--bg-light);
+    border: 1.5px solid var(--border-light);
+    border-radius: 999px;
+    padding: 0.4rem 0.75rem 0.4rem 0.45rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .comment-toggle:hover {
+    border-color: var(--amber-500);
+  }
+  .comment-toggle[aria-expanded="true"] {
+    border-color: var(--amber-500);
+    background: var(--bg-light-raised);
+  }
+  .comment-toggle-icon,
+  .comment-toggle-chevron {
+    display: inline-flex;
+    color: var(--text-on-light-muted);
+  }
+  .comment-toggle-icon :global(svg) {
+    width: 15px;
+    height: 15px;
+  }
+  .comment-toggle-chevron :global(svg) {
+    width: 12px;
+    height: 12px;
+    transition: transform 0.2s ease;
+  }
+  .comment-toggle[aria-expanded="true"] .comment-toggle-chevron :global(svg) {
+    transform: rotate(180deg);
+  }
+  .avatar-stack {
+    display: flex;
+    align-items: center;
+  }
+  .avatar-stack .avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-size: 0.58rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-light-raised);
+    margin-left: -7px;
+  }
+  .avatar-stack .avatar:first-child {
+    margin-left: 0;
+  }
 
-  /* --- Comments --- */
+  /* --- Comments panel: collapsed by default, opened via the toggle pill --- */
   .ep-comments {
     border-top: 1px solid var(--border-light);
-    padding-top: 1.25rem;
+    margin-top: 1.1rem;
+    padding-top: 1.1rem;
+  }
+  .ep-comments[hidden] {
+    display: none;
   }
   .comment-list {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 0.75rem;
     margin-bottom: 1.1rem;
   }
+  .comment-expand {
+    order: -1;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--amber-600);
+    cursor: pointer;
+  }
+  .comment-expand:hover {
+    text-decoration: underline;
+  }
+  .comment-list.is-collapsed .comment:not(:last-child) {
+    display: none;
+  }
   .comment {
+    display: flex;
+    gap: 0.65rem;
     background: var(--bg-light);
     border-radius: var(--radius-sm);
-    padding: 0.75rem 1rem;
+    padding: 0.7rem 0.9rem;
+  }
+  .comment-avatar {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    margin-top: 0.1rem;
+    border-radius: 50%;
+    background: var(--forest-700);
+    color: var(--cream-100);
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .comment-body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .comment-meta {
+    margin: 0 0 0.2rem;
   }
   .comment-author {
     font-weight: 700;
@@ -887,22 +1164,24 @@ const episodesData = episodes.map(({ post, embed }) => ({
     font-size: 0.75rem;
     color: var(--text-on-light-muted);
   }
-  .comment p {
-    margin: 0.35rem 0 0;
+  .comment-text {
+    margin: 0;
     line-height: 1.55;
   }
   .comment-form {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    align-items: flex-end;
+    gap: 0.6rem;
   }
   .comment-form textarea {
+    flex: 1 1 auto;
     width: 100%;
-    min-height: 72px;
+    min-height: 44px;
+    max-height: 140px;
     resize: vertical;
     font-family: var(--font-sans);
     font-size: 0.92rem;
-    padding: 0.75rem 0.9rem;
+    padding: 0.65rem 0.9rem;
     border-radius: var(--radius-sm);
     border: 1.5px solid var(--border-light);
     background: var(--bg-light);
@@ -912,10 +1191,31 @@ const episodesData = episodes.map(({ post, embed }) => ({
     outline: none;
     border-color: var(--amber-500);
   }
-  .btn-sm {
-    align-self: flex-end;
-    padding: 0.6rem 1.4rem;
-    font-size: 0.85rem;
+  .comment-send {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .comment-send:hover {
+    transform: translateY(-1px);
+  }
+  .comment-send:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+  }
+  .comment-send :global(svg) {
+    width: 18px;
+    height: 18px;
   }
 
   /* --- Lightbox --- */
