@@ -4,17 +4,19 @@ export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
-import { getAuthedMember } from "../../lib/auth";
+import PreviewBanner from "../../components/PreviewBanner.astro";
+import { getViewingMember } from "../../lib/auth";
 import { getEmbed } from "../../lib/embed";
 import { NEXT_CALL } from "../../lib/next-call";
 import { getMerchOrdersByEmail } from "../../lib/db";
 import { getHatVariant, hatLabel, getShirtVariant, shirtLabel } from "../../lib/printful";
 
 const env = (Astro.locals as any).runtime.env;
-const member = await getAuthedMember(Astro.cookies, env);
-if (!member) {
+const viewing = await getViewingMember(Astro.cookies, env);
+if (!viewing) {
   return Astro.redirect("/member/login");
 }
+const { member, isPreview } = viewing;
 
 // "Your Orders" — every hat/shirt purchase tied to this email (see
 // getMerchOrdersByEmail's comment in lib/db.ts for why it's email-matched
@@ -107,6 +109,7 @@ const ICONS = {
 ---
 <BaseLayout title="Member Dashboard — Dudela" description="Your Spit-Up Society member area.">
   <Nav isAuthed />
+  {isPreview && <PreviewBanner member={member} />}
 
   <section class="hero section-dark">
     <div class="container hero-inner">
@@ -212,12 +215,21 @@ const ICONS = {
         <span class="card-cta">Send a question →</span>
       </a>
 
-      <a href={member.stripe_customer_id ? "/api/create-portal-session" : "/member/dashboard?error=no-billing-account"} class="card">
-        <div class="card-icon" set:html={ICONS.card} />
-        <h3>Manage Membership</h3>
-        <p>Update your card, see billing history, or cancel — handled directly by Stripe.</p>
-        <span class="card-cta">Open billing portal →</span>
-      </a>
+      {isPreview ? (
+        <div class="card card-disabled">
+          <div class="card-icon" set:html={ICONS.card} />
+          <h3>Manage Membership</h3>
+          <p>Update your card, see billing history, or cancel — handled directly by Stripe.</p>
+          <span class="card-cta">Disabled while previewing</span>
+        </div>
+      ) : (
+        <a href={member.stripe_customer_id ? "/api/create-portal-session" : "/member/dashboard?error=no-billing-account"} class="card">
+          <div class="card-icon" set:html={ICONS.card} />
+          <h3>Manage Membership</h3>
+          <p>Update your card, see billing history, or cancel — handled directly by Stripe.</p>
+          <span class="card-cta">Open billing portal →</span>
+        </a>
+      )}
     </div>
 
     {errorMessage && <p class="dash-error container">{errorMessage}</p>}
@@ -431,6 +443,13 @@ const ICONS = {
   a.card:hover {
     transform: translateY(-2px);
     border-color: var(--amber-500);
+  }
+  .card-disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .card-disabled .card-cta {
+    color: var(--text-on-light-muted);
   }
   .card-icon {
     width: 38px;

@@ -1,0 +1,62 @@
+---
+// Shown at the top of every gated member page when an admin is using
+// "Preview as a subscriber" (see /admin) instead of a real member session.
+// Keeps it obvious this isn't their own account and gives a one-click way
+// back out — see getViewingMember in lib/auth.ts for how this gets set.
+import type { Member } from "../lib/db";
+
+export interface Props {
+  member: Member;
+}
+const { member } = Astro.props;
+const displayName = member.name || member.email;
+---
+<div class="preview-banner">
+  <div class="container preview-inner">
+    <p>
+      👀 <strong>Previewing as {displayName}</strong> — this is what they see. Interactions are
+      turned off while previewing.
+    </p>
+    <a href="/api/admin/preview?exit=1" class="preview-exit">Exit preview →</a>
+  </div>
+</div>
+
+<style>
+  /* Nav is position:fixed at top:0 with z-index:50 (see Nav.astro) and is
+     transparent until scrolled, so this can't just sit in normal flow —
+     it'd either get painted over by the nav or show through behind it
+     depending on scroll position. Pinning it fixed just below the nav's
+     own height (roughly 6.2rem — 64px wordmark + 1.1rem vertical padding)
+     keeps it clear of the logo/links row in both nav states without
+     touching the shared Nav component used by every page on the site. */
+  .preview-banner {
+    position: fixed;
+    top: 5.5rem;
+    left: 0;
+    right: 0;
+    z-index: 49;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  }
+  .preview-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .preview-inner p {
+    margin: 0;
+  }
+  .preview-exit {
+    color: var(--forest-900);
+    font-weight: 800;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+</style>

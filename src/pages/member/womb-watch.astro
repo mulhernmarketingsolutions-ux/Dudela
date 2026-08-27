@@ -4,15 +4,17 @@ export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
-import { getAuthedMember } from "../../lib/auth";
+import PreviewBanner from "../../components/PreviewBanner.astro";
+import { getViewingMember } from "../../lib/auth";
 import { listPosts, getReactionCounts, getMemberReactions, listComments } from "../../lib/db";
 import { getEmbed } from "../../lib/embed";
 
 const env = (Astro.locals as any).runtime.env;
-const member = await getAuthedMember(Astro.cookies, env);
-if (!member) {
+const viewing = await getViewingMember(Astro.cookies, env);
+if (!viewing) {
   return Astro.redirect("/member/login");
 }
+const { member, isPreview } = viewing;
 
 const posts = await listPosts(env, "womb-watch");
 
@@ -133,6 +135,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
   description="Follow Mike & Abigail's pregnancy week by week — real talk, no script, exclusively for Spit-Up Society members."
 >
   <Nav isAuthed />
+  {isPreview && <PreviewBanner member={member} />}
 
   <section class="hero section-dark">
     <div class="container hero-inner">
@@ -291,7 +294,14 @@ const episodesData = episodes.map(({ post, embed }) => ({
                     <div class="ep-interact">
                       <div class="reaction-row" data-reactions data-post-id={post.id}>
                         {REACTIONS.map((r) => (
-                          <button type="button" class="reaction-btn" class:list={{ active: myReactions.has(r.id) }} data-reaction={r.id} title={r.label}>
+                          <button
+                            type="button"
+                            class="reaction-btn"
+                            class:list={{ active: myReactions.has(r.id) }}
+                            data-reaction={r.id}
+                            title={r.label}
+                            disabled={isPreview}
+                          >
                             <span class="reaction-emoji">{r.emoji}</span>
                             <span class="reaction-label">{r.label}</span>
                             <span class="reaction-count" data-count>{counts[r.id] || 0}</span>
@@ -341,12 +351,16 @@ const episodesData = episodes.map(({ post, embed }) => ({
                           ))}
                         </div>
                       )}
-                      <form class="comment-form" data-comment-form data-post-id={post.id}>
-                        <textarea placeholder="Relate hard? Got a question for Mike? Drop it here." maxlength="600" required></textarea>
-                        <button type="submit" class="comment-send" aria-label="Post comment">
-                          <span set:html={ICONS.send} />
-                        </button>
-                      </form>
+                      {isPreview ? (
+                        <p class="preview-note">Commenting is disabled while previewing.</p>
+                      ) : (
+                        <form class="comment-form" data-comment-form data-post-id={post.id}>
+                          <textarea placeholder="Relate hard? Got a question for Mike? Drop it here." maxlength="600" required></textarea>
+                          <button type="submit" class="comment-send" aria-label="Post comment">
+                            <span set:html={ICONS.send} />
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -1025,6 +1039,18 @@ const episodesData = episodes.map(({ post, embed }) => ({
     background: var(--amber-500);
     border-color: var(--amber-500);
     color: var(--forest-900);
+  }
+  .reaction-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+    pointer-events: none;
+  }
+  .preview-note {
+    color: var(--text-on-light-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin: 0;
   }
   .reaction-label {
     white-space: nowrap;

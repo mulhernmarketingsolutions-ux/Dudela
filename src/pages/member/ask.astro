@@ -4,16 +4,19 @@ export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
-import { getAuthedMember } from "../../lib/auth";
+import PreviewBanner from "../../components/PreviewBanner.astro";
+import { getViewingMember } from "../../lib/auth";
 
 const env = (Astro.locals as any).runtime.env;
-const member = await getAuthedMember(Astro.cookies, env);
-if (!member) {
+const viewing = await getViewingMember(Astro.cookies, env);
+if (!viewing) {
   return Astro.redirect("/member/login");
 }
+const { member, isPreview } = viewing;
 ---
 <BaseLayout title="Ask Us Anything — Dudela" description="Send Mike & John a question for the next live Q&A.">
   <Nav isAuthed />
+  {isPreview && <PreviewBanner member={member} />}
 
   <section class="hero section-dark">
     <div class="container hero-inner">
@@ -27,8 +30,9 @@ if (!member) {
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
 
       <form class="ask-form" id="ask-form">
-        <textarea name="question" rows="5" placeholder="What do you want us to cover?" required></textarea>
-        <button type="submit" class="btn btn-primary">Send It In</button>
+        <textarea name="question" rows="5" placeholder="What do you want us to cover?" required disabled={isPreview}></textarea>
+        <button type="submit" class="btn btn-primary" disabled={isPreview}>Send It In</button>
+        {isPreview && <p class="preview-note">Disabled while previewing.</p>}
       </form>
       <p id="ask-form-status" class="form-status"></p>
 
@@ -44,6 +48,7 @@ if (!member) {
     form?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      if (btn.disabled) return; // preview mode — see PreviewBanner
       btn.disabled = true;
       if (status) status.textContent = "Sending…";
       try {
@@ -112,6 +117,12 @@ if (!member) {
     font-size: 0.85rem;
     margin-top: 0.9rem;
     min-height: 1.2em;
+  }
+  .preview-note {
+    color: var(--amber-500);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin: 0.6rem 0 0;
   }
   .alt-channel {
     margin-top: 2.5rem;

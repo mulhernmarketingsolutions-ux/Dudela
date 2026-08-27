@@ -4,14 +4,16 @@ export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
-import { getAuthedMember } from "../../lib/auth";
+import PreviewBanner from "../../components/PreviewBanner.astro";
+import { getViewingMember } from "../../lib/auth";
 import { listCommunityNotes, getCommunityNoteByMemberId } from "../../lib/db";
 
 const env = (Astro.locals as any).runtime.env;
-const member = await getAuthedMember(Astro.cookies, env);
-if (!member) {
+const viewing = await getViewingMember(Astro.cookies, env);
+if (!viewing) {
   return Astro.redirect("/member/login");
 }
+const { member, isPreview } = viewing;
 
 const notes = await listCommunityNotes(env);
 const myNote = await getCommunityNoteByMemberId(env, member.id);
@@ -37,6 +39,7 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
 ---
 <BaseLayout title="The Circle — Dudela" description="A snapshot of the dads in the Spit-Up Society.">
   <Nav isAuthed />
+  {isPreview && <PreviewBanner member={member} />}
 
   <section class="hero section-dark">
     <div class="container hero-inner">
@@ -112,7 +115,8 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
           <span>One thing you've learned as a dad <span class="hint">(160 characters, keep it tight)</span></span>
           <textarea name="advice" rows="2" maxlength="160" required placeholder="Sleep when you can, but let the dishes wait.">{myNote?.advice || ""}</textarea>
         </label>
-        <button type="submit" class="btn btn-primary">{myNote ? "Update My Bubble" : "Add My Bubble"}</button>
+        <button type="submit" class="btn btn-primary" disabled={isPreview}>{myNote ? "Update My Bubble" : "Add My Bubble"}</button>
+        {isPreview && <p class="preview-note">Disabled while previewing.</p>}
       </form>
       <p id="note-form-status" class="form-status"></p>
     </div>
@@ -181,6 +185,7 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     form?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      if (btn.disabled) return; // preview mode — see PreviewBanner
       btn.disabled = true;
       if (status) status.textContent = "Saving…";
       try {
@@ -451,5 +456,11 @@ const TINTS = ["tint-amber", "tint-rust", "tint-forest"];
     font-size: 0.85rem;
     margin-top: 0.9rem;
     min-height: 1.2em;
+  }
+  .preview-note {
+    color: var(--amber-500);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin: 0.6rem 0 0;
   }
 </style>

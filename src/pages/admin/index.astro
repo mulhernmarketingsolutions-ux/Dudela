@@ -2,8 +2,9 @@
 export const prerender = false;
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { isAdminAuthed } from "../../lib/auth";
+import { isAdminAuthed, PREVIEW_MEMBER_COOKIE } from "../../lib/auth";
 import { HAT_CATALOG, SHIRT_CATALOG, hatLabel, shirtLabel } from "../../lib/printful";
+import { listActiveMembers, getMemberById } from "../../lib/db";
 
 // Real admin home page — didn't exist before. /admin/login used to dump
 // straight into /admin/womb-watch because Womb Watch posting was the only
@@ -17,6 +18,15 @@ const authed = await isAdminAuthed(Astro.cookies, env);
 if (!authed) {
   return Astro.redirect("/admin/login");
 }
+
+// "Preview as a subscriber" — lets Mike/John see exactly what a real member
+// sees (Womb Watch, dashboard, the rest of /member/*) without logging out
+// of admin or logging into a separate member account. See getViewingMember
+// in lib/auth.ts for how the member-facing pages pick this up, and
+// /api/admin/preview.ts for the start/stop endpoint this panel links to.
+const previewMembers = await listActiveMembers(env);
+const previewingId = Astro.cookies.get(PREVIEW_MEMBER_COOKIE)?.value;
+const previewingMember = previewingId ? await getMemberById(env, previewingId) : null;
 ---
 <BaseLayout title="Admin — Dudela" description="">
   <section class="admin-shell">
@@ -31,6 +41,36 @@ if (!authed) {
         <h2>Womb Watch</h2>
         <p class="panel-sub">Post a new update or manage existing ones.</p>
         <a href="/admin/womb-watch" class="btn btn-primary">Open Womb Watch posting</a>
+      </div>
+
+      <div class="panel panel-preview">
+        <h2>Preview as a subscriber</h2>
+        {previewingMember ? (
+          <>
+            <p class="panel-sub">
+              You're currently previewing as <strong>{previewingMember.name || previewingMember.email}</strong>.
+              Every /member page will show exactly what they see (interactions are turned off) until you exit.
+            </p>
+            <a href="/api/admin/preview?exit=1" class="btn btn-primary">Exit preview</a>
+          </>
+        ) : previewMembers.length === 0 ? (
+          <p class="panel-sub">No active Spit-Up Society members yet — this fills in once someone joins.</p>
+        ) : (
+          <>
+            <p class="panel-sub">
+              Pick a real member and see the member area exactly as they see it — no separate login, no
+              guessing. Read-only: reactions and comments are disabled while previewing.
+            </p>
+            <div class="tester-row">
+              <select id="preview-select">
+                {previewMembers.map((m) => (
+                  <option value={m.id}>{m.name ? `${m.name} — ${m.email}` : m.email}</option>
+                ))}
+              </select>
+              <a id="preview-go" href="#" class="btn btn-ghost">Preview as this member</a>
+            </div>
+          </>
+        )}
       </div>
 
       <div class="panel">
@@ -104,6 +144,16 @@ if (!authed) {
   }
   wireTester("hat-select", "hat-go", "/api/admin/test-hat-order");
   wireTester("shirt-select", "shirt-go", "/api/admin/test-shirt-order");
+
+  const previewSelect = document.getElementById("preview-select") as HTMLSelectElement | null;
+  const previewGo = document.getElementById("preview-go") as HTMLAnchorElement | null;
+  if (previewSelect && previewGo) {
+    const updatePreview = () => {
+      previewGo.href = `/api/admin/preview?memberId=${encodeURIComponent(previewSelect.value)}`;
+    };
+    previewSelect.addEventListener("change", updatePreview);
+    updatePreview();
+  }
 </script>
 
 <style>
@@ -187,5 +237,8 @@ if (!authed) {
   .tool-list a {
     color: var(--amber-500);
     font-weight: 600;
+  }
+  .panel-preview {
+    border-color: var(--amber-500);
   }
 </style>
