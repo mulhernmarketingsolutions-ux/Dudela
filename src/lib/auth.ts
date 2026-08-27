@@ -36,7 +36,7 @@ export function setSessionCookie(cookies: CookieJar, token: string) {
 }
 
 export function clearSessionCookie(cookies: CookieJar) {
-  cookies.delete(SESSION_COOKIE, { path: "/" });
+  cookies.delete(SESSION_COOKIE, { path: "/", domain: ".thedudelaco.com" });
 }
 
 export function setAdminSessionCookie(cookies: CookieJar, token: string) {
@@ -51,7 +51,7 @@ export function setAdminSessionCookie(cookies: CookieJar, token: string) {
 }
 
 export function clearAdminSessionCookie(cookies: CookieJar) {
-  cookies.delete(ADMIN_SESSION_COOKIE, { path: "/" });
+  cookies.delete(ADMIN_SESSION_COOKIE, { path: "/", domain: ".thedudelaco.com" });
 }
 
 // Used at the top of every gated member page/route. Returns the logged-in
@@ -81,7 +81,12 @@ export function setPreviewMemberCookie(cookies: CookieJar, memberId: string) {
 }
 
 export function clearPreviewMemberCookie(cookies: CookieJar) {
-  cookies.delete(PREVIEW_MEMBER_COOKIE, { path: "/" });
+  // Must match the domain setPreviewMemberCookie set it with, or this
+  // silently expires a *different*, host-only cookie and leaves the real
+  // one in place — exactly the bug that made the R2 media 401s happen
+  // earlier, and the reason "Exit preview" didn't actually exit when
+  // first tested live.
+  cookies.delete(PREVIEW_MEMBER_COOKIE, { path: "/", domain: ".thedudelaco.com" });
 }
 
 // The member whose eyes we're actually rendering the page through. Almost
