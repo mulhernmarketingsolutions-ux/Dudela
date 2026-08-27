@@ -7,7 +7,7 @@ import Footer from "../../components/Footer.astro";
 import PreviewBanner from "../../components/PreviewBanner.astro";
 import { getViewingMember } from "../../lib/auth";
 import { listPosts, getReactionCounts, getMemberReactions, listComments } from "../../lib/db";
-import { getEmbed } from "../../lib/embed";
+import { getEmbed, toRelativeMediaUrl } from "../../lib/embed";
 
 const env = (Astro.locals as any).runtime.env;
 const viewing = await getViewingMember(Astro.cookies, env);
@@ -85,13 +85,14 @@ const REACTIONS = [
 const episodes = await Promise.all(
   posts.map(async (post) => {
     const embed = getEmbed(post.video_url);
+    const thumb = toRelativeMediaUrl(post.thumbnail_url);
     const weekNumber = parseWeekNumber(post.week_label);
     const [counts, myReactions, comments] = await Promise.all([
       getReactionCounts(env, post.id),
       getMemberReactions(env, post.id, member.id),
       listComments(env, post.id),
     ]);
-    return { post, embed, weekNumber, counts, myReactions, comments };
+    return { post, embed, thumb, weekNumber, counts, myReactions, comments };
   })
 );
 
@@ -127,7 +128,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
   title: post.title,
   kind: embed?.kind || null,
   src: embed?.src || null,
-  poster: post.thumbnail_url || null,
+  poster: toRelativeMediaUrl(post.thumbnail_url),
 }));
 ---
 <BaseLayout
@@ -188,9 +189,9 @@ const episodesData = episodes.map(({ post, embed }) => ({
                     >
                       <span
                         class="stop-thumb"
-                        style={episode.post.thumbnail_url ? `background-image:url(${episode.post.thumbnail_url})` : ""}
+                        style={episode.thumb ? `background-image:url(${episode.thumb})` : ""}
                       >
-                        {!episode.post.thumbnail_url && <span class="stop-thumb-fallback" set:html={ICONS.mic} />}
+                        {!episode.thumb && <span class="stop-thumb-fallback" set:html={ICONS.mic} />}
                         <span class="stop-play" set:html={ICONS.play} />
                       </span>
                       <span class="stop-week">Wk {week}</span>
@@ -236,7 +237,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
       <section class="posts section-light">
         <div class="container posts-inner">
           <div class="episode-feed">
-            {episodes.map(({ post, embed, counts, myReactions, comments }) => {
+            {episodes.map(({ post, embed, thumb, counts, myReactions, comments }) => {
               const playable = embed && embed.kind !== "link";
               const linkOnly = embed && embed.kind === "link";
               const { hook, rest } = splitHook(post.body);
@@ -247,24 +248,24 @@ const episodesData = episodes.map(({ post, embed }) => ({
                   <div class="ep-media">
                     {playable ? (
                       <button type="button" class="ep-thumb" data-open-lightbox data-episode-id={post.id} aria-label={`Play ${post.title}`}>
-                        <span class="ep-thumb-img" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
-                          {!post.thumbnail_url && <span class="ep-thumb-fallback" set:html={ICONS.mic} />}
+                        <span class="ep-thumb-img" style={thumb ? `background-image:url(${thumb})` : ""}>
+                          {!thumb && <span class="ep-thumb-fallback" set:html={ICONS.mic} />}
                         </span>
                         <span class="ep-play" set:html={ICONS.play} />
                         {post.week_label && <span class="week-badge">{post.week_label}</span>}
                       </button>
                     ) : linkOnly ? (
                       <a class="ep-thumb ep-thumb-static" href={embed!.src} target="_blank" rel="noopener">
-                        <span class="ep-thumb-img" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
-                          {!post.thumbnail_url && <span class="ep-thumb-fallback" set:html={ICONS.doc} />}
+                        <span class="ep-thumb-img" style={thumb ? `background-image:url(${thumb})` : ""}>
+                          {!thumb && <span class="ep-thumb-fallback" set:html={ICONS.doc} />}
                         </span>
                         {post.week_label && <span class="week-badge">{post.week_label}</span>}
                         <span class="watch-link">Watch here ↗</span>
                       </a>
                     ) : (
                       <div class="ep-thumb ep-thumb-static">
-                        <span class="ep-thumb-img" style={post.thumbnail_url ? `background-image:url(${post.thumbnail_url})` : ""}>
-                          {!post.thumbnail_url && <span class="ep-thumb-fallback" set:html={ICONS.doc} />}
+                        <span class="ep-thumb-img" style={thumb ? `background-image:url(${thumb})` : ""}>
+                          {!thumb && <span class="ep-thumb-fallback" set:html={ICONS.doc} />}
                         </span>
                         {post.week_label && <span class="week-badge">{post.week_label}</span>}
                       </div>
