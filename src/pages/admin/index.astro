@@ -37,11 +37,7 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
         <a href="/api/admin/logout" class="logout-link">Log out</a>
       </div>
 
-      <div class="panel">
-        <h2>Womb Watch</h2>
-        <p class="panel-sub">Post a new update or manage existing ones.</p>
-        <a href="/admin/womb-watch" class="btn btn-primary">Open Womb Watch posting</a>
-      </div>
+      <p class="section-label">Content</p>
 
       <div class="panel panel-preview">
         <h2>Preview as a subscriber</h2>
@@ -49,7 +45,7 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
           <>
             <p class="panel-sub">
               You're currently previewing as <strong>{previewingMember.name || previewingMember.email}</strong>.
-              Every /member page will show exactly what they see (interactions are turned off) until you exit.
+              Every member page shows exactly what they see (interactions are turned off) until you exit.
             </p>
             <a href="/api/admin/preview?exit=1" class="btn btn-primary">Exit preview</a>
           </>
@@ -74,13 +70,22 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
       </div>
 
       <div class="panel">
-        <h2>Test a hat order</h2>
+        <h2>Womb Watch</h2>
+        <p class="panel-sub">Post a new update or manage existing ones.</p>
+        <a href="/admin/womb-watch" class="btn btn-primary">Open Womb Watch posting</a>
+      </div>
+
+      <p class="section-label">Merch order testing</p>
+
+      <div class="panel">
         <p class="panel-sub">
-          Places a real Printful order for the picked color using the exact code the live site
+          Places a real Printful order for the picked color/size using the exact code the live site
           uses, but leaves it as an unconfirmed draft — free, no charge. Open Printful → Orders to
-          check it, then delete the draft.
+          check it, then delete the draft. Add <code>&confirm=1</code> to a link below to actually
+          confirm it into production instead — a real charge, same as a live order.
         </p>
         <div class="tester-row">
+          <span class="tester-label">Hat</span>
           <select id="hat-select">
             {HAT_CATALOG.map((h) => (
               <option value={h.key}>{hatLabel(h)}</option>
@@ -88,13 +93,8 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
           </select>
           <a id="hat-go" href="#" class="btn btn-ghost" target="_blank" rel="noopener">Create test draft</a>
         </div>
-        <p class="panel-hint">Add <code>&confirm=1</code> to the URL to actually confirm it into production — a real charge, same as a live order.</p>
-      </div>
-
-      <div class="panel">
-        <h2>Test a shirt order</h2>
-        <p class="panel-sub">Same as above, for shirts.</p>
         <div class="tester-row">
+          <span class="tester-label">Shirt</span>
           <select id="shirt-select">
             {SHIRT_CATALOG.map((s) => (
               <option value={s.key}>{shirtLabel(s)}</option>
@@ -104,29 +104,33 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
         </div>
       </div>
 
-      <div class="panel">
-        <h2>Printful / mockup debug tools</h2>
-        <p class="panel-sub">Read-only or idempotent — safe to open. Mostly useful when adding a new product or troubleshooting mockups.</p>
-        <ul class="tool-list">
-          <li><a href="/api/admin/printful-debug?all=1" target="_blank" rel="noopener">List every published Printful product</a> — name, color, sync_variant_id, mockup URL for each.</li>
-          <li><a href="/api/admin/printful-debug" target="_blank" rel="noopener">Raw sync/products list</a></li>
-          <li><a href="/api/admin/mockups" target="_blank" rel="noopener">Hat mockup regeneration tool</a> — pass <code>?start=1</code> to kick off, <code>?poll=&lt;keys&gt;</code> to check status.</li>
-          <li><a href="/api/admin/mockups-shirt" target="_blank" rel="noopener">Shirt mockup regeneration tool</a> — same pattern, superseded by the real Printful dashboard renders currently live on /merch.</li>
-        </ul>
-      </div>
-
-      <div class="panel">
-        <h2>Shipping tracking emails</h2>
-        <p class="panel-sub">
-          One-time setup so buyers get a real Dudela-branded email with tracking info when their order ships
-          (Printful fires a webhook to us; before this existed, the receipt's "we'll email you when it ships" line wasn't backed by anything).
-          Requires the <code>PRINTFUL_WEBHOOK_TOKEN</code> secret to be set first — run
-          <code>wrangler secret put PRINTFUL_WEBHOOK_TOKEN</code> (any random string) if it isn't yet.
-        </p>
-        <ul class="tool-list">
-          <li><a href="/api/admin/printful-webhook-setup" target="_blank" rel="noopener">Register this site with Printful</a> — safe to re-run any time the URL or token changes.</li>
-        </ul>
-      </div>
+      <details class="panel panel-advanced">
+        <summary>Advanced / debug tools</summary>
+        <div class="advanced-body">
+          <div class="advanced-group">
+            <h3>Printful / mockup debug tools</h3>
+            <p class="panel-sub">Read-only or idempotent — safe to open. Mostly useful when adding a new product or troubleshooting mockups.</p>
+            <ul class="tool-list">
+              <li><a href="/api/admin/printful-debug?all=1" target="_blank" rel="noopener">List every published Printful product</a> — name, color, sync_variant_id, mockup URL for each.</li>
+              <li><a href="/api/admin/printful-debug" target="_blank" rel="noopener">Raw sync/products list</a></li>
+              <li><a href="/api/admin/mockups" target="_blank" rel="noopener">Hat mockup regeneration tool</a> — pass <code>?start=1</code> to kick off, <code>?poll=&lt;keys&gt;</code> to check status.</li>
+              <li><a href="/api/admin/mockups-shirt" target="_blank" rel="noopener">Shirt mockup regeneration tool</a> — same pattern, superseded by the real Printful dashboard renders currently live on /merch.</li>
+            </ul>
+          </div>
+          <div class="advanced-group">
+            <h3>Shipping tracking emails</h3>
+            <p class="panel-sub">
+              One-time setup so buyers get a real Dudela-branded email with tracking info when their order ships
+              (Printful fires a webhook to us; before this existed, the receipt's "we'll email you when it ships" line wasn't backed by anything).
+              Requires the <code>PRINTFUL_WEBHOOK_TOKEN</code> secret to be set first — run
+              <code>wrangler secret put PRINTFUL_WEBHOOK_TOKEN</code> (any random string) if it isn't yet.
+            </p>
+            <ul class="tool-list">
+              <li><a href="/api/admin/printful-webhook-setup" target="_blank" rel="noopener">Register this site with Printful</a> — safe to re-run any time the URL or token changes.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
     </div>
   </section>
 </BaseLayout>
@@ -170,6 +174,18 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
     gap: 1rem;
     margin-bottom: 2.5rem;
   }
+  .section-label {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-on-dark-muted);
+    margin: 2.25rem 0 0.85rem;
+  }
+  .section-label:first-of-type {
+    margin-top: 0;
+  }
   .admin-header h1 {
     font-family: var(--font-display);
     font-size: 2rem;
@@ -212,8 +228,22 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
   }
   .tester-row {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+  .tester-row + .tester-row {
+    margin-top: 0.85rem;
+  }
+  .tester-label {
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-on-dark-muted);
+    width: 42px;
+    flex: 0 0 auto;
   }
   .tester-row select {
     flex: 1;
@@ -240,5 +270,49 @@ const previewingMember = previewingId ? await getMemberById(env, previewingId) :
   }
   .panel-preview {
     border-color: var(--amber-500);
+  }
+
+  /* Rarely-touched engineering tools, tucked behind a native <details> so
+     the page reads short and current-task-focused (Content, then Merch
+     testing) by default — nothing here is hidden, just collapsed. */
+  .panel-advanced {
+    padding: 0;
+    overflow: hidden;
+  }
+  .panel-advanced summary {
+    padding: 1.1rem 1.75rem;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--cream-100);
+    list-style: none;
+  }
+  .panel-advanced summary::-webkit-details-marker {
+    display: none;
+  }
+  .panel-advanced summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 0.6rem;
+    color: var(--amber-500);
+    transition: transform 0.15s ease;
+  }
+  .panel-advanced[open] summary::before {
+    transform: rotate(90deg);
+  }
+  .panel-advanced[open] summary {
+    border-bottom: 1px solid var(--forest-600);
+  }
+  .advanced-body {
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+  .advanced-group h3 {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+    color: var(--cream-100);
   }
 </style>
