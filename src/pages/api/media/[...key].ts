@@ -1,5 +1,5 @@
 import type { APIContext } from "astro";
-import { getAuthedMember } from "../../../lib/auth";
+import { getViewingMember } from "../../../lib/auth";
 
 export const prerender = false;
 
@@ -10,6 +10,14 @@ export const prerender = false;
 // have the link" — the bucket itself has public access disabled, so this
 // route is the *only* way to reach the file at all.
 //
+// Uses getViewingMember (real session OR an admin's "preview as a
+// subscriber" session — see lib/auth.ts), not the stricter getAuthedMember
+// that the write-side API routes use. Streaming a thumbnail/video is a
+// read, not an action taken on someone's behalf, so it's safe to allow
+// during preview — and without this, Preview mode would show every
+// Womb Watch thumbnail and video as a broken black box, since every
+// request for the actual media bytes would 401.
+//
 // Supports HTTP Range requests so the native <video> player in
 // member/womb-watch.astro can scrub/seek instead of only ever playing from
 // the start — browsers request video in ranges by default once playback
@@ -17,8 +25,8 @@ export const prerender = false;
 export async function GET({ params, request, cookies, locals }: APIContext) {
   const env = (locals as any).runtime.env;
 
-  const member = await getAuthedMember(cookies, env);
-  if (!member) {
+  const viewing = await getViewingMember(cookies, env);
+  if (!viewing) {
     return new Response("Not authorized", { status: 401 });
   }
 
