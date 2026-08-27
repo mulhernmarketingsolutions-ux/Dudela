@@ -34,6 +34,10 @@ export interface Post {
   video_url: string | null;
   thumbnail_url: string | null;
   week_label: string | null;
+  // Full-length audio version of the episode (migrations/0008) — powers the
+  // Watch/Listen toggle on /member/womb-watch. Independent of video_url so
+  // an episode can have either, both, or (eventually) audio only.
+  audio_url: string | null;
 }
 
 export interface Inquiry {
@@ -243,13 +247,14 @@ export async function createPost(
     videoUrl?: string;
     thumbnailUrl?: string;
     weekLabel?: string;
+    audioUrl?: string;
   }
 ): Promise<Post> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await env.DB.prepare(
-    `INSERT INTO posts (id, title, body, category, published_at, created_at, video_url, thumbnail_url, week_label)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO posts (id, title, body, category, published_at, created_at, video_url, thumbnail_url, week_label, audio_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -260,10 +265,23 @@ export async function createPost(
       now,
       opts.videoUrl || null,
       opts.thumbnailUrl || null,
-      opts.weekLabel || null
+      opts.weekLabel || null,
+      opts.audioUrl || null
     )
     .run();
   return (await env.DB.prepare("SELECT * FROM posts WHERE id = ?").bind(id).first<Post>())!;
+}
+
+// Sets (or clears, if audioUrl is empty/undefined) the audio_url on an
+// existing post. Split out from createPost rather than a general-purpose
+// updatePost because it's the only field that needs editing after the fact
+// today — the 5 already-published Womb Watch episodes need audio attached
+// retroactively, since the audio was recorded/exported after the videos
+// were already live.
+export async function updatePostAudio(env: DbEnv, id: string, audioUrl: string | null): Promise<void> {
+  await env.DB.prepare("UPDATE posts SET audio_url = ? WHERE id = ?")
+    .bind(audioUrl || null, id)
+    .run();
 }
 
 export async function deletePost(env: DbEnv, id: string): Promise<void> {

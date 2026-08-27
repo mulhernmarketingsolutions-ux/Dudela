@@ -118,6 +118,11 @@ const ICONS = {
   chat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
   send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
   chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
+  watch: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`,
+  headphones: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>`,
+  pause: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/></svg>`,
+  skipBack: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-9.5L1 10"/></svg>`,
+  skipFwd: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-.49-9.5L23 10"/></svg>`,
 };
 
 // Data the client script needs to run the lightbox — id -> playable source.
@@ -126,9 +131,14 @@ const ICONS = {
 const episodesData = episodes.map(({ post, embed }) => ({
   id: post.id,
   title: post.title,
+  weekLabel: post.week_label,
   kind: embed?.kind || null,
   src: embed?.src || null,
   poster: toRelativeMediaUrl(post.thumbnail_url),
+  // Full-length audio (migrations/0008) — powers the Listen toggle. Kept
+  // independent of `kind`/`src` above (which describe the video embed) so
+  // an episode can have video, audio, or both.
+  audio: toRelativeMediaUrl(post.audio_url),
 }));
 ---
 <BaseLayout
@@ -247,13 +257,30 @@ const episodesData = episodes.map(({ post, embed }) => ({
                 <article class="ep-card" id={`ep-${post.id}`}>
                   <div class="ep-media">
                     {playable ? (
-                      <button type="button" class="ep-thumb" data-open-lightbox data-episode-id={post.id} aria-label={`Play ${post.title}`}>
+                      <div class="ep-thumb">
                         <span class="ep-thumb-img" style={thumb ? `background-image:url(${thumb})` : ""}>
                           {!thumb && <span class="ep-thumb-fallback" set:html={ICONS.mic} />}
                         </span>
+                        <button
+                          type="button"
+                          class="ep-thumb-hit"
+                          data-open-lightbox
+                          data-episode-id={post.id}
+                          aria-label={`Play ${post.title}`}
+                        ></button>
                         <span class="ep-play" set:html={ICONS.play} />
                         {post.week_label && <span class="week-badge">{post.week_label}</span>}
-                      </button>
+                        {post.audio_url && (
+                          <div class="mode-toggle" data-mode-toggle data-episode-id={post.id}>
+                            <button type="button" class="mode-btn active" data-card-mode="watch">
+                              <span set:html={ICONS.watch} /> Watch
+                            </button>
+                            <button type="button" class="mode-btn" data-card-mode="listen">
+                              <span set:html={ICONS.headphones} /> Listen
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ) : linkOnly ? (
                       <a class="ep-thumb ep-thumb-static" href={embed!.src} target="_blank" rel="noopener">
                         <span class="ep-thumb-img" style={thumb ? `background-image:url(${thumb})` : ""}>
@@ -377,8 +404,19 @@ const episodesData = episodes.map(({ post, embed }) => ({
     <div class="lightbox-backdrop" data-lightbox-close></div>
     <div class="lightbox-panel">
       <button type="button" class="lightbox-close" data-lightbox-close aria-label="Close" set:html={ICONS.close}></button>
-      <p class="lightbox-title" id="ww-lightbox-title"></p>
+      <div class="lightbox-head">
+        <p class="lightbox-title" id="ww-lightbox-title"></p>
+        <div class="lb-toggle" id="ww-lightbox-toggle" hidden>
+          <button type="button" class="lb-mode-btn" data-lb-mode="watch">
+            <span set:html={ICONS.watch} /> Watch
+          </button>
+          <button type="button" class="lb-mode-btn" data-lb-mode="listen">
+            <span set:html={ICONS.headphones} /> Listen
+          </button>
+        </div>
+      </div>
       <div class="lightbox-video" id="ww-lightbox-video"></div>
+      <div class="lightbox-audio" id="ww-lightbox-audio" hidden></div>
     </div>
   </div>
 
@@ -389,26 +427,183 @@ const episodesData = episodes.map(({ post, embed }) => ({
     // instead of the old inline-swap that could shove page text out of the
     // way. A single overlay is reused for every episode rather than one
     // player per card. ---
-    const episodesData: Array<{ id: string; title: string; kind: string | null; src: string | null; poster: string | null }> =
-      JSON.parse(document.getElementById("ww-episodes-data")?.textContent || "[]");
+    const episodesData: Array<{
+      id: string;
+      title: string;
+      weekLabel: string | null;
+      kind: string | null;
+      src: string | null;
+      poster: string | null;
+      audio: string | null;
+    }> = JSON.parse(document.getElementById("ww-episodes-data")?.textContent || "[]");
     const byId = new Map(episodesData.map((e) => [e.id, e]));
+
+    // Which mode (watch/listen) each card's toggle is currently set to —
+    // read when that card's thumbnail is clicked, so the lightbox opens
+    // straight into whichever mode the member picked rather than always
+    // defaulting to video.
+    const preferredMode = new Map<string, "watch" | "listen">();
 
     const lightbox = document.getElementById("ww-lightbox");
     const lightboxTitle = document.getElementById("ww-lightbox-title");
     const lightboxVideo = document.getElementById("ww-lightbox-video");
+    const lightboxAudio = document.getElementById("ww-lightbox-audio");
+    const lightboxToggle = document.getElementById("ww-lightbox-toggle");
 
-    function openLightbox(id: string) {
+    // Minimal icon set for the audio player's own transport controls —
+    // separate from the ICONS object above since that's Astro-frontmatter
+    // scope and isn't reachable from this plain client script.
+    const AUD_ICON = {
+      play: '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+      pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/></svg>',
+      back15:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-9.5L1 10"/></svg>',
+      fwd15:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-.49-9.5L23 10"/></svg>',
+    };
+
+    function fmtTime(s: number) {
+      if (!isFinite(s)) return "0:00";
+      s = Math.max(0, Math.floor(s));
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${sec < 10 ? "0" : ""}${sec}`;
+    }
+
+    // Builds the whole Listen-mode player fresh on every open, same
+    // disposable-per-open approach as the video element below — closing
+    // the lightbox just discards this DOM, which stops playback for free.
+    function buildAudioPlayer(ep: (typeof episodesData)[number]) {
+      if (!lightboxAudio || !ep.audio) return;
+      lightboxAudio.innerHTML = "";
+
+      const coverWrap = document.createElement("div");
+      coverWrap.className = "aud-cover-wrap";
+      const cover = document.createElement("img");
+      cover.className = "aud-cover";
+      cover.alt = "";
+      if (ep.poster) cover.src = ep.poster;
+      const eq = document.createElement("div");
+      eq.className = "aud-eq";
+      eq.innerHTML = "<span></span><span></span><span></span><span></span>";
+      coverWrap.append(cover, eq);
+
+      const body = document.createElement("div");
+      body.className = "aud-body";
+      body.innerHTML = `
+        <p class="aud-eyebrow">🎧 Spit-Up Society exclusive${ep.weekLabel ? " · " + ep.weekLabel : ""}</p>
+        <div class="aud-scrub-row">
+          <span class="aud-time" data-aud-cur>0:00</span>
+          <input type="range" class="aud-scrub" min="0" max="100" value="0" data-aud-scrub />
+          <span class="aud-time end" data-aud-dur>0:00</span>
+        </div>
+        <div class="aud-transport">
+          <button type="button" class="aud-tbtn" data-aud-back aria-label="Back 15 seconds">${AUD_ICON.back15}<span class="aud-skip-label">15</span></button>
+          <button type="button" class="aud-tbtn aud-play-main" data-aud-play aria-label="Play">${AUD_ICON.play}</button>
+          <button type="button" class="aud-tbtn" data-aud-fwd aria-label="Forward 15 seconds">${AUD_ICON.fwd15}<span class="aud-skip-label">15</span></button>
+          <div class="aud-spacer"></div>
+          <button type="button" class="aud-speed-btn" data-aud-speed>1×</button>
+        </div>
+      `;
+
+      const audio = document.createElement("audio");
+      audio.src = ep.audio;
+      audio.preload = "metadata";
+
+      lightboxAudio.append(coverWrap, body, audio);
+
+      const playBtn = body.querySelector<HTMLButtonElement>("[data-aud-play]")!;
+      const scrub = body.querySelector<HTMLInputElement>("[data-aud-scrub]")!;
+      const curEl = body.querySelector<HTMLElement>("[data-aud-cur]")!;
+      const durEl = body.querySelector<HTMLElement>("[data-aud-dur]")!;
+      const speedBtn = body.querySelector<HTMLButtonElement>("[data-aud-speed]")!;
+      const speeds = [1, 1.25, 1.5, 2, 0.75];
+      let speedIdx = 0;
+      let seeking = false;
+
+      audio.addEventListener("loadedmetadata", () => {
+        durEl.textContent = fmtTime(audio.duration);
+        scrub.max = String(Math.floor(audio.duration));
+      });
+      audio.addEventListener("timeupdate", () => {
+        if (seeking) return;
+        curEl.textContent = fmtTime(audio.currentTime);
+        scrub.value = String(Math.floor(audio.currentTime));
+      });
+      audio.addEventListener("play", () => {
+        playBtn.innerHTML = AUD_ICON.pause;
+        playBtn.setAttribute("aria-label", "Pause");
+        eq.classList.add("playing");
+      });
+      audio.addEventListener("pause", () => {
+        playBtn.innerHTML = AUD_ICON.play;
+        playBtn.setAttribute("aria-label", "Play");
+        eq.classList.remove("playing");
+      });
+
+      playBtn.addEventListener("click", () => {
+        if (audio.paused) audio.play();
+        else audio.pause();
+      });
+      body.querySelector("[data-aud-back]")?.addEventListener("click", () => {
+        audio.currentTime = Math.max(0, audio.currentTime - 15);
+      });
+      body.querySelector("[data-aud-fwd]")?.addEventListener("click", () => {
+        audio.currentTime = Math.min(audio.duration || 1e9, audio.currentTime + 15);
+      });
+      scrub.addEventListener("input", () => {
+        seeking = true;
+        curEl.textContent = fmtTime(Number(scrub.value));
+      });
+      scrub.addEventListener("change", () => {
+        audio.currentTime = Number(scrub.value);
+        seeking = false;
+      });
+      speedBtn.addEventListener("click", () => {
+        speedIdx = (speedIdx + 1) % speeds.length;
+        audio.playbackRate = speeds[speedIdx];
+        speedBtn.textContent = `${speeds[speedIdx]}×`;
+      });
+
+      (lightboxAudio as any)._audioEl = audio;
+    }
+
+    function setLightboxMode(mode: "watch" | "listen") {
+      if (!lightboxVideo || !lightboxAudio || !lightboxToggle) return;
+      const watchBtn = lightboxToggle.querySelector<HTMLElement>('[data-lb-mode="watch"]');
+      const listenBtn = lightboxToggle.querySelector<HTMLElement>('[data-lb-mode="listen"]');
+      if (mode === "watch") {
+        lightboxVideo.hidden = false;
+        lightboxAudio.hidden = true;
+        watchBtn?.classList.add("active");
+        listenBtn?.classList.remove("active");
+        (lightboxAudio as any)._audioEl?.pause();
+      } else {
+        lightboxVideo.hidden = true;
+        lightboxAudio.hidden = false;
+        listenBtn?.classList.add("active");
+        watchBtn?.classList.remove("active");
+        lightboxVideo.querySelector("video")?.pause();
+      }
+    }
+
+    function openLightbox(id: string, mode?: "watch" | "listen") {
       const ep = byId.get(id);
-      if (!ep || !lightbox || !lightboxTitle || !lightboxVideo) return;
+      if (!ep || !lightbox || !lightboxTitle || !lightboxVideo || !lightboxAudio || !lightboxToggle) return;
 
       lightboxTitle.textContent = ep.title;
       lightboxVideo.innerHTML = "";
+      lightboxAudio.innerHTML = "";
 
-      if (ep.kind === "file" && ep.src) {
+      const hasVideo = ep.kind === "file" && !!ep.src;
+      const hasEmbed = !hasVideo && !!ep.src;
+      const hasAudio = !!ep.audio;
+
+      if (hasVideo) {
         const video = document.createElement("video");
-        video.src = ep.src;
+        video.src = ep.src as string;
         video.controls = true;
-        video.autoplay = true;
+        video.autoplay = mode !== "listen";
         // playsInline (both the property and the attribute) keeps mobile
         // Safari from hijacking playback into its own native fullscreen
         // player the instant .play() fires — without it, tapping play
@@ -417,13 +612,26 @@ const episodesData = episodes.map(({ post, embed }) => ({
         video.setAttribute("playsinline", "");
         if (ep.poster) video.poster = ep.poster;
         lightboxVideo.appendChild(video);
-      } else if (ep.src) {
+      } else if (hasEmbed) {
         const iframe = document.createElement("iframe");
-        iframe.src = ep.src;
+        iframe.src = ep.src as string;
         iframe.title = ep.title;
         iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
         iframe.allowFullscreen = true;
         lightboxVideo.appendChild(iframe);
+      }
+
+      if (hasAudio) buildAudioPlayer(ep);
+
+      const canToggle = (hasVideo || hasEmbed) && hasAudio;
+      lightboxToggle.hidden = !canToggle;
+      const initialMode: "watch" | "listen" = hasVideo || hasEmbed ? mode || "watch" : "listen";
+      setLightboxMode(initialMode);
+      if (initialMode === "listen") {
+        // autoplay was skipped on the video element above for this case;
+        // nothing to start automatically for audio — let the member press
+        // play, same as the video's own controls require after a route
+        // change. (Browsers block audio autoplay without interaction too.)
       }
 
       lightbox.hidden = false;
@@ -431,9 +639,10 @@ const episodesData = episodes.map(({ post, embed }) => ({
     }
 
     function closeLightbox() {
-      if (!lightbox || !lightboxVideo) return;
+      if (!lightbox || !lightboxVideo || !lightboxAudio) return;
       lightbox.hidden = true;
       lightboxVideo.innerHTML = ""; // stop playback rather than just hiding it
+      lightboxAudio.innerHTML = "";
       document.body.style.overflow = "";
     }
 
@@ -441,7 +650,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
       el.addEventListener("click", (e) => {
         e.preventDefault();
         const id = el.dataset.episodeId;
-        if (id) openLightbox(id);
+        if (id) openLightbox(id, preferredMode.get(id));
       });
     });
     document.querySelectorAll<HTMLElement>("[data-lightbox-close]").forEach((el) => {
@@ -449,6 +658,31 @@ const episodesData = episodes.map(({ post, embed }) => ({
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeLightbox();
+    });
+
+    // --- Card-level Watch/Listen toggle: sets which mode that episode's
+    // lightbox opens in (read above via preferredMode). Doesn't open the
+    // lightbox itself — the separate .ep-thumb-hit button underneath it
+    // does that. ---
+    document.querySelectorAll<HTMLElement>("[data-mode-toggle]").forEach((toggle) => {
+      const id = toggle.dataset.episodeId;
+      if (!id) return;
+      toggle.querySelectorAll<HTMLButtonElement>("[data-card-mode]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const mode = btn.dataset.cardMode as "watch" | "listen";
+          preferredMode.set(id, mode);
+          toggle.querySelectorAll("[data-card-mode]").forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+    });
+
+    // --- Lightbox-level Watch/Listen toggle: switches panes without
+    // closing/reopening, so scroll position and everything else stays put. ---
+    lightboxToggle?.querySelectorAll<HTMLButtonElement>("[data-lb-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setLightboxMode(btn.dataset.lbMode as "watch" | "listen");
+      });
     });
 
     // --- Reactions: toggle on click, optimistic count update from the
@@ -913,6 +1147,18 @@ const episodesData = episodes.map(({ post, embed }) => ({
     height: 22px;
     margin-left: 3px;
   }
+  .ep-thumb-hit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0;
+    margin: 0;
+    background: none;
+    cursor: pointer;
+    z-index: 1;
+  }
   .week-badge {
     position: absolute;
     top: 0.85rem;
@@ -926,7 +1172,45 @@ const episodesData = episodes.map(({ post, embed }) => ({
     text-transform: uppercase;
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
-    z-index: 1;
+    z-index: 2;
+  }
+  .mode-toggle {
+    position: absolute;
+    bottom: 0.85rem;
+    left: 0.85rem;
+    z-index: 3;
+    display: inline-flex;
+    background: rgba(18, 24, 15, 0.72);
+    backdrop-filter: blur(6px);
+    border-radius: 999px;
+    padding: 3px;
+    border: 1px solid rgba(245, 239, 227, 0.18);
+  }
+  .mode-btn {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border: none;
+    background: transparent;
+    color: var(--cream-100);
+    opacity: 0.72;
+    padding: 0.38rem 0.75rem;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: all 0.2s var(--ease-out);
+  }
+  .mode-btn :global(svg) {
+    width: 12px;
+    height: 12px;
+  }
+  .mode-btn.active {
+    background: var(--amber-500);
+    color: var(--forest-900);
+    opacity: 1;
   }
   .watch-link {
     position: absolute;
@@ -1292,12 +1576,56 @@ const episodesData = episodes.map(({ post, embed }) => ({
     width: 16px;
     height: 16px;
   }
+  .lightbox-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    padding-right: 2rem;
+    margin-bottom: 0.85rem;
+  }
   .lightbox-title {
     font-family: var(--font-display);
     font-size: 1.25rem;
     color: var(--cream-100);
-    margin: 0 0 0.85rem;
-    padding-right: 2rem;
+    margin: 0;
+  }
+  .lb-toggle {
+    display: inline-flex;
+    background: var(--forest-700);
+    border: 1px solid var(--forest-600);
+    border-radius: 999px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+  .lb-toggle[hidden] {
+    display: none;
+  }
+  .lb-mode-btn {
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--cream-100);
+    opacity: 0.65;
+    padding: 0.42rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.2s var(--ease-out);
+  }
+  .lb-mode-btn :global(svg) {
+    width: 13px;
+    height: 13px;
+  }
+  .lb-mode-btn.active {
+    background: var(--amber-500);
+    color: var(--black, #14150f);
+    opacity: 1;
   }
   .lightbox-video {
     width: 100%;
@@ -1306,12 +1634,204 @@ const episodesData = episodes.map(({ post, embed }) => ({
     border-radius: var(--radius-sm);
     overflow: hidden;
   }
+  .lightbox-video[hidden] {
+    display: none;
+  }
   .lightbox-video :global(video),
   .lightbox-video :global(iframe) {
     width: 100%;
     height: 100%;
     border: none;
     display: block;
+  }
+
+  /* --- Listen mode: compact podcast-style player, replaces the video box --- */
+  .lightbox-audio[hidden] {
+    display: none;
+  }
+  .lightbox-audio {
+    display: flex;
+    gap: 1.4rem;
+    align-items: center;
+    background: var(--forest-800);
+    border-radius: var(--radius-sm);
+    padding: 1.4rem;
+  }
+  .aud-cover-wrap {
+    position: relative;
+    flex: none;
+  }
+  .aud-cover {
+    width: 132px;
+    height: 132px;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    display: block;
+    background: var(--forest-700);
+  }
+  .aud-eq {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 14px;
+    background: rgba(18, 24, 15, 0.6);
+    padding: 4px 5px;
+    border-radius: 5px;
+  }
+  .aud-eq span {
+    width: 3px;
+    background: var(--amber-500);
+    border-radius: 2px;
+    height: 3px;
+    animation: aud-eqbar 0.9s ease-in-out infinite;
+    animation-play-state: paused;
+  }
+  .aud-eq.playing span {
+    animation-play-state: running;
+  }
+  .aud-eq span:nth-child(1) { animation-delay: -0.6s; }
+  .aud-eq span:nth-child(2) { animation-delay: -0.3s; }
+  .aud-eq span:nth-child(3) { animation-delay: -0.9s; }
+  .aud-eq span:nth-child(4) { animation-delay: -0.15s; }
+  @keyframes aud-eqbar {
+    0%, 100% { height: 3px; }
+    50% { height: 12px; }
+  }
+  .aud-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .aud-eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--amber-500);
+    margin: 0 0 0.5rem;
+  }
+  .aud-scrub-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+  }
+  .aud-time {
+    font-family: var(--font-label);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.75rem;
+    color: var(--text-on-dark-muted, #c9c2ae);
+    width: 3.4em;
+    flex: none;
+  }
+  .aud-time.end {
+    text-align: right;
+  }
+  .aud-scrub {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--forest-600);
+    cursor: pointer;
+    outline: none;
+  }
+  .aud-scrub::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    border-radius: 999px;
+    background: var(--amber-500);
+    box-shadow: 0 0 0 3px rgba(226, 125, 37, 0.25);
+    cursor: pointer;
+  }
+  .aud-scrub::-moz-range-thumb {
+    width: 13px;
+    height: 13px;
+    border: none;
+    border-radius: 999px;
+    background: var(--amber-500);
+    box-shadow: 0 0 0 3px rgba(226, 125, 37, 0.25);
+    cursor: pointer;
+  }
+  .aud-transport {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .aud-transport .aud-spacer {
+    flex: 1;
+  }
+  .aud-tbtn {
+    background: transparent;
+    border: none;
+    color: var(--cream-100);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+    position: relative;
+    padding: 0;
+  }
+  .aud-tbtn:hover {
+    opacity: 1;
+  }
+  .aud-tbtn :global(svg) {
+    width: 20px;
+    height: 20px;
+  }
+  .aud-tbtn .aud-skip-label {
+    position: absolute;
+    font-size: 7px;
+    font-family: var(--font-label);
+    font-weight: 700;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+  }
+  .aud-play-main {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: var(--amber-500);
+    color: var(--forest-900);
+    opacity: 1;
+  }
+  .aud-play-main:hover {
+    background: var(--amber-600);
+  }
+  .aud-play-main :global(svg) {
+    width: 19px;
+    height: 19px;
+  }
+  .aud-speed-btn {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid var(--forest-600);
+    background: var(--forest-700);
+    color: var(--cream-100);
+    border-radius: 999px;
+    padding: 0.38rem 0.7rem;
+    cursor: pointer;
+  }
+  .aud-speed-btn:hover {
+    border-color: var(--amber-500);
+  }
+  @media (max-width: 640px) {
+    .lightbox-audio {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
+    }
+    .aud-cover-wrap {
+      align-self: center;
+    }
   }
 
   @media (max-width: 640px) {

@@ -27,12 +27,13 @@ export async function POST({ request, locals, cookies }: APIContext) {
   const videoUrl = (form.get("video_url") || "").toString().trim();
   const thumbnailUrl = (form.get("thumbnail_url") || "").toString().trim();
   const weekLabel = (form.get("week_label") || "").toString().trim();
+  const audioUrl = (form.get("audio_url") || "").toString().trim();
 
   if (!title || !body) {
     return redirectTo(url.origin, "/admin/womb-watch?error=missing-fields");
   }
 
-  await createPost(env, { title, body, category, videoUrl, thumbnailUrl, weekLabel });
+  await createPost(env, { title, body, category, videoUrl, thumbnailUrl, weekLabel, audioUrl });
 
   try {
     const members = await listActiveMembers(env);
