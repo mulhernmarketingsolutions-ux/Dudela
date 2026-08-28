@@ -460,6 +460,8 @@ const episodesData = episodes.map(({ post, embed }) => ({
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-9.5L1 10"/></svg>',
       fwd15:
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-.49-9.5L23 10"/></svg>',
+      headphones:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
     };
 
     function fmtTime(s: number) {
@@ -534,11 +536,13 @@ const episodesData = episodes.map(({ post, embed }) => ({
         playBtn.innerHTML = AUD_ICON.pause;
         playBtn.setAttribute("aria-label", "Pause");
         eq.classList.add("playing");
+        coverWrap.classList.add("is-playing");
       });
       audio.addEventListener("pause", () => {
         playBtn.innerHTML = AUD_ICON.play;
         playBtn.setAttribute("aria-label", "Play");
         eq.classList.remove("playing");
+        coverWrap.classList.remove("is-playing");
       });
 
       playBtn.addEventListener("click", () => {
@@ -667,12 +671,21 @@ const episodesData = episodes.map(({ post, embed }) => ({
     document.querySelectorAll<HTMLElement>("[data-mode-toggle]").forEach((toggle) => {
       const id = toggle.dataset.episodeId;
       if (!id) return;
+      // The thumbnail itself + its center play icon — swapped to a podcast
+      // look the instant Listen is picked, not just once the lightbox opens.
+      // ep.ep-play is set:html'd from Astro frontmatter (ICONS.play), so its
+      // inner <svg> already relies on the same :global(svg) escape hatch
+      // used elsewhere on this page for raw-injected markup.
+      const thumb = toggle.closest<HTMLElement>(".ep-thumb");
+      const playIcon = thumb?.querySelector<HTMLElement>(".ep-play") || null;
       toggle.querySelectorAll<HTMLButtonElement>("[data-card-mode]").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           const mode = btn.dataset.cardMode as "watch" | "listen";
           preferredMode.set(id, mode);
           toggle.querySelectorAll("[data-card-mode]").forEach((b) => b.classList.toggle("active", b === btn));
+          thumb?.classList.toggle("mode-listen", mode === "listen");
+          if (playIcon) playIcon.innerHTML = mode === "listen" ? AUD_ICON.headphones : AUD_ICON.play;
         });
       });
     });
@@ -1212,6 +1225,34 @@ const episodesData = episodes.map(({ post, embed }) => ({
     color: var(--forest-900);
     opacity: 1;
   }
+
+  /* --- Card flips to a podcast look the instant Listen is picked, rather
+     than only revealing anything audio-shaped after the lightbox opens. --- */
+  .ep-thumb.mode-listen .ep-thumb-img {
+    filter: grayscale(0.5) brightness(0.5) saturate(0.85);
+  }
+  /* ::after on .ep-thumb-img itself (not the outer .ep-thumb) so the wash
+     paints as part of that element's own box — i.e. still *before* .ep-play
+     in paint order — instead of last, which would otherwise cover the icon. */
+  .ep-thumb.mode-listen .ep-thumb-img::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(165deg, rgba(226, 125, 37, 0.28), rgba(18, 24, 15, 0.6) 65%);
+    pointer-events: none;
+  }
+  .ep-thumb.mode-listen .ep-play {
+    background: rgba(226, 125, 37, 0.22);
+    border-color: var(--amber-500);
+  }
+  .ep-thumb.mode-listen .ep-play :global(svg) {
+    width: 24px;
+    height: 24px;
+    margin-left: 0;
+  }
+  .ep-thumb:hover.mode-listen .ep-play {
+    background: var(--amber-500);
+  }
   .watch-link {
     position: absolute;
     bottom: 1rem;
@@ -1645,44 +1686,58 @@ const episodesData = episodes.map(({ post, embed }) => ({
     display: block;
   }
 
-  /* --- Listen mode: compact podcast-style player, replaces the video box --- */
+  /* --- Listen mode: compact podcast-style player, replaces the video box.
+     Everything inside #ww-lightbox-audio is built with document.createElement
+     / innerHTML in the client <script> below, not written in this template —
+     so none of it receives Astro's scoped data-astro-cid attribute the way
+     .lightbox-audio itself does. Every .aud-* selector below is wrapped in
+     :global(...) for that reason (same reason .ep-play :global(svg) exists
+     above for raw set:html icon markup) — without it, this whole block
+     silently never matches anything and the player renders as unstyled
+     browser defaults (native range slider, native button chrome). --- */
   .lightbox-audio[hidden] {
     display: none;
   }
   .lightbox-audio {
     display: flex;
-    gap: 1.4rem;
+    gap: 1.6rem;
     align-items: center;
-    background: var(--forest-800);
-    border-radius: var(--radius-sm);
-    padding: 1.4rem;
+    background: linear-gradient(165deg, var(--forest-800), var(--forest-900));
+    border: 1px solid var(--forest-600);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
   }
-  .aud-cover-wrap {
+  :global(.aud-cover-wrap) {
     position: relative;
     flex: none;
   }
-  .aud-cover {
-    width: 132px;
-    height: 132px;
-    border-radius: 10px;
+  :global(.aud-cover) {
+    width: 148px;
+    height: 148px;
+    border-radius: 12px;
     object-fit: cover;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(245, 239, 227, 0.1);
     display: block;
     background: var(--forest-700);
+    transition: box-shadow 0.25s ease;
   }
-  .aud-eq {
+  :global(.aud-cover-wrap.is-playing) :global(.aud-cover) {
+    box-shadow: 0 0 0 4px rgba(226, 125, 37, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+  :global(.aud-eq) {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    bottom: 9px;
+    right: 9px;
     display: flex;
     align-items: flex-end;
     gap: 2px;
     height: 14px;
-    background: rgba(18, 24, 15, 0.6);
+    background: rgba(18, 24, 15, 0.7);
     padding: 4px 5px;
     border-radius: 5px;
   }
-  .aud-eq span {
+  :global(.aud-eq span) {
     width: 3px;
     background: var(--amber-500);
     border-radius: 2px;
@@ -1690,47 +1745,47 @@ const episodesData = episodes.map(({ post, embed }) => ({
     animation: aud-eqbar 0.9s ease-in-out infinite;
     animation-play-state: paused;
   }
-  .aud-eq.playing span {
+  :global(.aud-eq.playing span) {
     animation-play-state: running;
   }
-  .aud-eq span:nth-child(1) { animation-delay: -0.6s; }
-  .aud-eq span:nth-child(2) { animation-delay: -0.3s; }
-  .aud-eq span:nth-child(3) { animation-delay: -0.9s; }
-  .aud-eq span:nth-child(4) { animation-delay: -0.15s; }
+  :global(.aud-eq span:nth-child(1)) { animation-delay: -0.6s; }
+  :global(.aud-eq span:nth-child(2)) { animation-delay: -0.3s; }
+  :global(.aud-eq span:nth-child(3)) { animation-delay: -0.9s; }
+  :global(.aud-eq span:nth-child(4)) { animation-delay: -0.15s; }
   @keyframes aud-eqbar {
     0%, 100% { height: 3px; }
     50% { height: 12px; }
   }
-  .aud-body {
+  :global(.aud-body) {
     flex: 1;
     min-width: 0;
   }
-  .aud-eyebrow {
+  :global(.aud-eyebrow) {
     font-family: var(--font-label);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--amber-500);
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.6rem;
   }
-  .aud-scrub-row {
+  :global(.aud-scrub-row) {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
   }
-  .aud-time {
+  :global(.aud-time) {
     font-family: var(--font-label);
     font-variant-numeric: tabular-nums;
     font-size: 0.75rem;
-    color: var(--text-on-dark-muted, #c9c2ae);
+    color: var(--text-on-dark-muted);
     width: 3.4em;
     flex: none;
   }
-  .aud-time.end {
+  :global(.aud-time.end) {
     text-align: right;
   }
-  .aud-scrub {
+  :global(.aud-scrub) {
     flex: 1;
     -webkit-appearance: none;
     appearance: none;
@@ -1740,33 +1795,35 @@ const episodesData = episodes.map(({ post, embed }) => ({
     cursor: pointer;
     outline: none;
   }
-  .aud-scrub::-webkit-slider-thumb {
+  :global(.aud-scrub)::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     border-radius: 999px;
     background: var(--amber-500);
     box-shadow: 0 0 0 3px rgba(226, 125, 37, 0.25);
     cursor: pointer;
   }
-  .aud-scrub::-moz-range-thumb {
-    width: 13px;
-    height: 13px;
+  :global(.aud-scrub)::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
     border: none;
     border-radius: 999px;
     background: var(--amber-500);
     box-shadow: 0 0 0 3px rgba(226, 125, 37, 0.25);
     cursor: pointer;
   }
-  .aud-transport {
+  :global(.aud-transport) {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.1rem;
   }
-  .aud-transport .aud-spacer {
+  :global(.aud-transport) :global(.aud-spacer) {
     flex: 1;
   }
-  .aud-tbtn {
+  :global(.aud-tbtn) {
+    -webkit-appearance: none;
+    appearance: none;
     background: transparent;
     border: none;
     color: var(--cream-100);
@@ -1778,38 +1835,42 @@ const episodesData = episodes.map(({ post, embed }) => ({
     position: relative;
     padding: 0;
   }
-  .aud-tbtn:hover {
+  :global(.aud-tbtn):hover {
     opacity: 1;
   }
-  .aud-tbtn :global(svg) {
+  :global(.aud-tbtn svg) {
     width: 20px;
     height: 20px;
   }
-  .aud-tbtn .aud-skip-label {
+  :global(.aud-tbtn) :global(.aud-skip-label) {
     position: absolute;
     font-size: 7px;
     font-family: var(--font-label);
     font-weight: 700;
+    color: var(--cream-100);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -55%);
   }
-  .aud-play-main {
-    width: 46px;
-    height: 46px;
+  :global(.aud-play-main) {
+    width: 48px;
+    height: 48px;
     border-radius: 999px;
     background: var(--amber-500);
     color: var(--forest-900);
     opacity: 1;
+    box-shadow: 0 4px 14px rgba(226, 125, 37, 0.35);
   }
-  .aud-play-main:hover {
+  :global(.aud-play-main):hover {
     background: var(--amber-600);
   }
-  .aud-play-main :global(svg) {
-    width: 19px;
-    height: 19px;
+  :global(.aud-play-main svg) {
+    width: 20px;
+    height: 20px;
   }
-  .aud-speed-btn {
+  :global(.aud-speed-btn) {
+    -webkit-appearance: none;
+    appearance: none;
     font-family: var(--font-label);
     font-size: 0.75rem;
     font-weight: 700;
@@ -1817,10 +1878,10 @@ const episodesData = episodes.map(({ post, embed }) => ({
     background: var(--forest-700);
     color: var(--cream-100);
     border-radius: 999px;
-    padding: 0.38rem 0.7rem;
+    padding: 0.4rem 0.75rem;
     cursor: pointer;
   }
-  .aud-speed-btn:hover {
+  :global(.aud-speed-btn):hover {
     border-color: var(--amber-500);
   }
   @media (max-width: 640px) {
@@ -1829,8 +1890,11 @@ const episodesData = episodes.map(({ post, embed }) => ({
       align-items: stretch;
       text-align: center;
     }
-    .aud-cover-wrap {
+    :global(.aud-cover-wrap) {
       align-self: center;
+    }
+    :global(.aud-scrub-row) {
+      text-align: left;
     }
   }
 
