@@ -109,11 +109,19 @@ const progressPct = latestWeek > 0 ? Math.min(100, (latestWeek / TOTAL_WEEKS) * 
 const markerEpisodes = episodes
   .filter((ep) => ep.weekNumber != null)
   .sort((a, b) => (a.weekNumber as number) - (b.weekNumber as number));
-// Scales with episode count (not a fixed width) so markers keep breathing
-// room between them as more get added — a fixed width would start
-// crowding them together once there are a dozen+ episodes spread over 40
-// weeks.
-const lineWidth = Math.max(640, markerEpisodes.length * 110);
+// Sized off the *closest* pair of episodes by week, not episode count —
+// e.g. weeks 5/8/13/16/20 have a minimum 3-week gap (8-5), and a fixed
+// "110px per episode" width let two markers only 3 weeks apart land closer
+// together than their own 56px diameter, overlapping. Solving for "the
+// tightest gap gets at least MIN_MARKER_GAP_PX" keeps every marker
+// visually separated regardless of how the episodes happen to cluster.
+const MIN_MARKER_GAP_PX = 90;
+const weekGaps = markerEpisodes
+  .slice(1)
+  .map((ep, i) => (ep.weekNumber as number) - (markerEpisodes[i].weekNumber as number));
+const tightestGapWeeks = weekGaps.length > 0 ? Math.min(...weekGaps) : TOTAL_WEEKS;
+const widthForTightestGap = (MIN_MARKER_GAP_PX * TOTAL_WEEKS) / tightestGapWeeks;
+const lineWidth = Math.min(1600, Math.max(640, Math.round(widthForTightestGap)));
 
 // Feather-style stroke icons, same pattern as Roadmap.astro — rendered via
 // set:html below since these are raw SVG strings, not components.
@@ -240,9 +248,6 @@ const episodesData = episodes.map(({ post, embed }) => ({
               })}
             </div>
             <div class="track-fade" id="ww-track-fade" aria-hidden="true"></div>
-            <div class="scroll-hint" id="ww-scroll-hint" aria-hidden="true">
-              <span class="scroll-hint-arrow">&rarr;</span>
-            </div>
           </div>
         </div>
       </section>
@@ -838,27 +843,23 @@ const episodesData = episodes.map(({ post, embed }) => ({
       });
     });
 
-    // --- Timeline scroll-hint, same one-time "peek" pattern as Roadmap.astro ---
+    // --- Timeline: fades the right edge to hint "there's more" until the
+    // member actually scrolls, and opens on the latest episode rather than
+    // Week 1 every time. No separate arrow affordance — the line itself
+    // running off toward a visibly-cut-off "Due date" already reads as
+    // scrollable, so a second hint on top of it just looked redundant. ---
     const track = document.getElementById("ww-track");
-    const scrollHint = document.getElementById("ww-scroll-hint");
     const trackFade = document.getElementById("ww-track-fade");
 
-    function hideHint() {
-      scrollHint?.classList.add("hint-hidden");
+    function hideFade() {
       trackFade?.classList.add("hint-hidden");
     }
 
     if (track) {
       if (track.scrollWidth <= track.clientWidth + 4) {
-        hideHint();
+        hideFade();
       } else {
-        track.addEventListener(
-          "scroll",
-          () => {
-            hideHint();
-          },
-          { passive: true, once: true }
-        );
+        track.addEventListener("scroll", hideFade, { passive: true, once: true });
         // Scroll near the current week by default so a member returning
         // mid-series lands on "now" instead of week 1 every time.
         const activeStop = track.querySelector(".ml-marker:last-of-type") as HTMLElement | null;
@@ -1057,28 +1058,6 @@ const episodesData = episodes.map(({ post, embed }) => ({
     transition: opacity 0.35s ease;
   }
   .track-fade.hint-hidden {
-    opacity: 0;
-  }
-  .scroll-hint {
-    position: absolute;
-    right: 4px;
-    top: 28px;
-    transform: translate(50%, -50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--amber-500);
-    color: var(--forest-900);
-    pointer-events: none;
-    opacity: 1;
-    box-shadow: 0 4px 14px rgba(226, 125, 37, 0.45);
-    transition: opacity 0.35s ease;
-    z-index: 4;
-  }
-  .scroll-hint.hint-hidden {
     opacity: 0;
   }
 
