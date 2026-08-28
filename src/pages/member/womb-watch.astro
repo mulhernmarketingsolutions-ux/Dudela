@@ -97,16 +97,23 @@ const episodes = await Promise.all(
 );
 
 const TOTAL_WEEKS = 40;
-const byWeek = new Map<number, (typeof episodes)[number]>();
-for (const ep of episodes) {
-  if (ep.weekNumber) byWeek.set(ep.weekNumber, ep);
-}
 const latestWeek = episodes.reduce((max, ep) => (ep.weekNumber && ep.weekNumber > max ? ep.weekNumber : max), 0);
 const progressPct = latestWeek > 0 ? Math.min(100, (latestWeek / TOTAL_WEEKS) * 100) : 0;
-const timelineWeeks = Array.from({ length: TOTAL_WEEKS }, (_, i) => i + 1).map((week) => ({
-  week,
-  episode: byWeek.get(week) || null,
-}));
+// Only real episodes get a marker on the timeline now — no more
+// one-dot-per-week grid rendering all 40 weeks, which put 35 empty circles
+// next to 5 filled ones and read like a missed-post checklist rather than
+// a curated set of check-ins (Mike's feedback). A marker sits at its true
+// proportional week position along one continuous line instead of one
+// slot per week, so there's nothing implying a week that should've had
+// content but didn't.
+const markerEpisodes = episodes
+  .filter((ep) => ep.weekNumber != null)
+  .sort((a, b) => (a.weekNumber as number) - (b.weekNumber as number));
+// Scales with episode count (not a fixed width) so markers keep breathing
+// room between them as more get added — a fixed width would start
+// crowding them together once there are a dozen+ episodes spread over 40
+// weeks.
+const lineWidth = Math.max(640, markerEpisodes.length * 110);
 
 // Feather-style stroke icons, same pattern as Roadmap.astro — rendered via
 // set:html below since these are raw SVG strings, not components.
@@ -181,58 +188,54 @@ const episodesData = episodes.map(({ post, embed }) => ({
             just read down below.
           </p>
 
-          <div class="track-wrap">
-            <div class="track" id="ww-track">
-              <div class="track-line"></div>
-              <div class="track-fill" style={`width:${progressPct}%`}></div>
-              {timelineWeeks.map(({ week, episode }) => {
-                const playable = episode && episode.embed && episode.embed.kind !== "link";
-                const linkOnly = episode && episode.embed && episode.embed.kind === "link";
-                if (episode && playable) {
+          <div class="track-wrap" id="ww-track">
+            <div class="milestone-line" style={`width:${lineWidth}px`}>
+              <div class="ml-base"></div>
+              <div class="ml-fill" style={`width:${progressPct}%`}></div>
+              <span class="ml-endlabel ml-start">Week 1</span>
+              <span class="ml-endlabel ml-end">Due date</span>
+              {markerEpisodes.map((episode) => {
+                const pct = ((episode.weekNumber as number) / TOTAL_WEEKS) * 100;
+                const playable = episode.embed && episode.embed.kind !== "link";
+                const linkOnly = episode.embed && episode.embed.kind === "link";
+                if (playable) {
                   return (
                     <button
                       type="button"
-                      class="stop stop-episode"
+                      class="ml-marker"
+                      style={`left:${pct}%`}
                       data-open-lightbox
                       data-episode-id={episode.post.id}
                       aria-label={`Play: ${episode.post.title}`}
                     >
                       <span
-                        class="stop-thumb"
+                        class="ml-marker-thumb"
                         style={episode.thumb ? `background-image:url(${episode.thumb})` : ""}
                       >
-                        {!episode.thumb && <span class="stop-thumb-fallback" set:html={ICONS.mic} />}
-                        <span class="stop-play" set:html={ICONS.play} />
+                        {!episode.thumb && <span class="ml-marker-fallback" set:html={ICONS.mic} />}
+                        <span class="ml-marker-play" set:html={ICONS.play} />
                       </span>
-                      <span class="stop-week">Wk {week}</span>
+                      <span class="ml-marker-week">Wk {episode.weekNumber}</span>
                     </button>
                   );
                 }
-                if (episode && linkOnly) {
+                if (linkOnly) {
                   return (
-                    <a class="stop stop-episode" href={episode.embed!.src} target="_blank" rel="noopener">
-                      <span class="stop-thumb">
-                        <span class="stop-thumb-fallback" set:html={ICONS.doc} />
+                    <a class="ml-marker" style={`left:${pct}%`} href={episode.embed!.src} target="_blank" rel="noopener">
+                      <span class="ml-marker-thumb">
+                        <span class="ml-marker-fallback" set:html={ICONS.doc} />
                       </span>
-                      <span class="stop-week">Wk {week}</span>
-                    </a>
-                  );
-                }
-                if (episode) {
-                  return (
-                    <a class="stop stop-episode" href={`#ep-${episode.post.id}`}>
-                      <span class="stop-thumb">
-                        <span class="stop-thumb-fallback" set:html={ICONS.doc} />
-                      </span>
-                      <span class="stop-week">Wk {week}</span>
+                      <span class="ml-marker-week">Wk {episode.weekNumber}</span>
                     </a>
                   );
                 }
                 return (
-                  <span class="stop stop-empty" class:list={{ "stop-past": week <= latestWeek }}>
-                    <span class="stop-dot"></span>
-                    <span class="stop-week">{week}</span>
-                  </span>
+                  <a class="ml-marker" style={`left:${pct}%`} href={`#ep-${episode.post.id}`}>
+                    <span class="ml-marker-thumb">
+                      <span class="ml-marker-fallback" set:html={ICONS.doc} />
+                    </span>
+                    <span class="ml-marker-week">Wk {episode.weekNumber}</span>
+                  </a>
                 );
               })}
             </div>
@@ -858,7 +861,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
         );
         // Scroll near the current week by default so a member returning
         // mid-series lands on "now" instead of week 1 every time.
-        const activeStop = track.querySelector(".stop-episode:last-of-type") as HTMLElement | null;
+        const activeStop = track.querySelector(".ml-marker:last-of-type") as HTMLElement | null;
         if (activeStop) {
           setTimeout(() => activeStop.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }), 300);
         }
@@ -926,43 +929,67 @@ const episodesData = episodes.map(({ post, embed }) => ({
     max-width: 52ch;
     margin-bottom: 2.25rem;
   }
+  /* .track-wrap is now the actual scroll container (was .track before) —
+     .milestone-line is a single continuous line whose pixel width scales
+     with episode count, so it can exceed the wrapper's width and scroll
+     on narrow screens without needing one flex item per week. */
   .track-wrap {
     position: relative;
-  }
-  .track {
-    position: relative;
-    display: flex;
-    gap: 1.4rem;
     overflow-x: auto;
-    padding: 0.5rem 0.25rem 1.25rem;
+    padding: 0.5rem 0.25rem 0.25rem;
     scrollbar-width: thin;
   }
-  .track-line {
+  .milestone-line {
+    position: relative;
+    height: 84px;
+  }
+  .ml-base {
     position: absolute;
-    left: 0.25rem;
-    right: 0.25rem;
-    top: 26px;
+    left: 0;
+    right: 0;
+    top: 28px;
     height: 2px;
     background: var(--border-light);
     z-index: 0;
   }
-  .track-fill {
+  .ml-fill {
     position: absolute;
-    left: 0.25rem;
-    top: 26px;
+    left: 0;
+    top: 28px;
     height: 2px;
     background: var(--amber-500);
     z-index: 0;
   }
-  .stop {
-    position: relative;
+  .ml-endlabel {
+    position: absolute;
+    top: 28px;
+    transform: translateY(-50%);
+    font-family: var(--font-label);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-on-light-muted);
+    background: var(--bg-light);
+    padding: 0 0.5rem;
     z-index: 1;
-    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .ml-start {
+    left: 0;
+  }
+  .ml-end {
+    right: 0;
+  }
+  .ml-marker {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    min-width: 46px;
+    gap: 0.4rem;
     text-decoration: none;
     color: inherit;
     background: none;
@@ -971,30 +998,10 @@ const episodesData = episodes.map(({ post, embed }) => ({
     cursor: pointer;
     font-family: var(--font-label);
   }
-  .stop-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--bg-light-raised);
-    border: 2px solid var(--border-light);
-  }
-  .stop-past .stop-dot {
-    background: var(--amber-500);
-    border-color: var(--amber-500);
-    opacity: 0.4;
-  }
-  .stop-week {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--text-on-light-muted);
-  }
-  .stop-episode {
-    min-width: 64px;
-  }
-  .stop-thumb {
+  .ml-marker-thumb {
     position: relative;
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background-size: cover;
     background-position: center;
@@ -1003,21 +1010,22 @@ const episodesData = episodes.map(({ post, embed }) => ({
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     transition: transform 0.2s ease;
   }
-  .stop-episode:hover .stop-thumb {
+  .ml-marker:hover .ml-marker-thumb {
     transform: scale(1.08);
   }
-  .stop-thumb-fallback {
+  .ml-marker-fallback {
     width: 20px;
     height: 20px;
     color: rgba(245, 239, 227, 0.5);
   }
-  .stop-thumb-fallback :global(svg) {
+  .ml-marker-fallback :global(svg) {
     width: 100%;
     height: 100%;
   }
-  .stop-play {
+  .ml-marker-play {
     position: absolute;
     inset: 0;
     margin: auto;
@@ -1026,24 +1034,26 @@ const episodesData = episodes.map(({ post, embed }) => ({
     color: #fff;
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
   }
-  .stop-play :global(svg) {
+  .ml-marker-play :global(svg) {
     width: 100%;
     height: 100%;
   }
-  .stop-episode .stop-week {
-    color: var(--text-on-light);
+  .ml-marker-week {
+    font-size: 0.7rem;
     font-weight: 800;
+    color: var(--text-on-light);
+    white-space: nowrap;
   }
 
   .track-fade {
     position: absolute;
     top: 0;
     right: 0;
-    bottom: 1.25rem;
+    bottom: 0;
     width: 64px;
     background: linear-gradient(90deg, transparent, var(--bg-light) 80%);
     pointer-events: none;
-    z-index: 2;
+    z-index: 3;
     transition: opacity 0.35s ease;
   }
   .track-fade.hint-hidden {
@@ -1052,7 +1062,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
   .scroll-hint {
     position: absolute;
     right: 4px;
-    top: 26px;
+    top: 28px;
     transform: translate(50%, -50%);
     display: flex;
     align-items: center;
@@ -1066,7 +1076,7 @@ const episodesData = episodes.map(({ post, embed }) => ({
     opacity: 1;
     box-shadow: 0 4px 14px rgba(226, 125, 37, 0.45);
     transition: opacity 0.35s ease;
-    z-index: 3;
+    z-index: 4;
   }
   .scroll-hint.hint-hidden {
     opacity: 0;
