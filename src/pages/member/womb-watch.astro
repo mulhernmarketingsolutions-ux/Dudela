@@ -249,6 +249,9 @@ const episodesData = episodes.map(({ post, embed }) => ({
             </div>
             <div class="track-fade" id="ww-track-fade" aria-hidden="true"></div>
           </div>
+          <p class="scroll-cue" id="ww-scroll-cue" aria-hidden="true">
+            Swipe to see more <span class="scroll-cue-arrow">→</span>
+          </p>
         </div>
       </section>
 
@@ -850,9 +853,11 @@ const episodesData = episodes.map(({ post, embed }) => ({
     // scrollable, so a second hint on top of it just looked redundant. ---
     const track = document.getElementById("ww-track");
     const trackFade = document.getElementById("ww-track-fade");
+    const scrollCue = document.getElementById("ww-scroll-cue");
 
     function hideFade() {
       trackFade?.classList.add("hint-hidden");
+      scrollCue?.classList.add("hint-hidden");
     }
 
     if (track) {
@@ -1059,6 +1064,39 @@ const episodesData = episodes.map(({ post, embed }) => ({
   }
   .track-fade.hint-hidden {
     opacity: 0;
+  }
+  /* Shown until the member actually scrolls the timeline (or hidden
+     immediately if it doesn't overflow at all — see the JS below), rather
+     than a static label that keeps taking up space forever. */
+  .scroll-cue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin: 0.6rem 0 0;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-on-light-muted);
+    opacity: 1;
+    transition: opacity 0.35s ease;
+  }
+  .scroll-cue.hint-hidden {
+    opacity: 0;
+  }
+  .scroll-cue-arrow {
+    display: inline-block;
+    color: var(--amber-600);
+    animation: scrollCueNudge 1.3s ease-in-out infinite;
+  }
+  @keyframes scrollCueNudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(6px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue-arrow {
+      animation: none;
+    }
   }
 
   /* --- Library feed --- */
