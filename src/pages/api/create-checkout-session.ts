@@ -38,6 +38,10 @@ const PRODUCTS: Record<
     // there's no fixed inventory to sell out of (see lib/db.ts's
     // countMerchOrders comment for the removed presale-cap history).
     merchColor?: string;
+    // Shows a promo-code entry field on Stripe's hosted Checkout page — only
+    // set on products that actually have a live Coupon/Promotion Code to
+    // redeem (e.g. SHOWUP, the welcome-postcard code for Spit-Up Society).
+    allowPromotionCodes?: boolean;
   }
 > = {
   "prep-kit": {
@@ -51,6 +55,7 @@ const PRODUCTS: Record<
     returnPath: "/join/spit-up-society",
     thankYouPath: "/join/spit-up-society/thank-you",
     mode: "subscription",
+    allowPromotionCodes: true,
   },
   // Every buyable hat — see lib/printful.ts HAT_CATALOG, the single source of
   // truth for the real (design, thread color, add-on, cap color) combos
@@ -72,6 +77,7 @@ const PRODUCTS: Record<
         mode: "payment" as const,
         shipping: true,
         merchColor: hat.key,
+        allowPromotionCodes: true,
       },
     ])
   ),
@@ -90,6 +96,7 @@ const PRODUCTS: Record<
         mode: "payment" as const,
         shipping: true,
         merchColor: shirt.key,
+        allowPromotionCodes: true,
       },
     ])
   ),
@@ -182,6 +189,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
       // of being an invisible PaymentIntent the portal has nothing to display.
       invoiceCreation: productConfig.mode === "payment",
       extraLineItems,
+      allowPromotionCodes: productConfig.allowPromotionCodes,
     });
 
     return new Response(null, {
@@ -250,6 +258,7 @@ async function handleBundleCheckout(
       collectShipping: true,
       invoiceCreation: true,
       extraLineItems,
+      allowPromotionCodes: true,
     });
     return new Response(null, { status: 302, headers: { Location: session.url } });
   } catch (err) {

@@ -67,6 +67,11 @@ export async function createCheckoutSession(
     // one opaque combined charge). Shows up as its own line item at Stripe
     // Checkout, e.g. "Dudela Hat — $38" + "Dude to Dad Stitch — $1".
     extraLineItems?: Array<{ name: string; unitAmountCents: number; images?: string[] }>;
+    // Shows a "Add promotion code" link on Stripe's hosted Checkout page so a
+    // buyer can type in a code (e.g. SHOWUP from the welcome postcard) to
+    // redeem a Coupon/Promotion Code created in the Stripe Dashboard. Off by
+    // default — only pass true for flows that actually have a code to offer.
+    allowPromotionCodes?: boolean;
   }
 ) {
   const mode = opts.mode || "payment";
@@ -76,6 +81,9 @@ export async function createCheckoutSession(
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
+  if (opts.allowPromotionCodes) {
+    params["allow_promotion_codes"] = "true";
+  }
   if (opts.priceId) {
     params["line_items[0][price]"] = opts.priceId;
   } else if (opts.priceData) {
