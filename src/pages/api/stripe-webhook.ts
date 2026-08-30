@@ -21,6 +21,17 @@ import {
 } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
 
+// Welcome sticker + postcard — added as extra line items (see lib/printful.ts's
+// createPrintfulOrder comment) to every hat/shirt/bundle order so a first-time
+// buyer's box includes them automatically, no manual packing step. One combined
+// Printful order, but NOT guaranteed to arrive as one physical package — Printful
+// can still split fulfillment ("partial" status) since the hat/shirt (embroidery
+// or DTG) and the sticker/postcard (different print lines) aren't always produced
+// together. Sync variant ids from the Printful dashboard (My products):
+//   Dudela Sticker  (sync product 461929760) -> sync variant 5470154229
+//   Dudela Postcard (sync product 461929912, Standard Postcard 4x6) -> sync variant 5470154978
+const WELCOME_EXTRA_SYNC_VARIANT_IDS = [5470154229, 5470154978];
+
 export const prerender = false;
 
 // Stripe webhook endpoint. Configure in Stripe Dashboard → Developers → Webhooks:
@@ -472,7 +483,7 @@ export async function POST({ request, locals }: APIContext) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId: bundleHatVariant.syncVariantId,
-              extraSyncVariantIds: [bundleShirtVariant.syncVariantId],
+              extraSyncVariantIds: [bundleShirtVariant.syncVariantId, ...WELCOME_EXTRA_SYNC_VARIANT_IDS],
               recipient,
               externalId: await shortExternalId(session.id),
               // Test-mode Stripe event → leave as a free unconfirmed draft
@@ -573,6 +584,7 @@ export async function POST({ request, locals }: APIContext) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId,
+              extraSyncVariantIds: WELCOME_EXTRA_SYNC_VARIANT_IDS,
               recipient,
               externalId: await shortExternalId(session.id),
               // See the isTestMode comment near the top of this handler —
