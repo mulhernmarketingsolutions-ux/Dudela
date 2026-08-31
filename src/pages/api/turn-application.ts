@@ -18,10 +18,12 @@ export const prerender = false;
 // GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY, GOOGLE_SHEET_ID, LOOPS_API_KEY, RESEND_API_KEY,
 // RESEND_FROM_EMAIL, NOTIFY_EMAIL (optional — defaults to dude@thedudelaco.com).
 //
-// One-time manual setup needed before this goes live: add a "Turn Applications" tab
-// to the same Google Sheet the "Leads" tab lives in, with a header row matching the
-// columns appended below (Timestamp, Name, Email, Phone, Kid's stage, What's going
-// on, Source). Sheets' append API writes into an existing tab — it won't create one.
+// The "Turn Applications" tab (same Google Sheet as "Leads") already exists with
+// the right header row (Timestamp, Name, Email, Phone, Kid's stage, What's going
+// on, Source) -- confirmed live and working via a real test submission on
+// 2026-08-14 (checked directly in the sheet, 2026-09-01). Sheets' append API only
+// writes into an existing tab, it won't create one -- noting this since it's easy
+// to assume otherwise from reading this file alone.
 
 function emailShell(innerHtml: string) {
   return `
