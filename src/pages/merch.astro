@@ -386,18 +386,33 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
   </section>
 
-  <section id="stickers" class="stickers-section section-light">
-    <div class="container stickers-inner">
-      <img class="stickers-photo" src="/images/sticker/sticker-flat.png" alt="Dudela Sticker 5-Pack" loading="lazy" />
-      <div class="stickers-copy">
-        <p class="eyebrow">Small stuff</p>
-        <h2>Dudela Sticker 5-Pack</h2>
-        <p class="section-sub">
-          Five kiss-cut vinyl stickers — diaper bag, laptop, truck bumper, wherever. ${STICKER_PRICE}, free shipping, ships in a few days.
-        </p>
-        <a href="/api/create-checkout-session?product=sticker-5pack" class="btn btn-primary" data-buy>
-          Buy Now — ${STICKER_PRICE}
-        </a>
+  <section id="stickers" class="colors section-light stickers-section">
+    <div class="container">
+      <div class="section-divider">
+        <h2>Dudela Sticker 5-Pack.</h2>
+        <p class="section-sub">Five kiss-cut vinyl stickers — diaper bag, laptop, truck bumper, wherever. ${STICKER_PRICE}, free shipping, ships in a few days.</p>
+      </div>
+      <div class="colors-grid">
+        <div class="design-card">
+          <div class="design-media">
+            <div class="mockup-pair">
+              <img class="mockup-photo" src="/images/sticker/sticker-flat.png" alt="Dudela sticker, single, close up" />
+              <img class="mockup-photo" src="/images/sticker/sticker-pack.png" alt="Dudela Sticker 5-Pack, all five stickers" />
+            </div>
+          </div>
+          <div class="design-body">
+            <h3>Sticker 5-Pack</h3>
+            <p class="design-tagline">Kiss-cut vinyl, weatherproof — the fist-bump logo, five times over.</p>
+
+            <div class="color-meta">
+              <span class="price">${STICKER_PRICE}</span>
+              <span class="variant-name">5 stickers, one design</span>
+            </div>
+            <a href="/api/create-checkout-session?product=sticker-5pack" class="btn btn-primary" data-buy>
+              Buy Now — ${STICKER_PRICE}
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1709,6 +1724,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .hats-section {
     padding-top: 0;
   }
+  /* Stickers directly follows Hats — another .colors.section-light block —
+     so it loses its top padding too, same reasoning as .hats-section above. */
+  .stickers-section {
+    padding-top: 0;
+  }
   .section-divider {
     max-width: 60ch;
     margin: 0 0 2.25rem;
@@ -1886,41 +1906,16 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     margin: 0;
   }
 
-  /* Stickers — single fixed-price SKU, no variant picker needed, so this is
-     a much simpler photo+copy layout than the shirt/hat color-picker cards
-     above (see .colors-grid / .design-card for that pattern). */
-  .stickers-inner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-5);
-    flex-wrap: wrap;
-  }
-  .stickers-photo {
-    width: 260px;
-    max-width: 100%;
-    flex: none;
-    border-radius: var(--radius-md);
-  }
-  .stickers-copy {
-    flex: 1 1 320px;
-    min-width: 0;
-  }
-  .stickers-copy h2 {
-    margin: 0.3rem 0 0.6rem;
-  }
-  .stickers-copy .section-sub {
-    max-width: 46ch;
-    margin-bottom: 1.25rem;
-  }
-  @media (max-width: 640px) {
-    .stickers-inner {
-      flex-direction: column;
-      text-align: center;
-    }
-    .stickers-copy .section-sub {
-      max-width: none;
-    }
-  }
+  /* Stickers — single fixed-price SKU, no variant picker needed, so the
+     card below skips the thread/color swatches and "Dude to Dad" addon
+     toggle used on the hat/shirt cards, but otherwise reuses the exact
+     same .colors-grid / .design-card / .design-media / .mockup-pair /
+     .design-body markup and CSS as those sections above, so it keeps the
+     same two-photo layout and visual rhythm instead of a bespoke one. The
+     two photos are the real Printful product render (sticker-flat.png)
+     and a composite of that same art scattered as a 5-sticker pack
+     (sticker-pack.png, built locally from the Printful asset since
+     Printful only provides the one flat mockup for this product). */
 </style>
 
 <!-- Cap-color swatch buttons are created client-side via document.createElement
