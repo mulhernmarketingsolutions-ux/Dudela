@@ -27,6 +27,12 @@ const member = await getAuthedMember(Astro.cookies, env);
 const HAT_BASE_PRICE = Math.round(parseFloat(HAT_CATALOG[0].price));
 const SHIRT_BASE_PRICE = Math.round(parseFloat(SHIRT_CATALOG[0].price));
 
+// Sticker 5-pack is a single fixed-price SKU with no catalog entry of its
+// own (see api/create-checkout-session.ts and api/stripe-webhook.ts's
+// "sticker-5pack" PRODUCTS entries) -- hand-typed here to match, unlike the
+// two prices above. If this ever changes, update it in all three places.
+const STICKER_PRICE = 20;
+
 // Bundle & Save — buy one hat + one shirt together, 15% off each. Must match
 // BUNDLE_DISCOUNT_PERCENT in api/create-checkout-session.ts (that's the file
 // that actually charges the card; this is only used to render the live bar's
@@ -196,6 +202,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <div class="product-nav" role="group" aria-label="Jump to product">
         <a href="#shirts" class="product-nav-link">Shirts — ${SHIRT_BASE_PRICE}</a>
         <a href="#hats" class="product-nav-link">Hats — from ${HAT_BASE_PRICE}</a>
+        <a href="#stickers" class="product-nav-link">Stickers — ${STICKER_PRICE}</a>
       </div>
       <p class="bundle-hint">Get a hat and a shirt together and we knock {BUNDLE_DISCOUNT_PERCENT}% off each — no code needed, it shows up automatically once you've picked both.</p>
 
@@ -375,6 +382,22 @@ const canceled = url.searchParams.get("purchase") === "canceled";
           <script type="application/json" data-catalog set:html={JSON.stringify(d)} />
         </div>
       ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="stickers" class="stickers-section section-light">
+    <div class="container stickers-inner">
+      <img class="stickers-photo" src="/images/sticker/sticker-flat.png" alt="Dudela Sticker 5-Pack" loading="lazy" />
+      <div class="stickers-copy">
+        <p class="eyebrow">Small stuff</p>
+        <h2>Dudela Sticker 5-Pack</h2>
+        <p class="section-sub">
+          Five kiss-cut vinyl stickers — diaper bag, laptop, truck bumper, wherever. ${STICKER_PRICE}, free shipping, ships in a few days.
+        </p>
+        <a href="/api/create-checkout-session?product=sticker-5pack" class="btn btn-primary" data-buy>
+          Buy Now — ${STICKER_PRICE}
+        </a>
       </div>
     </div>
   </section>
@@ -1861,6 +1884,42 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-size: 0.76rem;
     color: var(--text-on-light-muted);
     margin: 0;
+  }
+
+  /* Stickers — single fixed-price SKU, no variant picker needed, so this is
+     a much simpler photo+copy layout than the shirt/hat color-picker cards
+     above (see .colors-grid / .design-card for that pattern). */
+  .stickers-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+  }
+  .stickers-photo {
+    width: 260px;
+    max-width: 100%;
+    flex: none;
+    border-radius: var(--radius-md);
+  }
+  .stickers-copy {
+    flex: 1 1 320px;
+    min-width: 0;
+  }
+  .stickers-copy h2 {
+    margin: 0.3rem 0 0.6rem;
+  }
+  .stickers-copy .section-sub {
+    max-width: 46ch;
+    margin-bottom: 1.25rem;
+  }
+  @media (max-width: 640px) {
+    .stickers-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+    .stickers-copy .section-sub {
+      max-width: none;
+    }
   }
 </style>
 
