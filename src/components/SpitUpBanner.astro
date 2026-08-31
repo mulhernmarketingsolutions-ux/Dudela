@@ -1,0 +1,81 @@
+---
+// Compact, single-row Spit-Up Society promo banner — for pages that don't
+// already have the full pitch (see Huddle.astro, the homepage's full
+// section-with-bullet-list-and-photo version of this same pitch). Built
+// 2026-08-31 for /merch and /podcast specifically: both had zero Spit-Up
+// Society mention despite being high-intent traffic (people already buying
+// or already listening). Deliberately evergreen copy, not tied to any one
+// episode or promo, so it doesn't go stale and need upkeep — the timely,
+// "we just dropped an episode" push belongs in the newsletter/social copy
+// instead, not baked into a permanent site banner.
+---
+<section class="spitup-banner">
+  <div class="container spitup-banner-inner">
+    <div class="spitup-banner-copy">
+      <span class="spitup-banner-badge">Live Q&amp;A &middot; Twice a Month</span>
+      <p class="spitup-banner-text">
+        Bring your real questions to John and Mike, live — join <strong>The Spit-Up Society</strong> for $5/mo, cancel anytime.
+      </p>
+    </div>
+    <a href="/join/spit-up-society" class="btn btn-primary spitup-banner-cta">Join the Spit-Up Society</a>
+  </div>
+</section>
+
+<style>
+  .spitup-banner {
+    background: var(--bg-dark-raised);
+    border-top: 1px solid var(--border-dark);
+    border-bottom: 1px solid var(--border-dark);
+    padding: var(--space-3) 0;
+  }
+  .spitup-banner-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .spitup-banner-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--text-on-dark);
+  }
+  .spitup-banner-badge {
+    display: inline-block;
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--forest-900);
+    background: var(--amber-500);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    width: fit-content;
+  }
+  .spitup-banner-text {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-on-dark-muted);
+    max-width: 46ch;
+  }
+  .spitup-banner-text strong {
+    color: var(--text-on-dark);
+  }
+  .spitup-banner-cta {
+    flex: none;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .spitup-banner-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .spitup-banner-cta {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
