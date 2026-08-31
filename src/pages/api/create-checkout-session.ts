@@ -114,7 +114,17 @@ const PRODUCTS: Record<
   // conservative stand-in (a small/light sticker mailer should ship for
   // *less* than that, so this only overstates cost) — place one real sticker
   // order and check Orders → order detail once this is live, then revisit.
-  // At $20 with that assumption: ~$2.42 profit (~12% margin) at full price.
+  //
+  // CORRECTED 2026-09-01: the stripe-webhook.ts isStickerPack branch always
+  // adds a free welcome postcard to every sticker order (unconditionally —
+  // there's no discount-threshold check here since promo codes are already
+  // blocked below), which the profit math above originally missed. Real
+  // postcard cost is $1.53 (confirmed from Printful's own product page, not
+  // a guess). With that included: $11.70 + $1.53 + $0.31 + $4.69 = $18.23
+  // cost, Stripe fee $0.88 on $20 → ~$0.89 profit (~4.5% margin), not the
+  // ~$2.42 (~12%) first estimated. Still profitable, just much thinner —
+  // worth a second look (raise the price, drop the postcard from sticker
+  // orders, or accept it once real shipping cost is confirmed).
   //
   // allowPromotionCodes is deliberately OFF (unlike hats/shirts) — at
   // $11.70+ in real product cost alone, this SKU can't survive FAMILY50
