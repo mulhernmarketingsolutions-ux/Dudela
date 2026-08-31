@@ -100,6 +100,25 @@ const PRODUCTS: Record<
       },
     ])
   ),
+  // Sticker 5-pack — one fixed SKU, no HAT_CATALOG/SHIRT_CATALOG entry (no
+  // color/size variants). merchColor is reused here purely to stamp
+  // metadata.color = "sticker-5pack" for the webhook (see stripe-webhook.ts's
+  // isMerch branch) — getHatVariant("sticker-5pack") below safely returns
+  // undefined, so the addon-surcharge logic just no-ops for this product.
+  // $15 is a placeholder — see the price comment on this product's PRODUCTS
+  // entry in stripe-webhook.ts before this goes live.
+  "sticker-5pack": {
+    priceData: {
+      name: "Dudela Sticker 5-Pack",
+      unitAmountCents: 1500,
+    },
+    returnPath: "/merch",
+    thankYouPath: "/merch/thank-you",
+    mode: "payment" as const,
+    shipping: true,
+    merchColor: "sticker-5pack",
+    allowPromotionCodes: true,
+  },
 };
 
 // Buy a hat + shirt together and get 20% off each — see /merch's "Bundle &

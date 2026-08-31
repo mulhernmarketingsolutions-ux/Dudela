@@ -81,6 +81,14 @@ export interface HatVariant {
   leftImage: string;
 }
 
+// The two "welcome kit" sync products (My products → Dudela Sticker /
+// Dudela Postcard in the Printful dashboard) — a single source of truth so
+// stripe-webhook.ts's welcome-extras logic and the standalone sticker
+// 5-pack product both reference the same numbers instead of each
+// hardcoding them separately.
+export const STICKER_SYNC_VARIANT_ID = 5470154229;
+export const POSTCARD_SYNC_VARIANT_ID = 5470154978;
+
 export const HAT_CATALOG: HatVariant[] = [
   {
     key: "classic-white-withaddon-black",
@@ -769,6 +777,11 @@ export async function createPrintfulOrder(
     // mapping for any hat without spending real money. Real webhook orders
     // always omit this (default true).
     confirm?: boolean;
+    // How many of syncVariantId to order — e.g. 5 for the sticker 5-pack.
+    // Extras (extraSyncVariantIds) are always quantity 1 each; only the
+    // primary item multiplies. Omitted/1 for every existing single-item
+    // purchase (hats, shirts).
+    quantity?: number;
   }
 ): Promise<{ id: number; status: string; costs?: PrintfulOrderCosts }> {
   const confirm = opts.confirm ?? true;
@@ -776,10 +789,10 @@ export async function createPrintfulOrder(
   const body = {
     external_id: opts.externalId,
     recipient: opts.recipient,
-    items: [opts.syncVariantId, ...(opts.extraSyncVariantIds || [])].map((id) => ({
-      sync_variant_id: id,
-      quantity: 1,
-    })),
+    items: [
+      { sync_variant_id: opts.syncVariantId, quantity: opts.quantity ?? 1 },
+      ...(opts.extraSyncVariantIds || []).map((id) => ({ sync_variant_id: id, quantity: 1 })),
+    ],
   };
 
   let lastErr = "";

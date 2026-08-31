@@ -18,6 +18,8 @@ import {
   SHIRT_CATALOG,
   shirtLabel,
   shortExternalId,
+  STICKER_SYNC_VARIANT_ID,
+  POSTCARD_SYNC_VARIANT_ID,
 } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
 
@@ -30,7 +32,7 @@ import { NEXT_CALL } from "../../lib/next-call";
 // together. Sync variant ids from the Printful dashboard (My products):
 //   Dudela Sticker  (sync product 461929760) -> sync variant 5470154229
 //   Dudela Postcard (sync product 461929912, Standard Postcard 4x6) -> sync variant 5470154978
-const WELCOME_EXTRA_SYNC_VARIANT_IDS = [5470154229, 5470154978];
+const WELCOME_EXTRA_SYNC_VARIANT_IDS = [STICKER_SYNC_VARIANT_ID, POSTCARD_SYNC_VARIANT_ID];
 
 // A deep enough discount already cuts into margin on its own — stacking the
 // ~$4-5/order welcome sticker+postcard cost on top of it can push an order
@@ -128,6 +130,13 @@ export const PRODUCTS: Record<string, ProductInfo> = {
       { name: shirtLabel(shirt), price: `$${Math.round(parseFloat(shirt.price))}`, isMerch: true, image: shirt.frontImage },
     ])
   ),
+  // Sticker 5-pack — one fixed SKU (no color/size catalog like hats/shirts),
+  // ordered as quantity 5 of the single sticker sync_variant_id at fulfillment
+  // time (see the isMerch branch below). $15 is a placeholder price — sanity
+  // check it against your real Printful cost (5 x $2.34 = $11.70 in product
+  // cost alone, before shipping/fulfillment and Stripe's fee) before it goes
+  // live; the profitability ledger has the same math worked out for hats/shirts.
+  "sticker-5pack": { name: "Dudela Sticker 5-Pack", price: "$15", isMerch: true },
 };
 
 // Stripe's Basil API version (2025-03-31+) moved collected checkout-time
@@ -583,6 +592,10 @@ export async function POST({ request, locals }: APIContext) {
       } else if (productInfo.isMerch) {
         ({ name: shippingName, address: shippingAddress } = extractShippingDetails(session));
         const color = session.metadata?.color || "unknown";
+        // The sticker 5-pack isn't a HAT_CATALOG/SHIRT_CATALOG key — one fixed
+        // SKU ordered at quantity 5 — so it's checked first, before falling
+        // through to the hat/shirt catalog lookup below.
+        const isStickerPack = color === "sticker-5pack";
 
         // Printful order created BEFORE the merch_orders insert below so the
         // real Printful order id can be stored on that row — that id is what
@@ -595,9 +608,11 @@ export async function POST({ request, locals }: APIContext) {
         // `color` is really "which HAT_CATALOG or SHIRT_CATALOG key" (metadata field
         // name is a holdover from when hats were the only merch product) — check
         // both catalogs since one Stripe `product` key never matches both.
-        const hatVariant = getHatVariant(color);
-        const shirtVariant = hatVariant ? undefined : getShirtVariant(color);
-        const syncVariantId = hatVariant?.syncVariantId ?? shirtVariant?.syncVariantId;
+        const hatVariant = isStickerPack ? undefined : getHatVariant(color);
+        const shirtVariant = isStickerPack || hatVariant ? undefined : getShirtVariant(color);
+        const syncVariantId = isStickerPack
+          ? STICKER_SYNC_VARIANT_ID
+          : hatVariant?.syncVariantId ?? shirtVariant?.syncVariantId;
         const recipient = extractPrintfulRecipient(session, name, email);
         let printfulOrderId: number | undefined;
         let itemCostCents: number | undefined;
@@ -605,7 +620,10 @@ export async function POST({ request, locals }: APIContext) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId,
-              extraSyncVariantIds: welcomeExtrasFor(session),
+              quantity: isStickerPack ? 5 : undefined,
+              // A sticker-pack order already IS stickers — no reason to also
+              // staple on the new-customer welcome sticker + postcard.
+              extraSyncVariantIds: isStickerPack ? [] : welcomeExtrasFor(session),
               recipient,
               externalId: await shortExternalId(session.id),
               // See the isTestMode comment near the top of this handler —
