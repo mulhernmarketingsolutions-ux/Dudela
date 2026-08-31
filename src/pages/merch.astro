@@ -19,6 +19,13 @@ const env = (Astro.locals as any).runtime.env;
 // of what a merch drop is for.
 const member = await getAuthedMember(Astro.cookies, env);
 
+// Base display prices for the nav links / section blurbs below — derived
+// from the catalogs (not hand-typed) so a future price change only ever
+// needs to happen in printful.ts, same reasoning as the per-variant price
+// spans and buy buttons elsewhere on this page.
+const HAT_BASE_PRICE = Math.round(parseFloat(HAT_CATALOG[0].price));
+const SHIRT_BASE_PRICE = Math.round(parseFloat(SHIRT_CATALOG[0].price));
+
 // Bundle & Save — buy one hat + one shirt together, 15% off each. Must match
 // BUNDLE_DISCOUNT_PERCENT in api/create-checkout-session.ts (that's the file
 // that actually charges the card; this is only used to render the live bar's
@@ -93,6 +100,7 @@ const designs = (Object.keys(DESIGN_INFO) as Design[]).map((dkey) => {
     colorHex: v.colorHex,
     colorHex2: v.colorHex2 || v.colorHex,
     addon: v.addon,
+    price: v.price,
     front: v.frontImage,
     left: v.leftImage,
   }));
@@ -185,8 +193,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       </p>
 
       <div class="product-nav" role="group" aria-label="Jump to product">
-        <a href="#shirts" class="product-nav-link">Shirts — $42</a>
-        <a href="#hats" class="product-nav-link">Hats — from $38</a>
+        <a href="#shirts" class="product-nav-link">Shirts — ${SHIRT_BASE_PRICE}</a>
+        <a href="#hats" class="product-nav-link">Hats — from ${HAT_BASE_PRICE}</a>
       </div>
       <p class="bundle-hint">Get a hat and a shirt together and we knock {BUNDLE_DISCOUNT_PERCENT}% off each — no code needed, it shows up automatically once you've picked both.</p>
 
@@ -207,7 +215,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     <div class="container">
       <div class="section-divider">
         <h2>The Dudela shirt.</h2>
-        <p class="section-sub">Comfort Colors heavyweight tee — front chest hit, full back print. $42, free shipping, made to order.</p>
+        <p class="section-sub">Comfort Colors heavyweight tee — front chest hit, full back print. ${SHIRT_BASE_PRICE}, free shipping, made to order.</p>
       </div>
       <div class="colors-grid">
         {shirtDesigns.map((d) => (
@@ -299,7 +307,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     <div class="container">
       <div class="section-divider">
         <h2>The Dudela hat.</h2>
-        <p class="section-sub">Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side stitch — $38, free shipping.</p>
+        <p class="section-sub">Two designs, three thread colors, a cap color to match, and an optional "Dude to Dad" side stitch — ${HAT_BASE_PRICE}, free shipping.</p>
       </div>
       <div class="colors-grid">
       {designs.map((d) => (
@@ -344,11 +352,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             </button>
 
             <div class="color-meta">
-              <span class="price" data-price>{d.first.addon ? "$39" : "$38"}</span>
+              <span class="price" data-price>${Math.round(parseFloat(d.first.price) + (d.first.addon ? 1 : 0))}</span>
               <span class="variant-name" data-variant-name>{d.first.colorLabel}</span>
             </div>
             <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
-              Buy Now — {d.first.addon ? "$39" : "$38"}
+              Buy Now — ${Math.round(parseFloat(d.first.price) + (d.first.addon ? 1 : 0))}
             </a>
 
             <div class="detail-links">
@@ -653,6 +661,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     colorHex: string;
     colorHex2: string;
     addon: boolean;
+    price: string;
     front: string;
     left: string;
   }
@@ -764,19 +773,22 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       }, 120);
 
       variantName.textContent = variant.colorLabel;
-      const priceLabel = variant.addon ? "$39" : "$38";
+      const priceLabel = `$${Math.round(parseFloat(variant.price) + (variant.addon ? 1 : 0))}`;
       priceEl.textContent = priceLabel;
       buyBtn.textContent = `Buy Now — ${priceLabel}`;
       buyBtn.href = `/api/create-checkout-session?product=${variant.key}`;
 
       if (isDefaultForBundle || userInteracted) {
-        // Base hat price is a flat $38 across every real variant (see
-        // HAT_CATALOG in lib/printful.ts) — the add-on is tracked
-        // separately as its own $1 surcharge, same split the server uses.
+        // Hat price is a flat $38 across every real variant today (see
+        // HAT_CATALOG in lib/printful.ts), but derived from variant.price
+        // rather than hand-typed so this can't drift if that ever changes —
+        // same reasoning as the shirt side (SHIRT_DESIGN_COLORS.price). The
+        // add-on is tracked separately as its own $1 surcharge, same split
+        // the server uses — bundle math adds it on top itself when relevant.
         currentHat = {
           key: variant.key,
           label: `${catalog.title} — ${variant.colorLabel}`,
-          price: 38,
+          price: parseFloat(variant.price),
           addon: variant.addon,
           image: variant.front,
         };

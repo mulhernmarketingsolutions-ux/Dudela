@@ -121,10 +121,12 @@ export const PRODUCTS: Record<string, ProductInfo> = {
   ...Object.fromEntries(
     HAT_CATALOG.map((hat) => [
       hat.key,
-      // $39 for Dude to Dad Stitch variants — the $1 add-on surcharge is a
+      // $1 more for Dude to Dad Stitch variants — that add-on surcharge is a
       // separate Stripe line item (see create-checkout-session.ts), but the
-      // receipt copy should still show what was actually charged.
-      { name: hatLabel(hat), price: hat.addon ? "$39" : "$38", isMerch: true, image: hat.frontImage },
+      // receipt copy should still show what was actually charged. Derived
+      // from hat.price (not hand-typed) so this can't drift if the hat price
+      // ever changes — matches how the shirt entry below already works.
+      { name: hatLabel(hat), price: `$${Math.round(parseFloat(hat.price) + (hat.addon ? 1 : 0))}`, isMerch: true, image: hat.frontImage },
     ])
   ),
   // Every buyable shirt — see lib/printful.ts SHIRT_CATALOG.
