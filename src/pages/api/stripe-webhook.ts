@@ -132,11 +132,15 @@ export const PRODUCTS: Record<string, ProductInfo> = {
   ),
   // Sticker 5-pack — one fixed SKU (no color/size catalog like hats/shirts),
   // ordered as quantity 5 of the single sticker sync_variant_id at fulfillment
-  // time (see the isMerch branch below). $15 is a placeholder price — sanity
-  // check it against your real Printful cost (5 x $2.34 = $11.70 in product
-  // cost alone, before shipping/fulfillment and Stripe's fee) before it goes
-  // live; the profitability ledger has the same math worked out for hats/shirts.
-  "sticker-5pack": { name: "Dudela Sticker 5-Pack", price: "$15", isMerch: true },
+  // time (see the isMerch branch below). $15 ($3/sticker) is intentionally
+  // thin/no-margin — stickers are brand reach, not a profit line (confirmed
+  // 2026-08-31). Real Printful numbers checked against actual fulfilled hat
+  // orders: product cost 5 x $2.34 = $11.70, no File Digitization fee expected
+  // (that only applies to embroidery, not this kiss-cut print), real shipping
+  // TBD for a sticker-only package — Printful's product page quotes $2.99-$8.29
+  // for ONE sticker, which only bounds it; place one real order and check its
+  // actual costs breakdown (Orders → order detail) once this is live.
+  "sticker-5pack": { name: "Dudela Sticker 5-Pack", price: "$15", isMerch: true, image: "/images/sticker/sticker-flat.png" },
 };
 
 // Stripe's Basil API version (2025-03-31+) moved collected checkout-time
@@ -621,9 +625,12 @@ export async function POST({ request, locals }: APIContext) {
             const result = await createPrintfulOrder(env, {
               syncVariantId,
               quantity: isStickerPack ? 5 : undefined,
-              // A sticker-pack order already IS stickers — no reason to also
-              // staple on the new-customer welcome sticker + postcard.
-              extraSyncVariantIds: isStickerPack ? [] : welcomeExtrasFor(session),
+              // An order that already includes stickers doesn't need a free
+              // extra one stapled on top — but the postcard (the actual
+              // Spit-Up Society pitch) still makes sense to include. Written
+              // as "already has stickers", not "is the sticker pack", so any
+              // future product built around the sticker inherits the same rule.
+              extraSyncVariantIds: isStickerPack ? [POSTCARD_SYNC_VARIANT_ID] : welcomeExtrasFor(session),
               recipient,
               externalId: await shortExternalId(session.id),
               // See the isTestMode comment near the top of this handler —

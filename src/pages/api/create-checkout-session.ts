@@ -111,6 +111,7 @@ const PRODUCTS: Record<
     priceData: {
       name: "Dudela Sticker 5-Pack",
       unitAmountCents: 1500,
+      image: "/images/sticker/sticker-flat.png",
     },
     returnPath: "/merch",
     thankYouPath: "/merch/thank-you",
