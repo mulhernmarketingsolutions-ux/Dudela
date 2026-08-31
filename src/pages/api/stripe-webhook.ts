@@ -32,6 +32,27 @@ import { NEXT_CALL } from "../../lib/next-call";
 //   Dudela Postcard (sync product 461929912, Standard Postcard 4x6) -> sync variant 5470154978
 const WELCOME_EXTRA_SYNC_VARIANT_IDS = [5470154229, 5470154978];
 
+// A deep enough discount already cuts into margin on its own — stacking the
+// ~$4-5/order welcome sticker+postcard cost on top of it can push an order
+// into a loss (see the Coupon Comparison section of the profitability ledger:
+// at 50% off, hat/shirt/bundle all go negative once the extras are included).
+// Rather than hardcode specific promo codes here — and have to remember to
+// update this file every time a new one is created in Stripe — key off the
+// ACTUAL discount percentage Stripe applied to the session. Any code cutting
+// this much or more skips the welcome extras automatically. 30% leaves
+// headroom under the hat's ~33% breakeven (the tightest of the three
+// products) under current cost assumptions; re-check against the ledger if
+// real Printful costs come in materially different.
+const SKIP_WELCOME_EXTRAS_DISCOUNT_THRESHOLD = 0.3;
+
+function welcomeExtrasFor(session: any): number[] {
+  const subtotal = typeof session.amount_subtotal === "number" ? session.amount_subtotal : 0;
+  const discount =
+    typeof session.total_details?.amount_discount === "number" ? session.total_details.amount_discount : 0;
+  const discountPct = subtotal > 0 ? discount / subtotal : 0;
+  return discountPct >= SKIP_WELCOME_EXTRAS_DISCOUNT_THRESHOLD ? [] : WELCOME_EXTRA_SYNC_VARIANT_IDS;
+}
+
 export const prerender = false;
 
 // Stripe webhook endpoint. Configure in Stripe Dashboard → Developers → Webhooks:
@@ -483,7 +504,7 @@ export async function POST({ request, locals }: APIContext) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId: bundleHatVariant.syncVariantId,
-              extraSyncVariantIds: [bundleShirtVariant.syncVariantId, ...WELCOME_EXTRA_SYNC_VARIANT_IDS],
+              extraSyncVariantIds: [bundleShirtVariant.syncVariantId, ...welcomeExtrasFor(session)],
               recipient,
               externalId: await shortExternalId(session.id),
               // Test-mode Stripe event → leave as a free unconfirmed draft
@@ -584,7 +605,7 @@ export async function POST({ request, locals }: APIContext) {
           try {
             const result = await createPrintfulOrder(env, {
               syncVariantId,
-              extraSyncVariantIds: WELCOME_EXTRA_SYNC_VARIANT_IDS,
+              extraSyncVariantIds: welcomeExtrasFor(session),
               recipient,
               externalId: await shortExternalId(session.id),
               // See the isTestMode comment near the top of this handler —
