@@ -619,7 +619,7 @@ export interface ShirtVariant {
   year: ShirtYear;
   size: ShirtSize;
   syncVariantId: number;
-  price: string; // "40.00" — every size/color/year of a given design is the same price
+  price: string; // "42.00" — every size/color/year of a given design is the same price. Bumped from $40 on 2026-08-31: real cost is the Comfort Colors 1717 garment ($21.24), not the $11.69 originally assumed, so $40 left too little margin once any discount code applied.
   frontImage: string;
   backImage: string;
   // A tight crop of the actual chest-logo print file (not the full-body
@@ -663,7 +663,7 @@ const SHIRT_DESIGN_COLORS: ShirtDesignColorYearRow[] = SHIRT_COLORS.flatMap(({ c
     frontImage: `/images/shirts/shirt-${color}-${year}-front.png`,
     backImage: `/images/shirts/shirt-${color}-${year}-back.png`,
     logoDetailImage: `/images/shirts/shirt-${color}-${year}-logo-detail.png`,
-    price: "40.00",
+    price: "42.00",
     sizeSyncVariantIds: SHIRT_SYNC_VARIANT_IDS[`${color}-${year}`] || [0, 0, 0, 0, 0, 0, 0],
   }))
 );

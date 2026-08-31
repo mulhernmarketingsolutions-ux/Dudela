@@ -122,7 +122,7 @@ const PRODUCTS: Record<
   },
 };
 
-// Buy a hat + shirt together and get 20% off each — see /merch's "Bundle &
+// Buy a hat + shirt together and get 15% off each — see /merch's "Bundle &
 // Save" section. Not a PRODUCTS entry above since it's parameterized by
 // TWO catalog picks (?hat=<HAT_CATALOG key>&shirt=<SHIRT_CATALOG key>), not
 // one fixed product — handled in its own branch (handleBundleCheckout)
@@ -130,6 +130,14 @@ const PRODUCTS: Record<
 // two separate discounted line items (not a Stripe Coupon on top of full
 // price), so the checkout page and the resulting receipt itemize each
 // piece at its real discounted price rather than one opaque combined charge.
+//
+// allowPromotionCodes is deliberately OFF for the bundle (see below) — the
+// bundle's own 15% is the one and only discount it ever gets. Before
+// 2026-08-31 a customer could also type FAMILY50/HUDDLE20 into Stripe's
+// checkout field and stack it on top of the already-discounted bundle price
+// (15% x 50% compounding to ~32% off), which real order costs showed pushed
+// bundle profit to -$14 to -$18 (see the Dudela Ledger's Coupon Comparison).
+// One discount only, whichever applies — never both.
 const BUNDLE_DISCOUNT_PERCENT = 15;
 
 export async function GET({ request, locals, cookies }: APIContext) {
@@ -278,7 +286,9 @@ async function handleBundleCheckout(
       collectShipping: true,
       invoiceCreation: true,
       extraLineItems,
-      allowPromotionCodes: true,
+      // No promo-code field on bundle checkout — see the BUNDLE_DISCOUNT_PERCENT
+      // comment above. The bundle's 15% is already applied to hatCents/shirtCents.
+      allowPromotionCodes: false,
     });
     return new Response(null, { status: 302, headers: { Location: session.url } });
   } catch (err) {

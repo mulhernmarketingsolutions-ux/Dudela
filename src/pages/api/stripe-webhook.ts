@@ -41,11 +41,15 @@ const WELCOME_EXTRA_SYNC_VARIANT_IDS = [STICKER_SYNC_VARIANT_ID, POSTCARD_SYNC_V
 // Rather than hardcode specific promo codes here — and have to remember to
 // update this file every time a new one is created in Stripe — key off the
 // ACTUAL discount percentage Stripe applied to the session. Any code cutting
-// this much or more skips the welcome extras automatically. 30% leaves
-// headroom under the hat's ~33% breakeven (the tightest of the three
-// products) under current cost assumptions; re-check against the ledger if
-// real Printful costs come in materially different.
-const SKIP_WELCOME_EXTRAS_DISCOUNT_THRESHOLD = 0.3;
+// this much or more skips the welcome extras automatically.
+//
+// Lowered from 0.30 to 0.15 on 2026-08-31 after checking real Printful order
+// costs: with the true shirt cost ($21.24, not the $11.69 originally assumed)
+// factored in, HUDDLE20 (20% off) was landing at ~breakeven with extras
+// included on shirt/bundle. 0.15 sits between WELCOME10 (10%, keeps the
+// welcome extras) and HUDDLE20 (20%, now skips them) — re-check against the
+// ledger if a new code lands between those two, or if real costs shift again.
+const SKIP_WELCOME_EXTRAS_DISCOUNT_THRESHOLD = 0.15;
 
 function welcomeExtrasFor(session: any): number[] {
   const subtotal = typeof session.amount_subtotal === "number" ? session.amount_subtotal : 0;
