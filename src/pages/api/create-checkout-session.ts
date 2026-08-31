@@ -105,12 +105,27 @@ const PRODUCTS: Record<
   // metadata.color = "sticker-5pack" for the webhook (see stripe-webhook.ts's
   // isMerch branch) — getHatVariant("sticker-5pack") below safely returns
   // undefined, so the addon-surcharge logic just no-ops for this product.
-  // $15 is a placeholder — see the price comment on this product's PRODUCTS
-  // entry in stripe-webhook.ts before this goes live.
+  //
+  // $20 (raised from a $15 placeholder, 2026-09-01) — real cost is 5 x
+  // $2.34/sticker = $11.70 (confirmed Printful rate) + $0.31 retail delivery
+  // fee, no file digitization (kiss-cut print, not embroidery, per John
+  // 2026-09-01). Shipping for a sticker-only package is still unconfirmed —
+  // using the $4.69 single-item rate from real hat/shirt orders as a
+  // conservative stand-in (a small/light sticker mailer should ship for
+  // *less* than that, so this only overstates cost) — place one real sticker
+  // order and check Orders → order detail once this is live, then revisit.
+  // At $20 with that assumption: ~$2.42 profit (~12% margin) at full price.
+  //
+  // allowPromotionCodes is deliberately OFF (unlike hats/shirts) — at
+  // $11.70+ in real product cost alone, this SKU can't survive FAMILY50
+  // (50% off) at any price a sticker pack should reasonably charge, so
+  // rather than chase an unreasonably high price to "breakeven with the
+  // sales" (John's instruction, 2026-09-01), no promo code ever applies
+  // here — full price every time, same logic as the bundle checkout above.
   "sticker-5pack": {
     priceData: {
       name: "Dudela Sticker 5-Pack",
-      unitAmountCents: 1500,
+      unitAmountCents: 2000,
       image: "/images/sticker/sticker-flat.png",
     },
     returnPath: "/merch",
@@ -118,7 +133,7 @@ const PRODUCTS: Record<
     mode: "payment" as const,
     shipping: true,
     merchColor: "sticker-5pack",
-    allowPromotionCodes: true,
+    allowPromotionCodes: false,
   },
 };
 

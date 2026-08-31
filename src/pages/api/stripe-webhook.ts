@@ -138,15 +138,21 @@ export const PRODUCTS: Record<string, ProductInfo> = {
   ),
   // Sticker 5-pack — one fixed SKU (no color/size catalog like hats/shirts),
   // ordered as quantity 5 of the single sticker sync_variant_id at fulfillment
-  // time (see the isMerch branch below). $15 ($3/sticker) is intentionally
-  // thin/no-margin — stickers are brand reach, not a profit line (confirmed
-  // 2026-08-31). Real Printful numbers checked against actual fulfilled hat
-  // orders: product cost 5 x $2.34 = $11.70, no File Digitization fee expected
-  // (that only applies to embroidery, not this kiss-cut print), real shipping
-  // TBD for a sticker-only package — Printful's product page quotes $2.99-$8.29
-  // for ONE sticker, which only bounds it; place one real order and check its
-  // actual costs breakdown (Orders → order detail) once this is live.
-  "sticker-5pack": { name: "Dudela Sticker 5-Pack", price: "$15", isMerch: true, image: "/images/sticker/sticker-flat.png" },
+  // time (see the isMerch branch below). $20 ($4/sticker, raised from a $15
+  // placeholder 2026-09-01) — real product cost 5 x $2.34 = $11.70 (confirmed
+  // Printful rate) + $0.31 retail delivery fee, no File Digitization fee (that
+  // only applies to embroidery, not this kiss-cut print). Real shipping for a
+  // sticker-only package is still TBD — using the $4.69 single-item rate from
+  // fulfilled hat/shirt orders as a conservative stand-in (Printful's product
+  // page separately quotes $2.99-$8.29 for ONE sticker, which only bounds it);
+  // place one real order and check its actual costs breakdown (Orders → order
+  // detail) once this is live, then revisit. At $20 with that shipping
+  // assumption: ~$2.42 profit (~12% margin), nominal but real (per John,
+  // 2026-09-01) — vs. the old $15 placeholder, which was actually a ~$2.44
+  // loss at full price under the same assumption. Promo codes are blocked on
+  // this checkout (see create-checkout-session.ts) so it never needs to
+  // survive a 50%-off code — full price every time.
+  "sticker-5pack": { name: "Dudela Sticker 5-Pack", price: "$20", isMerch: true, image: "/images/sticker/sticker-flat.png" },
 };
 
 // Stripe's Basil API version (2025-03-31+) moved collected checkout-time
