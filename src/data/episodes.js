@@ -33,10 +33,11 @@ export const APPLE_URL = "https://podcasts.apple.com/us/podcast/the-dudela-podca
 // Used to number the homepage's episode-row ghost numerals counting DOWN
 // from the real episode number (30, 29, 28...) instead of counting up from
 // 01 regardless of how many episodes have actually aired.
-// Bumped to 31 on 2026-08-18 for "Trying should be the fun part, right?" —
-// assumed sequential (30 was confirmed, this is the next one published);
-// worth a quick sanity check against Apple's count next time you're in there.
-export const TOTAL_EPISODES = 31;
+// Bumped to 32 on 2026-09-01 for "Our Wives Get Honest About Pregnancy,
+// Postpartum & Us" — assumed sequential (31 was itself an assumption, not
+// a confirmed Apple count); worth a quick sanity check against Apple's
+// count next time you're in there.
+export const TOTAL_EPISODES = 32;
 
 // Shared slug helper — used both to give each episode row on /podcast a
 // stable anchor id, and by the Roadmap to deep-link straight to the right
@@ -49,6 +50,13 @@ export function slugify(title) {
 }
 
 export const episodes = [
+  // Published 2026-09-01 (Podbean auto-published at 1am so the other
+  // platforms have time to catch up before the newsletter goes out
+  // mid-morning). Apple link intentionally left unset — same reasoning as
+  // "Trying should be the fun part, right?" above: new episodes take a bit
+  // to show up in Apple's public catalog/lookup API. Falls back to the
+  // show-level APPLE_URL until the real per-episode link exists.
+  { title: "Our Wives Get Honest About Pregnancy, Postpartum & Us", date: "2026-09-01", downloads: 0, link: "https://thedudelapodcast.podbean.com/e/our-wives-get-honest-about-pregnancy-postpartum-us/", apple: null },
   // Published 2026-08-18, confirmed live on the show's Podbean feed just
   // before this entry was added. Apple link intentionally left unset — new
   // episodes take a bit to show up in Apple's public catalog/lookup API, and
