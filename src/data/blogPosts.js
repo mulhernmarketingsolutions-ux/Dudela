@@ -38,6 +38,16 @@ export const blogPosts = [
     stageId: "sleep-regression",
     source: "Personal account — the Taking Cara Babies SITBACK Method, as used by John's family.",
   },
+  {
+    slug: "power-100-list",
+    title: "The List That Changes How You See Your Life",
+    dek: "A simple exercise from the book Wild Success — write down 100 things you're proud of, out loud, in the car. It sounds small. It isn't.",
+    description: "A mindset exercise for dads adapted from Calvin Coyles' book Wild Success: build your own list of 100 things you're proud of, and what it reveals about where you actually feel alive.",
+    date: "September 2026",
+    readTime: "5 min read",
+    stageId: "6mo",
+    source: "Adapted from the \"Power 100\" exercise in Wild Success by Calvin Coyles.",
+  },
 ];
 
 export function getBlogPost(slug) {
