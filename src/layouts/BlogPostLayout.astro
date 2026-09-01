@@ -1,0 +1,147 @@
+---
+// Shared shell for every /blog/[slug] post. Mirrors the hero pattern used
+// on /podcast and /prepare (eyebrow + h1 + hero-sub on a dark section) so a
+// blog post reads like the rest of the site instead of a bolted-on
+// WordPress-style template. Body content is the default slot — each post
+// page writes its own <p>/<h2>/<PhotoPlaceholder> markup directly rather
+// than going through a markdown pipeline, since none is wired up yet (see
+// blog plan doc: no @astrojs/mdx dependency exists in package.json).
+import BaseLayout from "./BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+export interface Props {
+  title: string;
+  description: string;
+  eyebrow: string;
+  dek: string; // one-line hook under the h1, same role as hero-sub elsewhere
+  date: string; // e.g. "September 2026" — deliberately not day-precise; see blog data file comment
+  readTime: string; // e.g. "6 min read"
+  ctaHeading: string;
+  ctaBody: string;
+  ctaHref: string;
+  ctaLabel: string;
+}
+const { title, description, eyebrow, dek, date, readTime, ctaHeading, ctaBody, ctaHref, ctaLabel } = Astro.props;
+---
+<BaseLayout title={`${title} — Dudela`} description={description}>
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container">
+      <p class="eyebrow">{eyebrow}</p>
+      <h1>{title}</h1>
+      <p class="hero-sub">{dek}</p>
+      <p class="meta">{date} · {readTime}</p>
+    </div>
+  </section>
+
+  <section class="post-body section-light">
+    <div class="container prose">
+      <slot />
+    </div>
+  </section>
+
+  <section class="post-cta section-dark">
+    <div class="container cta-inner">
+      <div>
+        <p class="eyebrow">Next step</p>
+        <h2>{ctaHeading}</h2>
+        <p class="hero-sub cta-body">{ctaBody}</p>
+      </div>
+      <a href={ctaHref} class="btn btn-primary">{ctaLabel} →</a>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 3rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    margin: 0.5rem 0 1rem;
+    max-width: 20ch;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 56ch;
+    margin: 0 0 1rem;
+  }
+  .meta {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-on-dark-muted);
+    opacity: 0.8;
+  }
+  .post-body {
+    padding: var(--space-6) 0;
+  }
+  .prose {
+    max-width: 68ch;
+  }
+  .prose :global(h2) {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    margin: 2.5rem 0 1rem;
+  }
+  .prose :global(p) {
+    color: var(--text-on-light-muted);
+    margin: 0 0 1.25rem;
+  }
+  .prose :global(strong) {
+    color: var(--text-on-light);
+  }
+  .prose :global(ul) {
+    color: var(--text-on-light-muted);
+    padding-left: 1.25rem;
+    margin: 0 0 1.5rem;
+  }
+  .prose :global(li) {
+    margin-bottom: 0.5rem;
+  }
+  .prose :global(.photo-placeholder) {
+    margin: 2rem 0;
+  }
+  .prose :global(a) {
+    color: var(--rust-600);
+  }
+  .prose :global(.pull-quote) {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+    color: var(--text-on-light);
+    border-left: 3px solid var(--action);
+    padding-left: 1.25rem;
+    margin: 2.5rem 0;
+  }
+  .post-cta {
+    padding: var(--space-5) 0;
+  }
+  .cta-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  .cta-inner h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin: 0.5rem 0 0.75rem;
+  }
+  .cta-body {
+    margin: 0;
+  }
+  @media (min-width: 768px) {
+    .cta-inner {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cta-inner > div {
+      max-width: 60ch;
+    }
+  }
+</style>

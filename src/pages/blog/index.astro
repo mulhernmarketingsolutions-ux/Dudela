@@ -1,0 +1,103 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { blogPosts } from "../../data/blogPosts.js";
+---
+<BaseLayout title="The Dudela Blog" description="Everything we've learned about fatherhood, written down. Real numbers, real stories, no vague advice.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container">
+      <p class="eyebrow">The Dudela Blog</p>
+      <h1>Everything we wish someone had written down.</h1>
+      <p class="hero-sub">
+        The same stuff we talk about on the podcast and in the newsletter — just longer, and
+        easier to come back to.
+      </p>
+    </div>
+  </section>
+
+  <section class="posts section-light">
+    <div class="container">
+      <div class="post-grid">
+        {blogPosts.map((post) => (
+          <a href={`/blog/${post.slug}`} class="post-card">
+            <p class="post-meta">{post.date} · {post.readTime}</p>
+            <h2>{post.title}</h2>
+            <p class="post-dek">{post.dek}</p>
+            <span class="post-link">Read the post →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 9rem 0 3rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    margin: 0.5rem 0 1rem;
+    max-width: 18ch;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 52ch;
+  }
+  .posts {
+    padding: var(--space-6) 0;
+  }
+  .post-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .post-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-light-raised);
+    border: 1px solid var(--cream-300);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    transition: transform 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
+  }
+  .post-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--clay-500);
+  }
+  .post-meta {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.75rem;
+  }
+  .post-card h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+    margin: 0 0 0.75rem;
+  }
+  .post-dek {
+    color: var(--text-on-light-muted);
+    margin: 0 0 1rem;
+    max-width: 60ch;
+  }
+  .post-link {
+    font-family: var(--font-label);
+    font-weight: 500;
+    color: var(--rust-600);
+  }
+  @media (min-width: 900px) {
+    .post-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
