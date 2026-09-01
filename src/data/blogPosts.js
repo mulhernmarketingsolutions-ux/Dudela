@@ -28,6 +28,16 @@ export const blogPosts = [
     stageId: "8wk",
     source: "Adapted from Episode 27, \"The Emotional Side of Fatherhood Nobody Talks About\"",
   },
+  {
+    slug: "sitback-method",
+    title: "The SITBACK Method: How We Got Our Twins Sleeping Through the Night",
+    dek: "The Taking Cara Babies sleep method, translated for dads. Six steps, no fluff, the one thing that actually worked for us out of the NICU.",
+    description: "A dad's breakdown of the Taking Cara Babies SITBACK Method — the sleep method that got the Dudela twins sleeping through the night straight out of the NICU.",
+    date: "September 2026",
+    readTime: "5 min read",
+    stageId: "sleep-regression",
+    source: "Personal account — the Taking Cara Babies SITBACK Method, as used by John's family.",
+  },
 ];
 
 export function getBlogPost(slug) {

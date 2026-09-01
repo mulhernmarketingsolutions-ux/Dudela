@@ -1,0 +1,97 @@
+---
+import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
+import { getBlogPost } from "../../data/blogPosts.js";
+
+const post = getBlogPost("sitback-method");
+---
+<BlogPostLayout
+  title={post.title}
+  description={post.description}
+  eyebrow="Sleep"
+  dek={post.dek}
+  date={post.date}
+  readTime={post.readTime}
+  ctaHeading="This is the actual program we used"
+  ctaBody="We didn't just read about this one — we paid for it and ran it ourselves with our twins, straight out of the NICU. If you want the full, real thing instead of our summary, this is the link."
+  ctaHref="https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC"
+  ctaLabel="Check out Taking Cara Babies"
+>
+  <p>
+    Every dad gets the same advice about baby sleep: "it gets better eventually." Cool. Not
+    helpful at 3am. Here's something that's actually a method, not a platitude — the SITBACK
+    Method from Taking Cara Babies. We used it with our twins, straight out of the NICU, and it's
+    the single biggest reason they were sleeping through the night as early as they did.
+  </p>
+
+  <p>
+    We're not affiliated with Cara Dumaplin's team beyond being customers who genuinely used this
+    and would buy it again. This isn't a paid post — it's us remaking something that worked,
+    written the way we wish someone had explained it to us: no fluff, no 40-minute video you have
+    to watch to get one idea.
+  </p>
+
+  <PhotoPlaceholder label="Dad standing over crib at night, hand resting on baby's chest" ratio="4/5" />
+
+  <h2>First — what this isn't</h2>
+  <p>
+    This isn't "cry it out." Cara Dumaplin, a pediatric nurse who built Taking Cara Babies, is
+    explicit that this is a gentle, gradual way to help a baby learn to self-soothe and string
+    sleep cycles together — not a method for leaving your kid to scream it out alone. It's also
+    not meant for babies under about 4 months old, since younger babies genuinely need more help
+    settling. Check the program for the exact age guidance for your situation.
+  </p>
+
+  <h2>The SITBACK acronym, translated for dudes</h2>
+  <p>
+    Here's the whole method, stripped down. When your baby stirs or fusses in the crib — not full
+    crying, just the restless, working-through-it noises — you work through these steps in order,
+    pausing between each one to see if they settle before moving to the next:
+  </p>
+  <ul>
+    <li><strong>S — Step back and pause.</strong> Don't rush in on the first sound. Give it a beat. A lot of stirring resolves on its own if you don't jump in and reset it.</li>
+    <li><strong>I — Increase the sound machine.</strong> Turn the white noise up. Sounds too simple to matter. It matters.</li>
+    <li><strong>T — Touch.</strong> A hand on the chest. No picking up, no rocking yet — just weight and presence.</li>
+    <li><strong>B — Binky.</strong> Pacifier in, if you're using one.</li>
+    <li><strong>A — Add rocking.</strong> Now you can pick up the intensity — gentle rocking or patting.</li>
+    <li><strong>C — Cuddles.</strong> Last resort in the sequence: pick them up. You didn't fail by getting here — you worked the steps.</li>
+  </ul>
+  <p>
+    The point isn't to avoid ever picking your baby up. It's to stop your first move from being
+    the biggest move. Most nights, you don't get past "T."
+  </p>
+
+  <div class="pull-quote">
+    You don't skip to the end because you're tired. You start at the top because it works.
+  </div>
+
+  <PhotoPlaceholder label="Nursery at night, sound machine and crib, low warm light" ratio="16/9" />
+
+  <h2>Why this actually landed for us</h2>
+  <p>
+    We came home from the NICU with two babies and zero margin for guessing. What we needed
+    wasn't more opinions — it was a sequence we could both run the same way, at 2am, without
+    negotiating it in the hallway first. That consistency is the whole engine. A baby learns the
+    pattern faster when every adult in the house runs the same steps in the same order.
+  </p>
+  <p>
+    It also took the pressure off feeling like every stir meant something was wrong. Half the
+    time your baby's not actually asking for help — they're just working through a sleep cycle
+    out loud. SITBACK gives you a reason to wait instead of react.
+  </p>
+
+  <h2>What to actually expect</h2>
+  <p>
+    It's not instant, and it's not identical for every baby — Taking Cara Babies is upfront about
+    that, and so are we. Some nights you'll fly through the steps. Some nights you'll end up at
+    "cuddles" anyway, and that's not a setback, that's a normal night with a newborn. What changes
+    over days and weeks is how often you need to get that far.
+  </p>
+
+  <p>
+    If you want the real program — the full explanation, the age-by-age guidance, the
+    troubleshooting for the stuff that doesn't fit neatly into six letters — that's what Cara's
+    team actually built, and it's worth paying for. This post is the version you read on your
+    phone in the dark with one hand. Theirs is the version that gets you through the actual weeks.
+  </p>
+</BlogPostLayout>
