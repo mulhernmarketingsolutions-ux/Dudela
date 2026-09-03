@@ -1,6 +1,5 @@
 ---
 import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
-import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
 import BlogPhoto from "../../components/BlogPhoto.astro";
 import { getBlogPost } from "../../data/blogPosts.js";
 
@@ -32,7 +31,7 @@ const post = getBlogPost("emotional-side-of-fatherhood");
     right when you need to be closest.
   </p>
 
-  <PhotoPlaceholder label="Dad sitting alone, quiet moment, low light" ratio="4/5" />
+  <BlogPhoto src="/images/blog/quiet-moment.jpg" alt="A dad in a quiet, thoughtful moment outdoors" ratio="4/5" />
 
   <h2>The feeling of being useless in the room</h2>
   <p>
