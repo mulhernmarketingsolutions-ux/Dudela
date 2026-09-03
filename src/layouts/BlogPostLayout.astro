@@ -21,10 +21,57 @@ export interface Props {
   ctaBody: string;
   ctaHref: string;
   ctaLabel: string;
+  // SEO/AEO: image is the post's hero photo (root-relative path, e.g.
+  // "/images/blog/receipts-budget.jpg"), used for og:image and the
+  // BlogPosting JSON-LD. isoMonth is "September 2026" as ISO-8601
+  // (e.g. "2026-09") for article:published_time and datePublished —
+  // month-precision only, matching blogPosts.js's deliberate choice not
+  // to claim a specific publish day we don't actually have. faqs is an
+  // optional list of {q, a} pairs: rendered as a visible "Common
+  // questions" section AND as FAQPage structured data, which is what
+  // actually gets a post pulled into Google's People Also Ask / AI
+  // Overviews and cited by answer engines like ChatGPT/Perplexity
+  // instead of just generically indexed.
+  image: string;
+  isoMonth: string;
+  faqs?: { q: string; a: string }[];
 }
-const { title, description, eyebrow, dek, date, readTime, ctaHeading, ctaBody, ctaHref, ctaLabel } = Astro.props;
+const { title, description, eyebrow, dek, date, readTime, ctaHeading, ctaBody, ctaHref, ctaLabel, image, isoMonth, faqs } = Astro.props;
+
+const siteUrl = Astro.site ?? Astro.url; // Astro.site comes from astro.config.mjs's `site` (https://thedudelaco.com)
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const imageUrl = new URL(image, siteUrl).toString();
+
+const blogPostingSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: title,
+  description,
+  image: imageUrl,
+  datePublished: isoMonth,
+  dateModified: isoMonth,
+  author: { "@type": "Organization", name: "Dudela", url: siteUrl },
+  publisher: {
+    "@type": "Organization",
+    name: "Dudela",
+    logo: { "@type": "ImageObject", url: new URL("/logo/dudela-badge-green.png", siteUrl).toString() },
+  },
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+};
+
+const faqSchema = faqs && faqs.length > 0 ? {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+} : null;
 ---
-<BaseLayout title={`${title} — Dudela`} description={description}>
+<BaseLayout title={`${title} — Dudela`} description={description} type="article" publishedTime={isoMonth} ogImage={image}>
+  <script type="application/ld+json" set:html={JSON.stringify(blogPostingSchema)} />
+  {faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
   <Nav />
 
   <section class="hero section-dark">
@@ -39,6 +86,18 @@ const { title, description, eyebrow, dek, date, readTime, ctaHeading, ctaBody, c
   <section class="post-body section-light">
     <div class="container prose">
       <slot />
+
+      {faqs && faqs.length > 0 && (
+        <div class="faq-block">
+          <h2>Common questions</h2>
+          {faqs.map((f) => (
+            <div class="faq-item">
+              <h3>{f.q}</h3>
+              <p>{f.a}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   </section>
 
@@ -116,6 +175,31 @@ const { title, description, eyebrow, dek, date, readTime, ctaHeading, ctaBody, c
     border-left: 3px solid var(--action);
     padding-left: 1.25rem;
     margin: 2.5rem 0;
+  }
+  /* Common-questions block -- deliberately plain (no accordion/JS) so the
+     Q/A text is always in the rendered HTML for crawlers and answer
+     engines to actually read, not hidden behind a click. */
+  .faq-block {
+    margin-top: 3rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border-light);
+  }
+  .faq-block h2 {
+    margin-bottom: 1.5rem;
+  }
+  .faq-item {
+    margin-bottom: 1.75rem;
+  }
+  .faq-item h3 {
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-on-light);
+    margin: 0 0 0.4rem;
+  }
+  .faq-item p {
+    color: var(--text-on-light-muted);
+    margin: 0;
   }
   .post-cta {
     padding: var(--space-5) 0;

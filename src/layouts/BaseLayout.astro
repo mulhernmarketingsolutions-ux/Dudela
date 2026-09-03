@@ -12,14 +12,24 @@ export interface Props {
   // links to directly (Footer, start-here, member/ask) instead of relying
   // on people noticing a floating tab.
   showVoicemailWidget?: boolean;
+  // "article" for blog posts (adds og:type=article + published-time meta,
+  // which is what tells Google/social crawlers/AI answer engines this is a
+  // dated piece of content rather than a static marketing page). Defaults
+  // to "website" for everything else.
+  type?: "website" | "article";
+  publishedTime?: string; // ISO 8601 (e.g. "2026-09"), article type only
+  ogImage?: string; // absolute or root-relative override of the default OG image
 }
 const {
   title = "Dudela — Turning Dudes Into Dads",
   description = "Fatherhood doesn't come with instructions. Dudela is the roadmap, the community, and the confidence system for dads getting ready to become who their family needs.",
   showVoicemailWidget = false,
+  type = "website",
+  publishedTime,
+  ogImage,
 } = Astro.props;
 
-const ogImageUrl = new URL("/og-image.jpg", Astro.site ?? Astro.url).toString();
+const ogImageUrl = new URL(ogImage ?? "/og-image.jpg", Astro.site ?? Astro.url).toString();
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
 ---
 <!doctype html>
@@ -37,7 +47,8 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toStri
     <link rel="apple-touch-icon" href="/logo/dudela-badge-green.png" />
 
     <link rel="canonical" href={canonicalUrl} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
+    {type === "article" && publishedTime && <meta property="article:published_time" content={publishedTime} />}
     <meta property="og:site_name" content="Dudela" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
