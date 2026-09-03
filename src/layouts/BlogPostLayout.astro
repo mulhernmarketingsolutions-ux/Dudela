@@ -202,14 +202,13 @@ const faqSchema = faqs && faqs.length > 0 ? {
     margin: 0;
   }
   .post-cta {
-    /* Deliberately NOT .section-dark (--forest-800) -- that's the exact
-       background Footer.astro uses too, and a CTA sitting directly above
-       the footer in an identical color reads as part of the footer
-       instead of a distinct "do this next" moment. --forest-700 (the
-       site's existing "raised card" shade) is close enough to stay in the
-       same dark family but different enough to visibly separate the two. */
-    background: var(--bg-dark-raised);
-    color: var(--text-on-dark);
+    /* Deliberately light, not dark -- a dark CTA here sits directly above
+       the (also dark) Footer, and even with a border between them the two
+       read as one fused block, so the CTA gets skipped as "more footer".
+       Going light is the actual break: it's unmistakably a different
+       section, not just a differently-shaded one. */
+    background: var(--bg-light);
+    color: var(--text-on-light);
     padding: var(--space-5) 0;
   }
   .cta-inner {
@@ -225,6 +224,10 @@ const faqSchema = faqs && faqs.length > 0 ? {
   }
   .cta-body {
     margin: 0;
+    /* .hero-sub (shared with the dark hero above) sets a light muted color
+       meant for dark backgrounds -- override it here now that this section
+       is light. */
+    color: var(--text-on-light-muted);
   }
   @media (min-width: 768px) {
     .cta-inner {
