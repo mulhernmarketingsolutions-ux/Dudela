@@ -21,9 +21,9 @@
 // `date` (ISO, in the call's actual timezone) drives the live countdown
 // chip on the member dashboard — keep it in sync with dateLabel/timeLabel.
 export const NEXT_CALL = {
-  dateLabel: "Tuesday, September 1",
+  dateLabel: "Thursday, September 24",
   timeLabel: "7:00 – 8:00pm MT",
-  date: "2026-09-01T19:00:00-06:00",
+  date: "2026-09-24T19:00:00-06:00",
   meetUrl: "https://meet.google.com/qrv-ceif-caf",
   phone: "+1 475-444-3646",
   pin: "741 991 265#",
