@@ -1,0 +1,105 @@
+---
+import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
+import { getBlogPost } from "../../data/blogPosts.js";
+
+const post = getBlogPost("power-100-list");
+---
+<BlogPostLayout
+  title={post.title}
+  description={post.description}
+  eyebrow="Mindset"
+  dek={post.dek}
+  date={post.date}
+  readTime={post.readTime}
+  ctaHeading="Want to talk through yours?"
+  ctaBody="We get into stuff like this on the podcast all the time — the mindset side of fatherhood, not just the logistics. Come listen, or bring your list to the Spit-Up Society."
+  ctaHref="/podcast"
+  ctaLabel="Listen to the podcast"
+>
+  <p>
+    A few months back I did an exercise from a book called <em>Wild Success</em>, by Calvin
+    Coyles. It's built around a scorecard — you rate yourself across a handful of categories,
+    and it spits out a number that's supposed to tell you how "wild" your success actually is.
+    Mine came back at 35%. Not great. But the number wasn't the part that stuck with me.
+  </p>
+
+  <p>
+    The part that stuck with me was a much simpler exercise buried a few chapters in: write down
+    100 things you're proud of. Not 100 things you own. Not 100 things you're good at on a
+    resume. 100 real things — moments, skills, decisions, scars — that you'd stand behind if
+    someone asked you to defend your life so far.
+  </p>
+
+  <BlogPhoto src="/images/blog/dad-driving-phone.jpg" alt="A phone mounted on a car dashboard, playing music while driving" ratio="16/9" />
+
+  <h2>Why 100, and why out loud</h2>
+  <p>
+    Here's the trick: don't sit down and type it. Talk it out loud, ideally somewhere you can't
+    easily stop — driving is perfect. The first 20 come fast and they're the obvious ones. The
+    next 30 get harder and force you to dig. By the last 20, you're pulling up stuff you forgot
+    you'd done — and that's where the exercise actually starts working, because you stop
+    performing for an imaginary audience and start just telling yourself the truth.
+  </p>
+  <p>
+    I did mine in the car over a couple of drives. It felt a little ridiculous at first, talking
+    to myself in traffic. Then it didn't.
+  </p>
+
+  <h2>What showed up on mine</h2>
+  <p>
+    I'm not going to give you all 100 — some of it's nobody's business but mine and Viv's. But
+    here's a slice, unedited, in no particular order, to show you what "real" looks like on this
+    list. It's not a highlight reel of achievements. It's a mix:
+  </p>
+  <ul>
+    <li>Being a dad</li>
+    <li>Launching Doodla with Michael</li>
+    <li>How I showed up during Viv's pregnancy</li>
+    <li>Our marriage's resilience — the actual hard years, not just the good ones</li>
+    <li>Built my own van — taught myself electrical, plumbing, basic solar, drywall</li>
+    <li>Been to 50 states and 10 countries</li>
+    <li>Overcame a serious injury to become comeback athlete of the year in college</li>
+    <li>Helped someone I love get through the hardest stretch of their life</li>
+    <li>Raised a dog with a genuinely great temperament</li>
+    <li>Wrote a children's book for my girls</li>
+    <li>Read music and play an instrument</li>
+    <li>Renovated a house with my own hands</li>
+    <li>Ran a half marathon</li>
+    <li>Learned Spanish well enough to actually use it</li>
+    <li>Cut down a Christmas tree myself, every year</li>
+    <li>A confident flyer who doesn't stress about turbulence</li>
+    <li>Quick-witted, genuinely funny off the cuff</li>
+    <li>Have genuinely asked for forgiveness when I needed to</li>
+  </ul>
+
+  <div class="pull-quote">
+    None of that is a brag list. It's a proof list — proof that you've already done hard, real
+    things, on days when it doesn't feel like you're doing anything at all.
+  </div>
+
+  <BlogPhoto src="/images/blog/notebook-coffee.jpg" alt="A to-do list notepad next to a cup of coffee" ratio="4/5" />
+
+  <h2>The part that actually matters</h2>
+  <p>
+    Once the list exists, don't just file it away. Read back through it and look for patterns.
+    Mine skewed heavily toward physical challenges, travel, and building things with my hands —
+    and almost nothing about money or career titles. That told me something true about where I
+    actually feel alive, versus where I'd been spending most of my mental energy. That gap is
+    worth sitting with.
+  </p>
+  <p>
+    It also does something simpler, on the bad days: it's evidence. Fatherhood has a way of
+    making you feel like you're constantly behind, constantly failing at something. A list like
+    this doesn't argue with that feeling — it just sits there as proof that the person having
+    the bad day has also done a hundred things worth being proud of. Some days that's the whole
+    difference.
+  </p>
+
+  <h2>Try it yourself</h2>
+  <p>
+    You don't need the book to do this part. Next time you're driving somewhere alone — school
+    pickup, the grocery run, whatever — just start talking. Don't edit, don't rank, don't stop
+    to fact-check yourself. Get to 100. It'll take a few drives. It's worth every one of them.
+  </p>
+</BlogPostLayout>

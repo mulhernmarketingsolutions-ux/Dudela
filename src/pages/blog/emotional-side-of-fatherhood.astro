@@ -1,0 +1,89 @@
+---
+import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
+import { getBlogPost } from "../../data/blogPosts.js";
+
+const post = getBlogPost("emotional-side-of-fatherhood");
+---
+<BlogPostLayout
+  title={post.title}
+  description={post.description}
+  eyebrow="Mindset"
+  dek={post.dek}
+  date={post.date}
+  readTime={post.readTime}
+  ctaHeading="Hear the full conversation"
+  ctaBody="We got into this one at length on the podcast — John and Mike, no scripts, on the stuff that's harder to say out loud than it is to write down."
+  ctaHref="/podcast"
+  ctaLabel="Listen to the episode"
+>
+  <p>
+    Nobody warns you about the emotional side. Everyone will tell you about the sleep. Everyone
+    has a sleep story. Nobody sits you down and tells you about the 2am doubt spiral — the one
+    where you're staring at the ceiling wondering if you're actually going to be good at this, or
+    just faking it well enough that no one notices yet.
+  </p>
+
+  <p>
+    That feeling doesn't mean something's wrong with you. It means you care about doing this
+    right. But if you don't do anything with it, it doesn't just sit there quietly — it turns into
+    something else. A short temper. A bad mood you can't explain to your partner. Distance,
+    right when you need to be closest.
+  </p>
+
+  <BlogPhoto src="/images/blog/quiet-moment.jpg" alt="A dad in a quiet, thoughtful moment outdoors" ratio="4/5" />
+
+  <h2>The feeling of being useless in the room</h2>
+  <p>
+    This one hits hard in the first weeks. She's healing, she's feeding, she seems to just
+    <em>know</em> things you don't — and you're standing there wondering what your actual job is.
+    Here's the truth: your job in that moment isn't to have the answers. It's to be steady. Handing
+    her water before she asks. Taking the baby for twenty minutes so she can shower without an
+    audience. Being the person who doesn't need managing on top of everything else she's already
+    managing.
+  </p>
+  <p>
+    That's not a consolation prize. That's the job. It just doesn't feel like enough because it's
+    quiet, and nobody claps for it.
+  </p>
+
+  <h2>The pressure to have it together when you don't</h2>
+  <p>
+    Somewhere along the way, a lot of us picked up the idea that a good dad doesn't struggle — he
+    just handles it. That's not strength, that's just a mask, and masks take energy to hold up.
+    Energy you don't have right now. The dads who actually come through this steady aren't the
+    ones who never struggled. They're the ones who stopped pretending they weren't.
+  </p>
+
+  <div class="pull-quote">
+    Name it out loud, to your partner or another dad, before it turns into a bad mood you can't
+    explain. Sounds small. It isn't.
+  </div>
+
+  <h2>Why naming it out loud actually works</h2>
+  <p>
+    This is the one piece of advice that actually changed something for us. Not journaling about
+    it, not white-knuckling through it — just saying the sentence out loud to another person.
+    "I'm feeling like I don't know what I'm doing right now." That's it. That's the whole move.
+  </p>
+  <p>
+    It works for two reasons. First, it takes the feeling out of your head, where it grows in
+    silence, and puts it somewhere smaller — a sentence, spoken, that someone else can actually
+    respond to. Second, it tells your partner the mood in the room isn't about her, which matters
+    more than almost anything else you can do for the marriage in this stretch.
+  </p>
+
+  <BlogPhoto src="/images/blog/two-dads-talking.jpg" alt="Two dads talking over coffee at an outdoor table" ratio="16/9" />
+
+  <h2>Who do you actually say it to</h2>
+  <p>
+    Your partner, when it's about the two of you. Another dad, when you just need someone who's
+    been in it to say "yeah, that's normal" without flinching. That's a lot of what the Spit-Up
+    Society ended up being for us and for the guys in it — a place to say the sentence out loud to
+    people who won't make it weird.
+  </p>
+  <p>
+    You don't need to have this figured out. You need one person you're willing to say the real
+    sentence to, before the bad mood does the talking for you.
+  </p>
+</BlogPostLayout>

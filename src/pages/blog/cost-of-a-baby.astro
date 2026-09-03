@@ -1,0 +1,94 @@
+---
+import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
+import { getBlogPost } from "../../data/blogPosts.js";
+
+const post = getBlogPost("cost-of-a-baby");
+---
+<BlogPostLayout
+  title={post.title}
+  description={post.description}
+  eyebrow="Money"
+  dek={post.dek}
+  date={post.date}
+  readTime={post.readTime}
+  ctaHeading="Want the exact line-item numbers?"
+  ctaBody="The free version is the framework. The Dudela Prep Kit has the actual dollar figures we used, month by month, plus what we'd cut first if money got tight."
+  ctaHref="/kit"
+  ctaLabel="Get the Prep Kit"
+>
+  <p>
+    Every dad hears the same warning before the baby arrives: "it's expensive." Nobody follows
+    that up with an actual number. So you're left doing the math yourself, at 11pm, on your
+    phone, guessing — which is a bad way to make a budget and a worse way to walk into
+    fatherhood.
+  </p>
+
+  <p>
+    Here's the honest version: there isn't one number, because it depends on where you live, what
+    insurance you have, and whether you're paying for childcare or not. But there are real
+    categories, and most of them are more predictable than you'd think once you break them down.
+  </p>
+
+  <BlogPhoto src="/images/blog/receipts-budget.jpg" alt="A budget calculator, notebook, and cash spread out on a table" ratio="16/9" />
+
+  <h2>The one-time hit before baby even arrives</h2>
+  <p>
+    Car seat, crib or bassinet, stroller, a chunk of clothes you'll immediately outgrow, and — if
+    you're not doing a hospital birth on a plan that covers it — a chunk of medical costs up
+    front. This is the number that scares people, but it's also the most controllable one: almost
+    all of it can be bought used, borrowed, or covered by a registry. This is the one category
+    where pride costs you real money. Nobody's judging the secondhand car seat as long as it's
+    within its expiration date and wasn't in a wreck.
+  </p>
+
+  <h2>The recurring costs nobody mentions until you're in them</h2>
+  <p>
+    <strong>Diapers and wipes.</strong> This is a real monthly line item for two-plus years, not a
+    rounding error. It adds up fastest in the newborn stage, when you're changing constantly.
+  </p>
+  <p>
+    <strong>Feeding.</strong> Formula, if you're using it, is one of the more expensive recurring
+    costs in year one. Breastfeeding is "free" in the sense that no product is purchased, but it's
+    not free in terms of what it demands from your partner — worth factoring into how you're
+    splitting the load, not just the budget.
+  </p>
+  <p>
+    <strong>Childcare.</strong> If both of you are working and daycare is part of the plan, this
+    is very likely the single biggest number on this whole list — bigger than diapers, formula,
+    and gear combined, depending on your area. It's also the cost most worth researching and
+    getting on a waitlist for early, before you actually need it.
+  </p>
+  <p>
+    <strong>Healthcare.</strong> Well-baby visits, vaccines, the occasional sick visit — even with
+    decent insurance, copays add up in a way that catches people off guard in year one
+    specifically, since that's when visits are most frequent.
+  </p>
+
+  <div class="pull-quote">
+    The couples who feel calm about money aren't the ones who make the most — they're the ones
+    who actually looked at the number instead of avoiding it.
+  </div>
+
+  <h2>The budget moves that actually make a difference</h2>
+  <p>
+    You don't need a finance degree for this part. A few moves consistently save more than any
+    single gadget on a registry:
+  </p>
+  <ul>
+    <li>Get on a daycare waitlist the moment you know childcare is part of the plan — this is a time cost, not a money one, and it's the easiest to put off and regret.</li>
+    <li>Buy secondhand for anything the baby will outgrow in under six months — clothes, the early-stage car seat, the bassinet.</li>
+    <li>Check what your insurance actually covers for well-baby visits before you're surprised by a bill.</li>
+    <li>Set a number for what you're comfortable spending on "gear you don't strictly need" before you're standing in the store making that call on the fly.</li>
+  </ul>
+
+  <BlogPhoto src="/images/blog/nursery-gear.jpg" alt="A nursery corner with a bassinet, changing table, and diapers laid out" ratio="4/5" />
+
+  <h2>The number that actually matters</h2>
+  <p>
+    Not the total. The number that matters is whatever amount lets you and your partner stop
+    flinching every time a baby expense comes up. That's different for every family, and it's the
+    thing the Prep Kit walks through — the real figures we used, and what we'd have cut first if
+    we'd had to.
+  </p>
+</BlogPostLayout>
