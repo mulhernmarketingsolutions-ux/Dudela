@@ -1,6 +1,6 @@
 ---
 import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
-import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
 import { getBlogPost } from "../../data/blogPosts.js";
 
 const post = getBlogPost("cost-of-a-baby");
@@ -30,7 +30,7 @@ const post = getBlogPost("cost-of-a-baby");
     categories, and most of them are more predictable than you'd think once you break them down.
   </p>
 
-  <PhotoPlaceholder label="Dad holding baby, going through receipts" ratio="16/9" />
+  <BlogPhoto src="/images/blog/receipts-budget.jpg" alt="A budget calculator, notebook, and cash spread out on a table" ratio="16/9" />
 
   <h2>The one-time hit before baby even arrives</h2>
   <p>
@@ -82,7 +82,7 @@ const post = getBlogPost("cost-of-a-baby");
     <li>Set a number for what you're comfortable spending on "gear you don't strictly need" before you're standing in the store making that call on the fly.</li>
   </ul>
 
-  <PhotoPlaceholder label="Nursery / gear laid out, secondhand and new mixed together" ratio="4/5" />
+  <BlogPhoto src="/images/blog/nursery-gear.jpg" alt="A nursery corner with a bassinet, changing table, and diapers laid out" ratio="4/5" />
 
   <h2>The number that actually matters</h2>
   <p>

@@ -1,6 +1,6 @@
 ---
 import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
-import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
 import { getBlogPost } from "../../data/blogPosts.js";
 
 const post = getBlogPost("power-100-list");
@@ -31,7 +31,7 @@ const post = getBlogPost("power-100-list");
     someone asked you to defend your life so far.
   </p>
 
-  <PhotoPlaceholder label="Dad driving, phone propped up recording a voice memo, dashboard visible" ratio="16/9" />
+  <BlogPhoto src="/images/blog/dad-driving-phone.jpg" alt="A phone mounted on a car dashboard, playing music while driving" ratio="16/9" />
 
   <h2>Why 100, and why out loud</h2>
   <p>
@@ -78,7 +78,7 @@ const post = getBlogPost("power-100-list");
     things, on days when it doesn't feel like you're doing anything at all.
   </div>
 
-  <PhotoPlaceholder label="Notebook or phone notes app with a handwritten-style list, coffee nearby" ratio="4/5" />
+  <BlogPhoto src="/images/blog/notebook-coffee.jpg" alt="A to-do list notepad next to a cup of coffee" ratio="4/5" />
 
   <h2>The part that actually matters</h2>
   <p>

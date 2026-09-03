@@ -1,0 +1,26 @@
+---
+// Real photo counterpart to PhotoPlaceholder — same aspect-ratio/margin
+// footprint in the post flow, swapped in once a placeholder's scene has a
+// sourced photo. Sourced from Pexels (free, no attribution required); alt
+// text carries the description instead of a visible credit line, matching
+// how the site's other stock photos (turn.astro's Unsplash shots) are
+// already handled.
+export interface Props {
+  src: string;
+  alt: string;
+  ratio?: string; // e.g. "16/9", "4/5"
+  class?: string;
+}
+const { src, alt, ratio = "4/5", class: klass = "" } = Astro.props;
+---
+<img class={`blog-photo ${klass}`} style={`aspect-ratio: ${ratio};`} src={src} alt={alt} loading="lazy" />
+
+<style>
+  .blog-photo {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin: 2rem 0;
+  }
+</style>

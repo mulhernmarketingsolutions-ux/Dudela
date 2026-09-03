@@ -1,6 +1,7 @@
 ---
 import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
 import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
 import { getBlogPost } from "../../data/blogPosts.js";
 
 const post = getBlogPost("emotional-side-of-fatherhood");
@@ -73,7 +74,7 @@ const post = getBlogPost("emotional-side-of-fatherhood");
     more than almost anything else you can do for the marriage in this stretch.
   </p>
 
-  <PhotoPlaceholder label="Two dads talking, casual setting, real conversation" ratio="16/9" />
+  <BlogPhoto src="/images/blog/two-dads-talking.jpg" alt="Two dads talking over coffee at an outdoor table" ratio="16/9" />
 
   <h2>Who do you actually say it to</h2>
   <p>

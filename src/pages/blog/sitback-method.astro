@@ -1,6 +1,6 @@
 ---
 import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
-import PhotoPlaceholder from "../../components/PhotoPlaceholder.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
 import { getBlogPost } from "../../data/blogPosts.js";
 
 const post = getBlogPost("sitback-method");
@@ -31,7 +31,7 @@ const post = getBlogPost("sitback-method");
     to watch to get one idea.
   </p>
 
-  <PhotoPlaceholder label="Dad standing over crib at night, hand resting on baby's chest" ratio="4/5" />
+  <BlogPhoto src="/images/blog/dad-crib.jpg" alt="A dad leaning over a crib, helping his baby stand" ratio="4/5" />
 
   <h2>First — what this isn't</h2>
   <p>
@@ -65,7 +65,7 @@ const post = getBlogPost("sitback-method");
     You don't skip to the end because you're tired. You start at the top because it works.
   </div>
 
-  <PhotoPlaceholder label="Nursery at night, sound machine and crib, low warm light" ratio="16/9" />
+  <BlogPhoto src="/images/blog/nursery-night.jpg" alt="A cozy nursery corner with a crib, night light, and soft green walls" ratio="16/9" />
 
   <h2>Why this actually landed for us</h2>
   <p>
