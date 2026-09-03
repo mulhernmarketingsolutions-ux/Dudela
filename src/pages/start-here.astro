@@ -4,13 +4,27 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // Mirrors the real link-in-bio page (used in Instagram/TikTok bios), plus
 // the Prep Kit checkout (own Stripe checkout, see /api/create-checkout-session)
 // and the Taking Cara Babies sleep affiliate link.
+//
+// Laid out in three tiers by priority, not just one flat list:
+//   1. The podcast — the single highest-intent thing IG traffic is looking
+//      for, gets its own featured card up top. Links to /podcast (the
+//      on-site episode list + Apple/Spotify/YouTube follow links) rather
+//      than straight to Spotify, so it doesn't pick one platform for people.
+//   2. New Merch + Spit-Up Society — the two things we're actively pushing
+//      right now, one step down from the podcast.
+//   3. Everything else, below a divider.
+const podcastLink = {
+  label: "The Dudela Podcast",
+  sub: "John & Mike, unfiltered — new episode every other Tuesday",
+  href: "/podcast",
+};
+
+const tierTwoLinks = [
+  { label: "Shop New Merch", sub: "Fresh shirt designs just dropped", href: "/merch#shirts", tag: null },
+  { label: "Join the Spit-Up Society", sub: "Live Q&A calls, twice a month", href: "/join/spit-up-society", tag: "$5/mo" },
+];
+
 const links = [
-  // "First LIVE call with us: August 4th" used to be hardcoded here — same
-  // stale-date liability next-call.ts's own comment warns about (this page
-  // is prerendered and doesn't rebuild when the call date moves). Swapped
-  // to the cadence instead, same fix already applied to Huddle.astro and
-  // /join/spit-up-society's hero.
-  { label: "Join the Spit-Up Society", sub: "Live Q&A calls, twice a month", href: "/join/spit-up-society", tag: "$5/mo", primary: true },
   { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free" },
   { label: "The Dudela Prep Kit", href: "/api/create-checkout-session?product=prep-kit", tag: "$37" },
   { label: "Steady Dad: Before Birth Workshop", href: "/workshop", tag: "$100" },
@@ -20,7 +34,6 @@ const links = [
   // the Cohort but never discover 1:1 coaching exists.
   { label: "The Turn — 1:1 Coaching", sub: "With John & Mike", href: "/turn", tag: "$1,800" },
   { label: "Taking Cara Babies", sub: "The sleep resource we recommend to every dad", href: "https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC", tag: null, external: true },
-  { label: "The Dudela Podcast", href: "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ", tag: null, external: true },
   { label: "Leave Us a Voicemail", href: "/voicemail", tag: null },
 ];
 ---
@@ -30,10 +43,30 @@ const links = [
       <a href="/" class="wordmark"><img src="/logo/dudela-wordmark-cream.png" alt="Dudela" /></a>
       <p class="tagline">Turning Dudes Into Dads</p>
 
+      <a href={podcastLink.href} class="podcast-hero">
+        <span class="podcast-hero-eyebrow">Listen Now</span>
+        <span class="podcast-hero-title">{podcastLink.label}</span>
+        <span class="podcast-hero-sub">{podcastLink.sub}</span>
+      </a>
+
+      <div class="tier-two">
+        {tierTwoLinks.map((l) => (
+          <a class="link-btn featured" href={l.href}>
+            <span class="link-btn-text">
+              <span class="link-btn-label">{l.label}</span>
+              {l.sub && <span class="link-btn-sub">{l.sub}</span>}
+            </span>
+            {l.tag && <span class="tag">{l.tag}</span>}
+          </a>
+        ))}
+      </div>
+
+      <div class="tier-divider"><span>More from Dudela</span></div>
+
       <div class="link-list">
         {links.map((l) => (
           <a
-            class={`link-btn ${l.primary ? "primary" : ""}`}
+            class="link-btn"
             href={l.href}
             target={l.external ? "_blank" : undefined}
             rel={l.external ? "noopener" : undefined}
@@ -82,8 +115,82 @@ const links = [
     font-family: var(--font-display);
     color: var(--text-on-dark-muted);
     font-size: 1.1rem;
-    margin: 0.5rem 0 2.5rem;
+    margin: 0.5rem 0 2rem;
   }
+
+  /* Tier 1: podcast hero */
+  .podcast-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 1.6rem 1.5rem;
+    margin-bottom: 1.6rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--amber-500);
+    background: var(--amber-500);
+    color: var(--forest-900);
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+  .podcast-hero:hover {
+    background: var(--amber-600);
+    border-color: var(--amber-600);
+    transform: translateY(-2px);
+  }
+  .podcast-hero-eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.75;
+  }
+  .podcast-hero-title {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    line-height: 1.15;
+  }
+  .podcast-hero-sub {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+
+  /* Tier 2: new merch + spit-up society */
+  .tier-two {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    width: 100%;
+    margin-bottom: 1.6rem;
+  }
+
+  /* Tier divider, above the rest of the links */
+  .tier-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    margin-bottom: 1.2rem;
+  }
+  .tier-divider::before,
+  .tier-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--forest-600);
+  }
+  .tier-divider span {
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-on-dark-muted);
+    white-space: nowrap;
+  }
+
   .link-list {
     display: flex;
     flex-direction: column;
@@ -109,10 +216,8 @@ const links = [
     border-color: var(--amber-500);
     transform: translateY(-2px);
   }
-  .link-btn.primary {
-    background: var(--amber-500);
+  .link-btn.featured {
     border-color: var(--amber-500);
-    color: var(--forest-900);
   }
   .link-btn-text {
     display: flex;
@@ -135,9 +240,6 @@ const links = [
     color: var(--amber-500);
     font-weight: 700;
     flex-shrink: 0;
-  }
-  .link-btn.primary .tag {
-    color: var(--forest-900);
   }
   .socials {
     display: flex;
