@@ -101,7 +101,7 @@ const faqSchema = faqs && faqs.length > 0 ? {
     </div>
   </section>
 
-  <section class="post-cta section-dark">
+  <section class="post-cta">
     <div class="container cta-inner">
       <div>
         <p class="eyebrow">Next step</p>
@@ -202,6 +202,14 @@ const faqSchema = faqs && faqs.length > 0 ? {
     margin: 0;
   }
   .post-cta {
+    /* Deliberately NOT .section-dark (--forest-800) -- that's the exact
+       background Footer.astro uses too, and a CTA sitting directly above
+       the footer in an identical color reads as part of the footer
+       instead of a distinct "do this next" moment. --forest-700 (the
+       site's existing "raised card" shade) is close enough to stay in the
+       same dark family but different enough to visibly separate the two. */
+    background: var(--bg-dark-raised);
+    color: var(--text-on-dark);
     padding: var(--space-5) 0;
   }
   .cta-inner {

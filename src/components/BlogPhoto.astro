@@ -10,10 +10,19 @@ export interface Props {
   alt: string;
   ratio?: string; // e.g. "16/9", "4/5"
   class?: string;
+  position?: string; // object-position, e.g. "left center" -- for source photos
+                      // whose subject sits off-center, so a cover-crop doesn't
+                      // cut into it
 }
-const { src, alt, ratio = "4/5", class: klass = "" } = Astro.props;
+const { src, alt, ratio = "4/5", class: klass = "", position = "center" } = Astro.props;
 ---
-<img class={`blog-photo ${klass}`} style={`aspect-ratio: ${ratio};`} src={src} alt={alt} loading="lazy" />
+<img
+  class={`blog-photo ${klass}`}
+  style={`aspect-ratio: ${ratio}; object-position: ${position};`}
+  src={src}
+  alt={alt}
+  loading="lazy"
+/>
 
 <style>
   .blog-photo {

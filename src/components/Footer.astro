@@ -89,6 +89,14 @@
 <style>
   .footer {
     padding: var(--space-6) 0 var(--space-4);
+    /* Every page that ends on a dark section (a CTA block, a hero, etc.)
+       shares this exact background (--bg-dark = --forest-800), so without
+       a seam here the footer just fuses into whatever came before it --
+       one long dark mass with no visual "this is a new section" cue. That
+       flattens even a real CTA into what reads as more footer. A hairline
+       border is enough of a break to fix it everywhere at once, whatever
+       precedes the footer on any given page. */
+    border-top: 1px solid var(--border-dark);
   }
   .footer-inner {
     display: flex;
