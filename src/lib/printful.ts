@@ -675,9 +675,9 @@ const SHIRT_DESIGN_COLORS: ShirtDesignColorYearRow[] = SHIRT_COLORS.flatMap(({ c
     colorLabel,
     colorHex,
     year,
-    frontImage: `/images/shirts/shirt-${color}-${year}-front.png`,
-    backImage: `/images/shirts/shirt-${color}-${year}-back.png`,
-    logoDetailImage: `/images/shirts/shirt-${color}-${year}-logo-detail.png`,
+    frontImage: `/images/shirts/shirt-${color}-${year}-front.webp`,
+    backImage: `/images/shirts/shirt-${color}-${year}-back.webp`,
+    logoDetailImage: `/images/shirts/shirt-${color}-${year}-logo-detail.webp`,
     price: "42.00",
     sizeSyncVariantIds: SHIRT_SYNC_VARIANT_IDS[`${color}-${year}`] || [0, 0, 0, 0, 0, 0, 0],
   }))

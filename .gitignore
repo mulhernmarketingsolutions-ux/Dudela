@@ -10,3 +10,6 @@ Dudela 15 Things.pdf
 # Raw Womb Watch podcast audio — large source files, uploaded to R2
 # directly via wrangler, never committed to the repo.
 Womb Watch Audios/
+
+# Original image backups kept locally, outside the published website.
+local-assets/

@@ -939,11 +939,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       });
     }
 
-    catalog.variants.forEach((v) => {
-      new Image().src = v.front;
-      new Image().src = v.back;
-      new Image().src = v.logoDetail;
-    });
+    // Load the selected shirt only; other years load when selected.
 
     const DEFAULT_SHIRT_YEAR = "2026";
     const state = {
