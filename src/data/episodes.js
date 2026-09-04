@@ -26,19 +26,6 @@ export const SPOTIFY_URL = "https://open.spotify.com/show/19bw724AZVIygPb52pCOnQ
 export const YOUTUBE_URL = "https://www.youtube.com/@TheDudela-Official/videos";
 export const APPLE_URL = "https://podcasts.apple.com/us/podcast/the-dudela-podcast-first-time-dad-help-and/id1807603921";
 
-// The real total episode count per Apple Podcasts (John confirmed "Every Dad
-// Has Strengths and Weaknesses" is #30, 2026-07-28) — set by hand rather than
-// derived from `episodes.length` below, since that array is a few episodes
-// short of Apple's count (some older ones were never transcribed in here).
-// Used to number the homepage's episode-row ghost numerals counting DOWN
-// from the real episode number (30, 29, 28...) instead of counting up from
-// 01 regardless of how many episodes have actually aired.
-// Bumped to 32 on 2026-09-01 for "Our Wives Get Honest About Pregnancy,
-// Postpartum & Us" — assumed sequential (31 was itself an assumption, not
-// a confirmed Apple count); worth a quick sanity check against Apple's
-// count next time you're in there.
-export const TOTAL_EPISODES = 32;
-
 // Shared slug helper — used both to give each episode row on /podcast a
 // stable anchor id, and by the Roadmap to deep-link straight to the right
 // episode (e.g. /podcast#why-we-started-dudela...).
@@ -49,7 +36,7 @@ export function slugify(title) {
     .replace(/(^-|-$)/g, "");
 }
 
-export const episodes = [
+const episodeEntries = [
   // Published 2026-09-01 (Podbean auto-published at 1am so the other
   // platforms have time to catch up before the newsletter goes out
   // mid-morning). Apple link intentionally left unset — same reasoning as
@@ -106,4 +93,12 @@ export const episodes = [
   link: ep.link || SHOW_URL,
   apple: ep.apple || APPLE_URL,
   img: ep.img || SHOW_COVER,
+}));
+
+// Regular episodes are numbered oldest to newest. Bonus releases stay separate.
+export const TOTAL_EPISODES = episodeEntries.filter(ep => !ep.title.startsWith("BONUS:")).length;
+let nextEpisodeNumber = TOTAL_EPISODES;
+export const episodes = episodeEntries.map(ep => ({
+  ...ep,
+  number: ep.title.startsWith("BONUS:") ? null : nextEpisodeNumber--,
 }));

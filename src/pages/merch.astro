@@ -1365,12 +1365,13 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
 
   .colors {
+    background: #faf9f6;
     padding: var(--space-6) 0;
   }
   .colors-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 1.5rem;
   }
   .design-card {
     display: flex;
@@ -1378,7 +1379,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     overflow: hidden;
-    background: var(--bg-light-raised);
+    background: #fffefa;
     /* A flat 1px border on a light background reads thin/insubstantial on
        its own — the added shadow gives each card real physical weight
        without changing the border itself. */
@@ -1696,13 +1697,44 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       align-items: stretch;
     }
     .design-media {
-      width: 46%;
+      width: 52%;
       flex-shrink: 0;
       border-bottom: none;
       border-right: 1px solid var(--border-light);
     }
     .design-body {
-      width: 54%;
+      width: 48%;
+    }
+    .design-media {
+      display: flex;
+      align-items: center;
+    }
+    .design-media .mockup-pair {
+      height: 100%;
+      min-height: 320px;
+      aspect-ratio: auto;
+      align-items: center;
+    }
+    .design-media .mockup-photo {
+      height: 100%;
+      min-height: 320px;
+    }
+    .shirt-card .mockup-photo {
+      object-fit: cover;
+    }
+    .hats-section .design-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.9rem 1rem;
+      padding: 1.5rem;
+    }
+    .hats-section .design-body > * {
+      grid-column: 1 / -1;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    .hats-section .design-body > .selector {
+      grid-column: auto;
     }
   }
 
