@@ -256,11 +256,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
               <div class="selector">
                 <span class="selector-label">Year</span>
-                <div class="year-options" role="group" aria-label={`${d.title} year`} data-shirt-years>
+                <select class="year-select" aria-label={`${d.title} year`} data-shirt-years>
                   {d.years.map((y) => (
-                    <button type="button" class={`year-btn${y === d.first.year ? " active" : ""}`} data-shirt-year={y}>&apos;{y.slice(2)}</button>
+                    <option value={y} selected={y === d.first.year}>{y}</option>
                   ))}
-                </div>
+                </select>
               </div>
 
               <div class="selector">
@@ -913,7 +913,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const logoDetailToggle = card.querySelector<HTMLButtonElement>("[data-logo-detail-toggle]");
     const logoDetailPopover = card.querySelector<HTMLElement>("[data-logo-detail-popover]");
     const titleEl = card.querySelector<HTMLElement>("[data-shirt-title]");
-    const yearContainer = card.querySelector<HTMLElement>("[data-shirt-years]");
+    const yearContainer = card.querySelector<HTMLSelectElement>("[data-shirt-years]");
     const colorContainer = card.querySelector<HTMLElement>("[data-shirt-colors]");
     const sizeContainer = card.querySelector<HTMLElement>("[data-shirt-sizes]");
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
@@ -959,9 +959,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     }
 
     function render() {
-      yearContainer!.querySelectorAll<HTMLButtonElement>("[data-shirt-year]").forEach((b) => {
-        b.classList.toggle("active", b.dataset.shirtYear === state.year);
-      });
+      yearContainer!.value = state.year;
       colorContainer!.querySelectorAll<HTMLButtonElement>("[data-shirt-color]").forEach((b) => {
         b.classList.toggle("active", b.dataset.shirtColor === state.color);
       });
@@ -1007,10 +1005,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       updateBundleBar();
     }
 
-    yearContainer.addEventListener("click", (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-shirt-year]");
-      if (!btn) return;
-      state.year = btn.dataset.shirtYear || state.year;
+    yearContainer.addEventListener("change", () => {
+      state.year = yearContainer.value;
       render();
     });
 
@@ -1769,38 +1765,25 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     background: var(--forest-800);
     color: var(--cream-100);
   }
-  /* Year picker — deliberately NOT styled like .size-btn. Sitting right next
-     to the size buttons in the same square, dark-active style made it read
-     as "just more sizes" instead of "which print you get" — a completely
-     different kind of choice. Pill-shaped with the brand amber as its active
-     color (same accent used for prices/CTAs) ties it to "this changes the
-     design," while size stays the neutral dark square. Short '24/'25/'26/'27
-     labels reinforce that these are years, not garment specs. */
-  .year-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .year-btn {
-    min-width: 2.5rem;
-    padding: 0.4rem 0.7rem;
-    border-radius: 999px;
+  .year-select {
+    min-width: 8rem;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
     border: 2px solid var(--border-light);
     background: var(--bg-light-raised);
     color: var(--text-on-light);
     font-family: var(--font-label);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
   }
-  .year-btn:hover {
+  .year-select:hover {
     border-color: var(--amber-500);
   }
-  .year-btn.active {
-    border-color: var(--amber-500);
-    background: var(--amber-500);
-    color: var(--forest-900, #141c10);
+  .year-select:focus-visible {
+    outline: 2px solid var(--amber-500);
+    outline-offset: 3px;
   }
 
   /* Product Details & Sizing — one shared native <dialog>, content panels
