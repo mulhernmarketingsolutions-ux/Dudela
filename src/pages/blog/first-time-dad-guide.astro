@@ -1,0 +1,95 @@
+---
+import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
+import BlogOffer from "../../components/BlogOffer.astro";
+import { getBlogPost } from "../../data/blogPosts.js";
+const post = getBlogPost("first-time-dad-guide");
+---
+<BlogPostLayout {...post} eyebrow="Becoming a dad"
+  ctaHeading="Your next step does not have to be a big one"
+  ctaBody="Start with the free Dad Prep Guide. Pick one thing you can put into practice today, then build from there."
+  ctaHref="/guide" ctaLabel="Get the free Dad Prep Guide">
+<h2 id="quick-answer">What should a first time dad know?</h2>
+<p><strong>Start participating before the baby arrives. Support your partner, learn basic baby care, make a practical money and leave plan, and talk about the first days home. You do not need to feel ready for everything. You need to keep learning, share the work, and ask for help when you need it.</strong></p>
+<p>This is the list we would want in our pocket before becoming dads. Not twenty one products. Not a speech about how fast it goes. The practical stuff that changes a Tuesday night when everyone is tired and nobody can find the clean burp cloths.</p>
+<p>At Dudela, we organize preparation around six pillars: your head, your money, your partnership, birth, the kind of dad you want to be, and the first days home. This guide follows that same idea. Read it once, then choose a few things to act on. You do not need twenty one new assignments tonight.</p>
+<nav aria-label="In this article"><p>Jump to: <a href="#before-birth">Before birth</a> · <a href="#baby-care">Baby care</a> · <a href="#relationship">Your relationship</a> · <a href="#support">Finding support</a> · <a href="#this-week">This week’s plan</a></p></nav>
+<BlogOffer heading="Start with something you can use today" body="Our free Dad Prep Guide gives you a place to start when every tab on your phone has a different opinion." href="/guide" label="Get the free Dad Prep Guide" />
+
+<BlogPhoto src={post.image} alt="John holding both newborn twins and kissing one daughter on the forehead" ratio="2/3" />
+<h2 id="before-birth">1. Your job starts before the birth</h2>
+<p>You are already becoming a parent when you learn the appointment schedule, take over dinner, and make space for a difficult conversation. Waiting until the baby arrives to get involved means your partner spends pregnancy becoming the default expert.</p>
+<p>Ask what feels hardest this week and take responsibility for one thing that makes it easier. Our <a href="/blog/how-to-support-your-pregnant-wife">guide to supporting your pregnant wife</a> turns that idea into specific actions.</p>
+<h2>2. Excited and scared can show up together</h2>
+<p>You can want this baby and worry about what the change will cost you, how your relationship will feel, or whether you know enough. Having mixed feelings does not make you less committed.</p>
+<p>Say the real sentence to someone you trust. “I am worried I will not know what to do” gives you somewhere to start. Pretending you have no questions leaves you alone with all of them.</p>
+<h2>3. Learning is part of the work</h2>
+<p>Attend a class. Read the care instructions. Ask the nurse to show you again. Your partner should not have to become the instruction manual for every new task.</p>
+<p>Choose one subject at a time, such as diaper changes or what happens at the birth location. You will remember more from a focused question than from a midnight scroll through fifty conflicting opinions.</p>
+<h2>4. The budget needs actual numbers</h2>
+<p>Price the costs that apply to your household: leave, healthcare, childcare, feeding, diapers, and the gear you need. Ask your employer and insurer for the details relevant to you. A friend’s bill or leave arrangement may tell you very little about yours.</p>
+<p>Use our <a href="/blog/cost-of-a-baby">baby cost article</a> as a starting point for categories, then put your own figures beside them. The useful result is a shared plan, even if it is simple.</p>
+<h2>5. Leave from work needs a conversation early</h2>
+<p>Find out how leave is requested, what is paid, and how your team wants updates when the baby arrives. Discuss how you will use that time together. Being home is valuable; knowing which responsibilities you will cover makes it more useful.</p>
+<p>Also talk about the return to work. Who handles the morning? What can you own when you get home? Make the transition a shared problem to solve before it lands.</p>
+<h2>6. A long registry does not equal readiness</h2>
+<p>Prioritize the basics: safe transport, a safe sleep space, diapers, clothing, and feeding supplies appropriate to your plan. Check suitability, recalls, and instructions before using equipment. Be especially careful with items whose safety depends on condition or history.</p>
+<p>Before buying another organizer, learn where the things you already own will go. A stocked changing area you can navigate with one hand earns its place.</p>
+<BlogOffer heading="Put a plan behind the good intentions" body="The $37 Dudela Prep Kit brings together six pillars and nine printable tools, including preparation for birth, your relationship, and the first days home." href="/kit" label="See what is inside the Prep Kit" />
+
+<h2>7. Birth preparation is more useful than a perfect birth prediction</h2>
+<p>Know the route, the bag, your partner’s preferences, and the care team’s instructions about when to call. Understand that the plan can change without anyone having failed.</p>
+<p>Read <a href="/blog/what-should-a-dad-do-during-labor">what a dad should do during labor</a>, then talk through how she wants you to support her. You are preparing to respond well, not trying to control the outcome.</p>
+<h2 id="baby-care">8. The boring repetitions build confidence</h2>
+<p>Your first diaper change might take a ridiculous amount of concentration. Keep doing it. Competence comes from repetitions, not from waiting until you feel naturally good at baby care.</p>
+<p>When someone demonstrates a task, try it yourself with help available. If you always hand the baby back at the first sign of uncertainty, you miss the practice that would make the next attempt easier.</p>
+<h2>9. Bonding may grow through ordinary care</h2>
+<p>Some dads feel an immediate rush. Others feel protective, stunned, or mostly focused on what needs doing. Do not turn someone else’s first moment into a test of your own.</p>
+<p>Hold your baby safely while awake, talk to them, change them, and learn their cues. Keep showing up for those small interactions. If disconnection or distress is persistent or troubling, talk with a qualified health professional.</p>
+<h2>10. Feeding is a team responsibility</h2>
+<p>If your partner is breastfeeding, you can handle the surrounding work: water, food, clean equipment where needed, diapers, and settling afterward. If you are using bottles, learn the preparation, cleaning, and storage instructions yourself.</p>
+<p>Follow the feeding plan you develop with your baby’s care team. When something is confusing or not going well, ask for help rather than trying to win an argument about which method is best.</p>
+<h2>11. Safe sleep is worth learning before the first exhausted night</h2>
+<p>Place your baby on their back for sleep, on a firm, flat infant sleep surface with a fitted sheet. Keep pillows, loose blankets, and toys out. Use a separate infant sleep space rather than sharing an adult sleep surface. The <a href="https://www.cdc.gov/reproductive-health/features/babies-sleep.html">CDC safe sleep guidance</a> explains these basics.</p>
+<p>If you are getting sleepy with the baby in your arms, put them down in their safe sleep space or hand them to an awake caregiver. Do not try to outlast exhaustion on the couch.</p>
+<h2>12. Plan for the night you will have, not the one you want</h2>
+<p>Work out who can cover which tasks around feeding and recovery. Review the plan when it stops working. A newborn’s needs will not always fit tidy shifts, but you can still make the workload more deliberate.</p>
+<p>A sleep resource can help you learn what questions to ask and what is appropriate for your baby’s stage. It should not replace the feeding or medical advice specific to your child.</p>
+<BlogOffer heading="Want a structured resource for baby sleep?" body="Explore Taking Cara Babies for guidance suited to your baby’s stage. Check the program’s age range and follow your clinician’s feeding and medical advice." href="https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC" label="Explore Taking Cara Babies" affiliate />
+
+<h2 id="relationship">13. Recovery deserves as much planning as the nursery</h2>
+<p>Your partner is recovering while everyone is excited about the baby. Ask what she needs. Keep her discharge instructions available, help with practical tasks, and contact her care team with concerns.</p>
+<p>Food, laundry, transport, and a boundary with visitors may do more for her day than another baby outfit. Put those jobs on your own list.</p>
+<h2>14. Owning a task is different from waiting to be asked</h2>
+<p>If you handle laundry, notice when it needs doing and finish the cycle all the way to putting it away. If you handle groceries, track what is running low. The noticing is part of the task.</p>
+<p>Agree on responsibilities while you are both relatively rested. “Tell me what to do” is occasionally useful in a busy moment. It is exhausting as the household operating system.</p>
+<h2>15. Keep score of what needs doing, not who has suffered more</h2>
+<p>There will be nights when you both feel you have given everything. Turning that into a contest usually leaves two tired people defending themselves.</p>
+<p>Try a concrete request: “I am struggling to stay awake. Can we work out the next hour?” You can name your limits and still recognize hers. Revisit bigger fairness questions when you have enough bandwidth to hear each other.</p>
+<h2>16. Protect time together without making it another obligation</h2>
+<p>A relationship check in can be ten quiet minutes asking how each other is doing. It does not need a reservation. Ask about the person, not just the next feeding or supply run.</p>
+<p>Affection and intimacy may change during pregnancy and recovery. Listen, respect comfort and consent, and follow clinical guidance where relevant. Keep kindness available without making it a transaction.</p>
+<BlogPhoto src="/images/John+and+Viv-40.webp" alt="John and Vivian smiling at each other while holding their newborn twins at home" ratio="2/3" />
+<h2>17. Visitors should make life easier</h2>
+<p>Decide together who you want around, for how long, and what would help. You can welcome someone and still say that today is a short visit.</p>
+<p>Give willing helpers a specific job: bring dinner, take the dog out, or pick up groceries. Handle the communication with your own relatives so your recovering partner is not responsible for everyone’s expectations.</p>
+<h2 id="support">18. Have another dad you can tell the truth to</h2>
+<p>You need somewhere to ask the question you think you should already know the answer to. A friend, a relative, or a dad community can give you perspective and a place to talk.</p>
+<p>That is part of why Dudela exists. Bring the awkward question, the practical question, or the one you have been carrying around for a week.</p>
+<BlogOffer heading="Bring the question you are actually worried about" body="Spit Up Society gives you a place to ask John and Mike your real dad questions, with live Q&A twice a month and a private community." href="/join/spit-up-society" label="Join Spit Up Society" />
+
+<h2>19. Persistent distress deserves more than pushing through</h2>
+<p>Some days will be rough. If worry, low mood, anger, or disconnection persists or interferes with daily life, speak with a qualified health professional. You do not need to reach a breaking point before asking for help.</p>
+<p>Our article on <a href="/blog/emotional-side-of-fatherhood">the emotional side of fatherhood</a> can help start a conversation. If you or anyone else is in immediate danger, contact emergency services.</p>
+<h2>20. Repair matters more than pretending you never get it wrong</h2>
+<p>You will miss a cue, snap when you are tired, or forget something important. Name what you did, apologize without attaching a defense, and change the part you can change.</p>
+<p>“I was short with you. That was unfair. I need a minute, then I will handle the dishes” is more useful than a long explanation of why you are the tired one.</p>
+<h2>21. Decide what kind of dad you want to practice being</h2>
+<p>Choose a few qualities you want your family to experience: patient, dependable, playful, honest. Then make one visible in the day you already have. Put the phone away during a feed. Follow through on the errand. Admit when you do not know.</p>
+<p>You do not become that dad by writing the perfect statement about fatherhood. You practice him in ordinary moments, and you start again when you miss one.</p>
+<h2 id="this-week">Your first week of preparation</h2>
+<p>Pick three moves: one conversation with your partner, one practical task you will fully own, and one thing you will learn. That might be talking about visitors, confirming leave, and learning safe sleep basics. Next week, choose the next three.</p>
+<p>For a companion conversation, find <a href="/podcast#what-i-wish-i-knew-in-year-one-as-a-new-dad">What I Wish I Knew in Year One as a New Dad</a> on the podcast. For preparation that follows your stage, explore the <a href="/prepare">Dudela roadmap</a>.</p>
+<BlogOffer heading="Keep the conversation going" body="Listen to What I Wish I Knew in Year One as a New Dad, then choose one topic to talk through with your partner." href="/podcast#what-i-wish-i-knew-in-year-one-as-a-new-dad" label="Listen to the year one episode" />
+
+</BlogPostLayout>

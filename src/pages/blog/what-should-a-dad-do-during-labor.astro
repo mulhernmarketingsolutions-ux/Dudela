@@ -1,0 +1,66 @@
+---
+import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import BlogPhoto from "../../components/BlogPhoto.astro";
+import BlogOffer from "../../components/BlogOffer.astro";
+import { getBlogPost } from "../../data/blogPosts.js";
+const post = getBlogPost("what-should-a-dad-do-during-labor");
+---
+<BlogPostLayout {...post} eyebrow="Labor & birth"
+  ctaHeading="Your next step does not have to be a big one"
+  ctaBody="Start with the free Dad Prep Guide. Pick one thing you can put into practice today, then build from there."
+  ctaHref="/guide" ctaLabel="Get the free Dad Prep Guide">
+<h2 id="quick-answer">What should a dad do during labor?</h2>
+<p><strong>Be a calm, attentive support person. Know your partner’s preferences, handle the practical details, offer comfort she actually wants, and help her communicate with the care team. Follow her lead and the team’s guidance as labor changes. Your job is to support her, not direct the birth.</strong></p>
+<p>A lot of expecting dads picture one big moment: the drive, the pushing, the first time they hold the baby. In between those moments, there can be waiting, uncertainty, repeated questions, and long stretches where being useful looks pretty ordinary.</p>
+<p>You might refill a water cup when the team says she can drink. You might find the charger. You might say almost nothing because she has asked for quiet. None of that is a supporting role in the movie sense. It is the actual work.</p>
+<nav aria-label="In this article"><p>Jump to: <a href="#before">Before labor</a> · <a href="#during">In the room</a> · <a href="#changes">When plans change</a> · <a href="#after">After birth</a> · <a href="#checklist">Quick checklist</a></p></nav>
+<BlogOffer heading="Start with something you can use today" body="Our free Dad Prep Guide gives you a place to start when every tab on your phone has a different opinion." href="/guide" label="Get the free Dad Prep Guide" />
+
+<BlogPhoto src={post.image} alt="Mike holding his newborn daughter close and looking into her face" ratio="1/1" />
+<h2 id="before">Do the preparation while you can still think in full sentences</h2>
+<p>Ask your partner what kind of support sounds good to her. Does she like touch when she is overwhelmed? Encouragement? Quiet? Who should receive updates, and who should wait until you are both ready? These are easier conversations on the couch than between contractions.</p>
+<p>Use the <a href="/birth-plan-template">birth plan template</a> to talk through preferences together. Keep the plan accessible, and understand that preferences can change. If she wants a different pain relief option than she expected, support the person in front of you.</p>
+<p>Learn the basics in a childbirth class. Ask your care team what signs should prompt a call, where to go, and what to do if labor starts before the expected time. Save those instructions. There is no single contraction timing rule that is right for every pregnancy, distance from the hospital, or medical situation.</p>
+<p>Take care of transport, parking, childcare for older kids, pet care, and your work contact. Check the hospital’s policy for support people. If a doula will be involved, talk about how you can work together. Knowing who handles what helps you stay focused on your partner.</p>
+<h3>Pack your own bag</h3>
+<p>Bring a charger with enough reach, comfortable clothes, toiletries, identification, and your own snacks and water. Check what paperwork and supplies your hospital requests. Keep your partner’s things easy to find, so “Can you get my lip balm?” does not become a full unpacking exercise.</p>
+<p>Download the <a href="/hospital-bag-checklist">free hospital bag checklist</a> and review it together. The goal is a bag you can use, not a bag impressive enough to photograph.</p>
+<BlogOffer heading="Get the bag handled now" body="Use the free checklist, check your hospital\u2019s requirements, and put the essentials somewhere you can find them." href="/hospital-bag-checklist" label="Get the hospital bag checklist" />
+
+<h2 id="during">During labor, offer one useful thing at a time</h2>
+<p>Try a clear choice: “Would you like my hand, or some space?” If she wants touch, ask the nurse or midwife to show you a comfort technique suited to the situation. If she does not want it, stop. You do not need to take the change personally or explain that it helped ten minutes ago.</p>
+<p>The <a href="https://www.nhs.uk/best-start-in-life/pregnancy/preparing-for-labour-and-birth/tips-for-your-birthing-partner-or-partners/">NHS tips for birth partners</a> include reassurance, breathing together, and helping with position changes. Check with the care team about movement, eating, and drinking, especially when monitoring, medication, or procedures affect what is appropriate.</p>
+<p>Pay attention between contractions, too. Does she want the room quieter? Is a family group chat lighting up the phone? Does she need the nurse? Small details are easier for you to notice because you are not the one doing the physical work of labor.</p>
+<h3>What to say, and when to stop talking</h3>
+<p>Keep your words short and believable. “I am here.” “Do you want me closer?” “I will ask the nurse.” You can be reassuring without predicting when the baby will arrive or promising that something will not hurt.</p>
+<p>Avoid “calm down,” “you are almost done” when you do not know that, or an update about how uncomfortable your chair is. If she asks you to stop talking, that is useful information. Quiet presence counts.</p>
+<h3>Be the person who manages the outside world</h3>
+<p>Send only the updates you both agreed to share. Put the phone away afterward. Ask before taking photos or video, and check hospital rules. A moment can belong to your family without becoming content or a group text immediately.</p>
+<p>Eat and drink enough to function. If you need a bathroom break, coordinate it with your partner and the team. If you feel faint, tell a staff member and sit down safely. Staying useful includes recognizing your own limits early.</p>
+<BlogOffer heading="Put a plan behind the good intentions" body="The $37 Dudela Prep Kit brings together six pillars and nine printable tools, including preparation for birth, your relationship, and the first days home." href="/kit" label="See what is inside the Prep Kit" />
+
+<h2>Help her be heard without speaking over her</h2>
+<p>Start by listening when a clinician explains something. If your partner wants help asking questions, you can say, “Could you explain that again in plain language?” or “She has a question before we move on.” Give her the first chance to answer questions about her own body and preferences.</p>
+<p>When a decision comes up and time allows, useful questions include: What are you recommending? Why? What are the benefits and risks? Are there alternatives? How much time do we have to decide?</p>
+<p>Those questions are for understanding the situation. They are not a script for delaying urgent care or arguing your way into the birth you pictured. If the team says action is urgent, listen and follow directions.</p>
+<p>If she tells you something feels wrong or asks for help, take it seriously and alert the team. You can say exactly what she reported and when it began. Clear information is more helpful than trying to name the problem yourself.</p>
+<h2 id="changes">If the plan changes, stay with the person</h2>
+<p>An induction, an epidural, an assisted birth, or a C section can bring a new set of instructions and feelings. Your partner does not need a performance review of the original plan. Ask what she needs now.</p>
+<p>If a C section is recommended, ask where you can be, what you should wear, and what happens next. If you are allowed beside her, focus on her face and keep your reassurance simple. If you must wait elsewhere, ask how you will receive updates and follow the team’s instructions.</p>
+<p>If your baby needs separate care, ask the team to help you understand where everyone is going and how to keep your partner informed. Do not promise an outcome you cannot know. “I am finding out what happens next” is honest and useful.</p>
+<p>Afterward, let her tell the story in her own way and at her own pace. A safe outcome can coexist with a frightening experience. If either of you is struggling with what happened, ask the care team about follow up support.</p>
+<BlogOffer heading="Bring the question you are actually worried about" body="Spit Up Society gives you a place to ask John and Mike your real dad questions, with live Q&A twice a month and a private community." href="/join/spit-up-society" label="Join Spit Up Society" />
+
+<h2 id="after">Your job keeps going after the baby arrives</h2>
+<p>Ask what your partner needs before arranging visitors or announcements. Help her reach her belongings and call the nurse when she needs assistance. After surgery or other interventions, follow staff guidance about movement and recovery rather than trying to help her up on your own.</p>
+<p>Ask someone to show you the baby care you are unsure about. Practice the diaper change. Learn the feeding plan together. Write down discharge instructions and ask who to contact for questions about her recovery and the baby’s health.</p>
+<p>Before the first night, learn safe sleep basics: place your baby on their back in a separate infant sleep space with a firm, flat surface and a fitted sheet, without soft bedding or toys. The <a href="https://www.cdc.gov/reproductive-health/features/babies-sleep.html">CDC safe sleep guidance</a> explains the setup. If you are getting sleepy while holding the baby, put them in their safe sleep space or ask an awake caregiver for help.</p>
+<p>For more preparation around the nights ahead, a structured sleep resource may be useful. Keep expectations appropriate to a newborn and follow the baby’s individual feeding advice.</p>
+<BlogOffer heading="Want a structured resource for baby sleep?" body="Explore Taking Cara Babies for guidance suited to your baby’s stage. Check the program’s age range and follow your clinician’s feeding and medical advice." href="https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC" label="Explore Taking Cara Babies" affiliate />
+
+<h2 id="checklist">The delivery room checklist worth remembering</h2>
+<ul><li><strong>Know:</strong> her preferences, the care team’s instructions, and who to contact.</li><li><strong>Ask:</strong> whether she wants touch, quiet, encouragement, or help getting the nurse.</li><li><strong>Handle:</strong> the bag, transport, messages, and other practical details.</li><li><strong>Listen:</strong> to her first, and to the clinical guidance.</li><li><strong>Adapt:</strong> when her needs or the birth plan change.</li><li><strong>Stay involved:</strong> in recovery and baby care after the birth.</li></ul>
+<p>For the relationship side of showing up, listen to <a href="/podcast#our-wives-get-honest-about-pregnancy-postpartum-us">the conversation with Vivian and Abigail</a>. For what comes next, read our <a href="/blog/first-time-dad-guide">first time dad guide</a>. And if you still have weeks or months to prepare, start with <a href="/blog/how-to-support-your-pregnant-wife">supporting your partner during pregnancy</a>.</p>
+<BlogOffer heading="Hear what support looks like from her side" body="Listen to Our Wives Get Honest About Pregnancy, Postpartum & Us before you make assumptions about what a partner needs." href="/podcast#our-wives-get-honest-about-pregnancy-postpartum-us" label="Listen to the podcast" />
+
+</BlogPostLayout>

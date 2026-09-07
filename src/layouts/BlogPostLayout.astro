@@ -142,6 +142,9 @@ const faqSchema = faqs && faqs.length > 0 ? {
   .prose {
     max-width: 68ch;
   }
+  .prose :global([id]) {
+    scroll-margin-top: 7rem;
+  }
   .prose :global(h2) {
     font-family: var(--font-display);
     font-size: clamp(1.4rem, 3vw, 1.9rem);

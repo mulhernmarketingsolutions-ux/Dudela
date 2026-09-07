@@ -8,6 +8,104 @@
 // not dated news, and picking a specific day would imply a publish-date
 // accuracy we don't actually have.
 export const blogPosts = [
+{
+  "slug": "how-to-support-your-pregnant-wife",
+  "title": "How to Support Your Pregnant Wife: What She Actually Needs From You",
+  "dek": "She should not have to become your project manager to get through pregnancy. Here is how to take real weight off her day.",
+  "description": "How to support your pregnant wife with practical help, better conversations, shared planning, and a clear plan for each trimester and the first days home.",
+  "stageId": "12wk",
+  "image": "/images/John+and+Viv-40.webp",
+  "readTime": "8 min read",
+  "faqs": [
+    {
+      "q": "What does a pregnant wife need from her husband?",
+      "a": "Ask what feels hardest, listen without dismissing it, and take ownership of recurring work such as meals, laundry, and shared planning. Learn about pregnancy yourself and respect her choices about appointments, comfort, and birth."
+    },
+    {
+      "q": "How can I help my pregnant wife when she is exhausted?",
+      "a": "Make rest possible by handling dinner, cleanup, errands, and care for older children. Offer specific help instead of another decision. If her exhaustion feels concerning or comes with other symptoms, help her contact her pregnancy care team."
+    },
+    {
+      "q": "How do I support my pregnant wife emotionally?",
+      "a": "Believe her experience, ask whether she wants listening or practical help, and follow through on what you agree to do. Avoid explaining her feelings away as hormones. Make room for excitement, worry, frustration, and mixed feelings."
+    },
+    {
+      "q": "What should a dad do in the third trimester?",
+      "a": "Confirm leave and transport plans, pack the hospital bag, discuss birth preferences, learn basic baby care, and arrange meals and practical support for recovery. Save the care team contact details and follow their instructions about when to call."
+    }
+  ],
+  "date": "September 2026",
+  "isoMonth": "2026-09",
+  "source": "Dudela editorial guide, with related podcast listening and linked care guidance."
+},
+{
+  "slug": "what-should-a-dad-do-during-labor",
+  "title": "What Should a Dad Do During Labor? A First Time Dad's Guide",
+  "dek": "You do not need a delivery room speech. You need to know her preferences, handle the practical stuff, and stay useful when the plan changes.",
+  "description": "What should a dad do during labor? A practical guide to comfort, communication, hospital preparation, changing birth plans, and the first hours after birth.",
+  "stageId": "hospital",
+  "image": "/images/mike-riley-face-to-face.png",
+  "readTime": "8 min read",
+  "faqs": [
+    {
+      "q": "What is a dad’s role during labor?",
+      "a": "Provide the support your partner wants, handle logistics, help communicate her preferences, and follow the care team’s guidance. Ask before touching or coaching her. Her comfort and choices should guide your support."
+    },
+    {
+      "q": "What should a dad pack for the hospital?",
+      "a": "Bring identification, a charger, a change of clothes, toiletries, your own snacks and water, and the contact details and paperwork your hospital requests. Check the hospital’s rules and use a shared checklist for your partner and baby."
+    },
+    {
+      "q": "What should I say to my wife during labor?",
+      "a": "Use brief, reassuring phrases such as “I am here” or “Do you want quiet or encouragement?” Avoid promising how soon birth will happen or telling her a medical decision is easy. Listen when she tells you what helps."
+    },
+    {
+      "q": "How can a dad help during a C section?",
+      "a": "Ask the team where you can be and what to expect. If you can stay with your partner, offer calm reassurance and keep her informed as the team advises. Afterward, help with practical tasks and follow her recovery instructions."
+    },
+    {
+      "q": "What if I feel faint in the delivery room?",
+      "a": "Tell a nurse or another member of the care team immediately and sit down safely. Do not try to push through it while holding your partner or baby. Let the team help you so you can return to supporting her."
+    }
+  ],
+  "date": "September 2026",
+  "isoMonth": "2026-09",
+  "source": "Dudela editorial guide, with related podcast listening and linked care guidance."
+},
+{
+  "slug": "first-time-dad-guide",
+  "title": "First Time Dad Guide: 21 Things I Wish I Knew Before Becoming a Father",
+  "dek": "The gear is the easy part. Here are the conversations, habits, and practical moves that deserve a place on your list before the baby arrives.",
+  "description": "A first time dad guide with 21 practical lessons on pregnancy, labor, newborn care, money, sleep, your relationship, and finding support as a new father.",
+  "stageId": "8wk",
+  "image": "/images/john-kissing-twins.webp",
+  "readTime": "10 min read",
+  "faqs": [
+    {
+      "q": "How do I prepare to be a first time dad?",
+      "a": "Start by supporting your partner, learning basic baby care, planning leave and household costs, and talking through birth and the first days home. Choose a few practical tasks each week rather than trying to learn everything at once."
+    },
+    {
+      "q": "Is it normal to feel scared about becoming a father?",
+      "a": "Many expecting dads feel both excited and scared. Talk to your partner or someone you trust. If worry, low mood, or anger is persistent or makes daily life hard, speak with a qualified health professional."
+    },
+    {
+      "q": "What should a new dad do in the first week?",
+      "a": "Share baby care, protect your partner’s recovery time, handle meals and household tasks, and keep track of follow up instructions together. Follow your baby’s feeding plan and safe sleep guidance, and ask the care team when you are unsure."
+    },
+    {
+      "q": "How can a dad bond with a newborn?",
+      "a": "Build familiarity through everyday care: holding your baby safely while awake, talking, changing diapers, soothing, and participating in feeding as appropriate. Connection may grow gradually through repetition."
+    },
+    {
+      "q": "What does a first time dad actually need to buy?",
+      "a": "Prioritize an appropriate car seat for travel, a safe infant sleep space, diapers, basic clothing, and feeding supplies suited to your plan. Confirm safety and suitability before buying. A long registry is not a requirement for being prepared."
+    }
+  ],
+  "date": "September 2026",
+  "isoMonth": "2026-09",
+  "source": "Dudela editorial guide, with related podcast listening and linked care guidance."
+},
   {
     slug: "cost-of-a-baby",
     title: "How Much Is a Baby Actually Going to Cost You",

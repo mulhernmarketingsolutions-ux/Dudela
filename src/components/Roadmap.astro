@@ -1,5 +1,6 @@
 ---
 import { slugify } from "../data/episodes.js";
+import { blogPosts } from "../data/blogPosts.js";
 
 const stages = [
   {
@@ -114,6 +115,15 @@ const stages = [
     paid: null,
   },
 ];
+
+// Attach editorial articles by stage, preserving existing resource order.
+for (const post of blogPosts) {
+  const stage = stages.find((stage) => stage.id === post.stageId);
+  const href = `/blog/${post.slug}`;
+  if (stage && !stage.free.some((resource) => resource.href === href)) {
+    stage.free.push({ title: post.title, type: "Article", href });
+  }
+}
 
 function freeHref(f) {
   // Prefer an explicit href on the item itself — set this whenever a
