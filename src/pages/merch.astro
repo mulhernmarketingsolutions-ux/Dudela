@@ -417,6 +417,29 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
   </section>
 
+  <section id="recommended" class="colors section-light recommended-section">
+    <div class="container">
+      <div class="section-divider">
+        <p class="eyebrow">Not sold by us</p>
+        <h2>One more thing we'd actually recommend.</h2>
+        <p class="section-sub">This one isn't a Dudela product — it doesn't ship from us and it's not part of the lineup above. It's real gear we'd point another dad toward, from a partner we may earn a commission from.</p>
+      </div>
+      <div class="colors-grid">
+        <div class="design-card affiliate-card">
+          <div class="design-body">
+            <span class="affiliate-badge">Affiliate — ships from the retailer, not Dudela</span>
+            <h3>Baby monitor</h3>
+            <p class="design-tagline">Keep an eye on the crib without hovering over it — a video monitor we'd point another dad toward.</p>
+            <p class="disclosure">Affiliate link: Dudela may earn a commission if you purchase through this link.</p>
+            <a href="https://babymonitordirectllc.pxf.io/rEq1o3" class="btn btn-primary" target="_blank" rel="sponsored noopener">
+              See baby monitors <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Product Details & Sizing — one shared dialog for both product types
        rather than one per card, since the specs are the same across every
        hat design (all Otto Cap 31-069) and every shirt design (all Comfort
@@ -1752,6 +1775,37 @@ const canceled = url.searchParams.get("purchase") === "canceled";
      so it loses its top padding too, same reasoning as .hats-section above. */
   .stickers-section {
     padding-top: 0;
+  }
+  /* Recommended (affiliate) section directly follows Stickers, another
+     .colors.section-light block, so it loses its top padding too — same
+     reasoning as .hats-section / .stickers-section above. */
+  .recommended-section {
+    padding-top: 0;
+  }
+  /* Dashed border + a visible "not us" badge so this card never reads as
+     another buyable Dudela SKU sitting in the grid above it — no price, no
+     "Buy Now", no Printful fulfillment. */
+  .affiliate-card {
+    border-style: dashed;
+    background: var(--bg-light-raised);
+  }
+  .affiliate-badge {
+    display: inline-block;
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-on-light-muted);
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    padding: 0.3rem 0.7rem;
+    margin-bottom: 0.75rem;
+  }
+  .affiliate-card .disclosure {
+    font-size: 0.85rem;
+    color: var(--text-on-light-muted);
+    margin: 0.5rem 0 1rem;
   }
   .section-divider {
     max-width: 60ch;
