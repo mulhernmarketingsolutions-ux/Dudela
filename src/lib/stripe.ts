@@ -71,7 +71,15 @@ export async function createCheckoutSession(
     // buyer can type in a code (e.g. SHOWUP from the welcome postcard) to
     // redeem a Coupon/Promotion Code created in the Stripe Dashboard. Off by
     // default — only pass true for flows that actually have a code to offer.
+    // Ignored when promotionCodeId is given — Stripe doesn't allow both.
     allowPromotionCodes?: boolean;
+    // Cart checkout only: a specific Promotion Code object id (promo_...),
+    // already looked up and validated by validate-promo-code.ts /
+    // create-cart-checkout-session.ts. Pre-applies that exact discount to
+    // the session (the buyer already saw it applied in the cart drawer)
+    // instead of showing Stripe's generic "Add promotion code" box —
+    // mutually exclusive with allowPromotionCodes.
+    promotionCodeId?: string;
     // Cart checkout only (create-cart-checkout-session.ts): a full list of
     // line items, each with its own real quantity — used INSTEAD of
     // priceId/priceData/extraLineItems above (all three are ignored when
@@ -87,7 +95,9 @@ export async function createCheckoutSession(
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
-  if (opts.allowPromotionCodes) {
+  if (opts.promotionCodeId) {
+    params["discounts[0][promotion_code]"] = opts.promotionCodeId;
+  } else if (opts.allowPromotionCodes) {
     params["allow_promotion_codes"] = "true";
   }
   if (opts.items && opts.items.length > 0) {
@@ -179,6 +189,55 @@ export async function createCheckoutSession(
     throw new Error(`Stripe checkout session create failed: ${res.status} ${await res.text()}`);
   }
   return res.json() as Promise<{ id: string; url: string }>;
+}
+
+// Looks up a Promotion Code by its human-typed code (e.g. "SHOWUP") for the
+// cart drawer's live promo-code field (validate-promo-code.ts) and for
+// create-cart-checkout-session.ts's own re-check right before charging —
+// never trust the client's earlier validation for the actual discount
+// applied to money. Stripe's code filter is case-sensitive exact match, so
+// this tries the code as typed, then uppercased (codes are conventionally
+// all-caps, and most people don't type in caps) before giving up.
+export interface PromotionCodeInfo {
+  id: string;
+  code: string;
+  percentOff?: number;
+  amountOffCents?: number;
+  currency?: string;
+}
+
+export async function lookupPromotionCode(env: StripeEnv, rawCode: string): Promise<PromotionCodeInfo | null> {
+  const trimmed = rawCode.trim();
+  if (!trimmed) return null;
+
+  const candidates = Array.from(new Set([trimmed, trimmed.toUpperCase()]));
+  for (const candidate of candidates) {
+    const res = await fetch(
+      `https://api.stripe.com/v1/promotion_codes?code=${encodeURIComponent(candidate)}&active=true&limit=1`,
+      { headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` } }
+    );
+    if (!res.ok) {
+      throw new Error(`Stripe promotion code lookup failed: ${res.status} ${await res.text()}`);
+    }
+    const data = (await res.json()) as {
+      data: Array<{
+        id: string;
+        code: string;
+        coupon: { percent_off?: number | null; amount_off?: number | null; currency?: string; valid: boolean };
+      }>;
+    };
+    const match = data.data[0];
+    if (match && match.coupon?.valid) {
+      return {
+        id: match.id,
+        code: match.code,
+        percentOff: match.coupon.percent_off ?? undefined,
+        amountOffCents: match.coupon.amount_off ?? undefined,
+        currency: match.coupon.currency,
+      };
+    }
+  }
+  return null;
 }
 
 // Creates a Stripe Billing Portal session so members can update their card,

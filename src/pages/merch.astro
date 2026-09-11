@@ -591,6 +591,19 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
     <div class="cart-drawer-foot" id="cart-drawer-foot" hidden>
       <p class="cart-bundle-hint" id="cart-bundle-hint" hidden></p>
+
+      <div class="cart-promo">
+        <div class="cart-promo-row" id="cart-promo-row">
+          <input type="text" id="cart-promo-input" class="cart-promo-input" placeholder="Promo code" autocomplete="off" />
+          <button type="button" id="cart-promo-apply" class="btn btn-ghost cart-promo-apply">Apply</button>
+        </div>
+        <div class="cart-promo-applied" id="cart-promo-applied" hidden>
+          <span id="cart-promo-applied-label"></span>
+          <button type="button" id="cart-promo-remove" class="cart-promo-remove" aria-label="Remove promo code">&times;</button>
+        </div>
+        <p class="cart-promo-msg" id="cart-promo-msg" hidden></p>
+      </div>
+
       <div class="cart-subtotal">
         <span>Subtotal</span>
         <span id="cart-subtotal-amount">$0</span>
@@ -599,11 +612,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         <span>🎉 Bundle discount (hat + shirt)</span>
         <span id="cart-bundle-discount-amount">-$0</span>
       </div>
+      <div class="cart-promo-discount" id="cart-promo-discount" hidden>
+        <span id="cart-promo-discount-label">Promo code</span>
+        <span id="cart-promo-discount-amount">-$0</span>
+      </div>
       <div class="cart-total" id="cart-total-row" hidden>
         <span>Total</span>
         <span id="cart-total-amount">$0</span>
       </div>
-      <p class="cart-note">Shipping — and any promo code — applied at checkout.</p>
+      <p class="cart-note">Shipping calculated at checkout.</p>
       <button type="button" class="btn btn-primary cart-checkout-btn" id="cart-checkout-btn">Checkout</button>
       <p class="cart-error" id="cart-error" hidden></p>
     </div>
@@ -701,6 +718,43 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
   let cart: CartItem[] = loadCart();
 
+  interface AppliedPromo {
+    code: string;
+    id: string;
+    percentOff?: number;
+    amountOffCents?: number;
+  }
+  // Not persisted to localStorage on purpose — a code applied a week ago in
+  // a stale tab might not still be valid, and re-checking fresh each page
+  // load avoids showing a discount Stripe would then refuse at checkout.
+  let appliedPromo: AppliedPromo | null = null;
+
+  // Same restriction as create-cart-checkout-session.ts's promoAllowedForCart
+  // — mirrored here purely for display, so the drawer never shows/lets you
+  // apply a code the server would just ignore.
+  function promoBlockedReason(): string | null {
+    const hasHat = cart.some((i) => i.category === "hat");
+    const hasShirt = cart.some((i) => i.category === "shirt");
+    if (hasHat && hasShirt) {
+      return "Promo codes can't combine with the Bundle discount — remove a hat or shirt to use one.";
+    }
+    if (cart.some((i) => i.category === "sticker")) {
+      return "Promo codes can't be used with the sticker pack.";
+    }
+    return null;
+  }
+
+  function computePromoDiscountCents(amountCents: number): number {
+    if (!appliedPromo || amountCents <= 0) return 0;
+    if (typeof appliedPromo.amountOffCents === "number") {
+      return Math.min(appliedPromo.amountOffCents, amountCents);
+    }
+    if (typeof appliedPromo.percentOff === "number") {
+      return Math.round(amountCents * (appliedPromo.percentOff / 100));
+    }
+    return 0;
+  }
+
   const cartToggle = document.getElementById("cart-toggle");
   const cartToggleCount = document.getElementById("cart-toggle-count");
   const cartBackdrop = document.getElementById("cart-backdrop");
@@ -717,6 +771,16 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   const cartTotalAmountEl = document.getElementById("cart-total-amount");
   const cartCheckoutBtn = document.getElementById("cart-checkout-btn") as HTMLButtonElement | null;
   const cartErrorEl = document.getElementById("cart-error");
+  const cartPromoInput = document.getElementById("cart-promo-input") as HTMLInputElement | null;
+  const cartPromoApplyBtn = document.getElementById("cart-promo-apply") as HTMLButtonElement | null;
+  const cartPromoRow = document.getElementById("cart-promo-row");
+  const cartPromoAppliedEl = document.getElementById("cart-promo-applied");
+  const cartPromoAppliedLabelEl = document.getElementById("cart-promo-applied-label");
+  const cartPromoRemoveBtn = document.getElementById("cart-promo-remove");
+  const cartPromoMsgEl = document.getElementById("cart-promo-msg");
+  const cartPromoDiscountEl = document.getElementById("cart-promo-discount");
+  const cartPromoDiscountLabelEl = document.getElementById("cart-promo-discount-label");
+  const cartPromoDiscountAmountEl = document.getElementById("cart-promo-discount-amount");
 
   // Bundle & Save, mirrored client-side purely for display — the server
   // (create-cart-checkout-session.ts) is what actually charges the
@@ -779,15 +843,62 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
     const hasHat = cart.some((i) => i.category === "hat");
     const hasShirt = cart.some((i) => i.category === "shirt");
-    const discountCents = computeBundleDiscountCents();
+    const bundleDiscountCents = computeBundleDiscountCents();
 
-    if (cartBundleDiscountEl && cartBundleDiscountAmountEl && cartTotalRowEl && cartTotalAmountEl) {
-      const eligible = discountCents > 0;
-      cartBundleDiscountEl.hidden = !eligible;
-      cartTotalRowEl.hidden = !eligible;
-      if (eligible) {
-        cartBundleDiscountAmountEl.textContent = `-$${(discountCents / 100).toFixed(2)}`;
-        cartTotalAmountEl.textContent = `$${(subtotal - discountCents / 100).toFixed(2)}`;
+    // A promo applied earlier can become ineligible if the cart changed
+    // since (e.g. a sticker pack got added, or the bundle became eligible)
+    // — drop it rather than silently keep showing a discount the server
+    // will refuse to honor at checkout.
+    const blockedReason = promoBlockedReason();
+    if (blockedReason && appliedPromo) {
+      appliedPromo = null;
+    }
+    const afterBundleCents = Math.round(subtotal * 100) - bundleDiscountCents;
+    const promoDiscountCents = blockedReason ? 0 : computePromoDiscountCents(afterBundleCents);
+    const totalDiscountCents = bundleDiscountCents + promoDiscountCents;
+
+    if (
+      cartBundleDiscountEl &&
+      cartBundleDiscountAmountEl &&
+      cartPromoDiscountEl &&
+      cartPromoDiscountAmountEl &&
+      cartPromoDiscountLabelEl &&
+      cartTotalRowEl &&
+      cartTotalAmountEl
+    ) {
+      cartBundleDiscountEl.hidden = bundleDiscountCents <= 0;
+      if (bundleDiscountCents > 0) {
+        cartBundleDiscountAmountEl.textContent = `-$${(bundleDiscountCents / 100).toFixed(2)}`;
+      }
+      cartPromoDiscountEl.hidden = promoDiscountCents <= 0;
+      if (promoDiscountCents > 0 && appliedPromo) {
+        cartPromoDiscountLabelEl.textContent = `Promo code (${appliedPromo.code})`;
+        cartPromoDiscountAmountEl.textContent = `-$${(promoDiscountCents / 100).toFixed(2)}`;
+      }
+      const showTotal = totalDiscountCents > 0;
+      cartTotalRowEl.hidden = !showTotal;
+      if (showTotal) {
+        cartTotalAmountEl.textContent = `$${(subtotal - totalDiscountCents / 100).toFixed(2)}`;
+      }
+    }
+
+    if (cartPromoRow && cartPromoAppliedEl && cartPromoMsgEl) {
+      if (blockedReason) {
+        cartPromoRow.hidden = true;
+        cartPromoAppliedEl.hidden = true;
+        cartPromoMsgEl.textContent = blockedReason;
+        cartPromoMsgEl.hidden = false;
+      } else if (appliedPromo) {
+        cartPromoRow.hidden = true;
+        cartPromoAppliedEl.hidden = false;
+        if (cartPromoAppliedLabelEl) cartPromoAppliedLabelEl.textContent = `✓ ${appliedPromo.code} applied`;
+        cartPromoMsgEl.hidden = true;
+      } else {
+        cartPromoRow.hidden = false;
+        cartPromoAppliedEl.hidden = true;
+        // Leaves whatever error message (if any) an Apply attempt set —
+        // only cleared explicitly on the next apply/remove, not on every
+        // render (qty changes elsewhere in the cart shouldn't wipe it).
       }
     }
 
@@ -879,7 +990,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       const res = await fetch("/api/create-cart-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cart.map((i) => ({ key: i.key, qty: i.qty })) }),
+        body: JSON.stringify({
+          items: cart.map((i) => ({ key: i.key, qty: i.qty })),
+          promoCode: appliedPromo?.code,
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as { url: string };
@@ -893,6 +1007,66 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       }
       console.error("Cart checkout failed:", err);
     }
+  });
+
+  // Promo code field — validates live against Stripe (validate-promo-
+  // code.ts) and shows the real discount right in the drawer, instead of
+  // only finding out on Stripe's hosted checkout page. create-cart-
+  // checkout-session.ts re-checks the same code again right before
+  // charging — this is just the preview.
+  async function applyPromoCode() {
+    const code = cartPromoInput?.value.trim();
+    if (!code || !cartPromoApplyBtn || !cartPromoMsgEl) return;
+    const blocked = promoBlockedReason();
+    if (blocked) {
+      cartPromoMsgEl.textContent = blocked;
+      cartPromoMsgEl.hidden = false;
+      return;
+    }
+    cartPromoApplyBtn.disabled = true;
+    cartPromoApplyBtn.textContent = "Checking…";
+    cartPromoMsgEl.hidden = true;
+    try {
+      const res = await fetch("/api/validate-promo-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await res.json()) as {
+        valid: boolean;
+        id?: string;
+        code?: string;
+        percentOff?: number;
+        amountOffCents?: number;
+      };
+      if (data.valid && data.id) {
+        appliedPromo = { code: data.code || code, id: data.id, percentOff: data.percentOff, amountOffCents: data.amountOffCents };
+        if (cartPromoInput) cartPromoInput.value = "";
+        renderCart();
+      } else {
+        cartPromoMsgEl.textContent = "That code isn't valid — check the spelling and try again.";
+        cartPromoMsgEl.hidden = false;
+      }
+    } catch (err) {
+      console.error("Promo code check failed:", err);
+      cartPromoMsgEl.textContent = "Couldn't check that code right now — try again in a moment.";
+      cartPromoMsgEl.hidden = false;
+    } finally {
+      cartPromoApplyBtn.disabled = false;
+      cartPromoApplyBtn.textContent = "Apply";
+    }
+  }
+
+  cartPromoApplyBtn?.addEventListener("click", applyPromoCode);
+  cartPromoInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyPromoCode();
+    }
+  });
+  cartPromoRemoveBtn?.addEventListener("click", () => {
+    appliedPromo = null;
+    renderCart();
   });
 
   document.getElementById("sticker-add-cart")?.addEventListener("click", () => {
@@ -2454,5 +2628,75 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     border-top: 1px solid var(--border-light);
     padding-top: 0.5rem;
     margin: 0.3rem 0 0.3rem;
+  }
+  .cart-promo-discount {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-label);
+    font-size: 0.92rem;
+    color: var(--amber-600);
+    margin: 0.3rem 0;
+  }
+
+  /* --- Cart promo-code field — baked into the drawer itself so a buyer
+     sees the real discount before checkout, instead of only finding a
+     promo box on Stripe's hosted page. ------------------------------ */
+  .cart-promo {
+    margin: 0 0 0.9rem;
+  }
+  .cart-promo-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .cart-promo-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: var(--bg-light-raised);
+    color: inherit;
+    font-family: var(--font-label);
+    font-size: 0.88rem;
+  }
+  .cart-promo-input:focus {
+    outline: none;
+    border-color: var(--amber-500);
+  }
+  .cart-promo-apply {
+    flex: none;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+  }
+  .cart-promo-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    background: var(--forest-800);
+    color: var(--cream-100);
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .cart-promo-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.75;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+  }
+  .cart-promo-remove:hover {
+    opacity: 1;
+  }
+  .cart-promo-msg {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    color: var(--rust-600);
   }
 </style>

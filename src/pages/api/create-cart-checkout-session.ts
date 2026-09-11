@@ -1,5 +1,5 @@
 import type { APIContext } from "astro";
-import { createCheckoutSession } from "../../lib/stripe";
+import { createCheckoutSession, lookupPromotionCode } from "../../lib/stripe";
 import { getAuthedMember } from "../../lib/auth";
 import { getHatVariant, hatLabel, getShirtVariant, shirtLabel, BUNDLE_DISCOUNT_PERCENT } from "../../lib/printful";
 
@@ -105,7 +105,7 @@ export async function POST({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
   const origin = new URL(request.url).origin;
 
-  let payload: { items?: CartLine[]; email?: string };
+  let payload: { items?: CartLine[]; email?: string; promoCode?: string };
   try {
     payload = await request.json();
   } catch {
@@ -205,7 +205,27 @@ export async function POST({ request, locals, cookies }: APIContext) {
   // that's the exact stacking bug the standalone Bundle checkout was built
   // to prevent in the first place (see create-checkout-session.ts's
   // BUNDLE_DISCOUNT_PERCENT comment).
-  const allowPromotionCodes = !resolved.some((l) => l.blocksPromo) && !bundleEligible;
+  const promoAllowedForCart = !resolved.some((l) => l.blocksPromo) && !bundleEligible;
+
+  // The cart drawer's promo-code field already validated this code and
+  // showed the buyer its discount (validate-promo-code.ts) — but that was
+  // just a preview. Re-look-up the SAME code here, right before it
+  // actually affects a charge, rather than trusting whatever the client
+  // sends. If the code turns out invalid, or the cart became promo-
+  // ineligible since it was applied (e.g. a sticker pack got added after),
+  // silently drop it and check out at full price rather than fail the
+  // whole checkout — the drawer's own live re-check keeps this from being
+  // the common case, this is just the safety net.
+  let promotionCodeId: string | undefined;
+  if (payload.promoCode && promoAllowedForCart) {
+    try {
+      const promo = await lookupPromotionCode(env, payload.promoCode);
+      if (promo) promotionCodeId = promo.id;
+    } catch (err) {
+      console.error("create-cart-checkout-session promo re-check failed:", err);
+    }
+  }
+  const allowPromotionCodes = promoAllowedForCart && !promotionCodeId;
 
   // Compact [key, qty] tuples (not {key, qty} objects) to leave more room
   // under Stripe's 500-char metadata value cap — see MAX_CART_LINES above.
@@ -231,6 +251,7 @@ export async function POST({ request, locals, cookies }: APIContext) {
       collectShipping: true,
       invoiceCreation: true,
       allowPromotionCodes,
+      promotionCodeId,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
