@@ -417,26 +417,24 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
   </section>
 
-  <section id="recommended" class="colors section-light recommended-section">
-    <div class="container">
-      <div class="section-divider">
-        <p class="eyebrow">Not sold by us</p>
-        <h2>One more thing we'd actually recommend.</h2>
-        <p class="section-sub">This one isn't a Dudela product — it doesn't ship from us and it's not part of the lineup above. It's real gear we'd point another dad toward, from a partner we may earn a commission from.</p>
+  <!-- Affiliate pick — single-row banner, same pattern as SpitUpBanner.astro
+       (filled amber pill badge, one line of copy, one CTA) rather than a
+       card dropped into the product grid above. A bare text-only card next
+       to photo-rich shirt/hat/sticker cards read as an unfinished product
+       tile; this reads as an intentional, branded callout instead, while
+       the badge + disclosure still make clear it's not a Dudela SKU. -->
+  <section class="affiliate-banner">
+    <div class="container affiliate-banner-inner">
+      <div class="affiliate-banner-copy">
+        <span class="affiliate-banner-badge">Affiliate pick &middot; not a Dudela product</span>
+        <p class="affiliate-banner-text">
+          Want eyes on the crib without hovering over it? Here's the <strong>video baby monitor</strong> we'd actually point another dad toward.
+        </p>
+        <p class="affiliate-banner-disclosure">Ships from the retailer, not Dudela — affiliate link, we may earn a commission if you buy.</p>
       </div>
-      <div class="colors-grid">
-        <div class="design-card affiliate-card">
-          <div class="design-body">
-            <span class="affiliate-badge">Affiliate — ships from the retailer, not Dudela</span>
-            <h3>Baby monitor</h3>
-            <p class="design-tagline">Keep an eye on the crib without hovering over it — a video monitor we'd point another dad toward.</p>
-            <p class="disclosure">Affiliate link: Dudela may earn a commission if you purchase through this link.</p>
-            <a href="https://babymonitordirectllc.pxf.io/rEq1o3" class="btn btn-primary" target="_blank" rel="sponsored noopener">
-              See baby monitors <span aria-hidden="true">→</span>
-            </a>
-          </div>
-        </div>
-      </div>
+      <a href="https://babymonitordirectllc.pxf.io/rEq1o3" class="btn btn-primary affiliate-banner-cta" target="_blank" rel="sponsored noopener">
+        See baby monitors <span aria-hidden="true">→</span>
+      </a>
     </div>
   </section>
 
@@ -1776,36 +1774,67 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   .stickers-section {
     padding-top: 0;
   }
-  /* Recommended (affiliate) section directly follows Stickers, another
-     .colors.section-light block, so it loses its top padding too — same
-     reasoning as .hats-section / .stickers-section above. */
-  .recommended-section {
-    padding-top: 0;
-  }
-  /* Dashed border + a visible "not us" badge so this card never reads as
-     another buyable Dudela SKU sitting in the grid above it — no price, no
-     "Buy Now", no Printful fulfillment. */
-  .affiliate-card {
-    border-style: dashed;
+  /* Affiliate pick banner — same structure/spacing logic as
+     SpitUpBanner.astro's .spitup-banner, kept light (not the dark
+     .bg-dark-raised that component uses) so it doesn't visually compete
+     with the real SpitUpBanner further down the page, while still reading
+     as a deliberate, branded strip rather than a leftover card. */
+  .affiliate-banner {
     background: var(--bg-light-raised);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    padding: var(--space-3) 0;
   }
-  .affiliate-badge {
+  .affiliate-banner-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .affiliate-banner-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-width: 52ch;
+  }
+  .affiliate-banner-badge {
     display: inline-block;
     font-family: var(--font-label);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-on-light-muted);
-    border: 1px solid var(--border-light);
-    border-radius: 999px;
+    color: var(--forest-900);
+    background: var(--amber-500);
     padding: 0.3rem 0.7rem;
-    margin-bottom: 0.75rem;
+    border-radius: 999px;
+    width: fit-content;
   }
-  .affiliate-card .disclosure {
-    font-size: 0.85rem;
+  .affiliate-banner-text {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-on-light);
+  }
+  .affiliate-banner-disclosure {
+    margin: 0;
+    font-size: 0.8rem;
     color: var(--text-on-light-muted);
-    margin: 0.5rem 0 1rem;
+  }
+  .affiliate-banner-cta {
+    flex: none;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .affiliate-banner-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .affiliate-banner-cta {
+      width: 100%;
+      justify-content: center;
+    }
   }
   .section-divider {
     max-width: 60ch;

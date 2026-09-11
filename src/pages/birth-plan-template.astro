@@ -23,11 +23,7 @@ import Footer from "../components/Footer.astro";
         </form>
         <p id="birth-plan-form-status" class="form-status"></p>
       </div>
-      <div class="cover-card">
-        <p class="cover-kicker">The Birth Plan Template</p>
-        <p class="cover-title">Know your job<br />in the room<br />before you're in it.</p>
-        <p class="cover-brand">Dudela</p>
-      </div>
+      <img src="/images/cover-birth-plan.jpg" alt="The Birth Plan Template — free guide cover" class="cover-img" />
     </div>
   </section>
 
@@ -118,37 +114,10 @@ import Footer from "../components/Footer.astro";
     color: var(--cream-100);
     font-family: var(--font-sans);
   }
-  .cover-card {
-    background: var(--forest-900);
-    border: 1px solid var(--forest-600);
+  .cover-img {
+    width: 100%;
     border-radius: var(--radius-md);
-    padding: 2.5rem;
-    aspect-ratio: 4/5;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     box-shadow: 0 20px 50px rgba(18, 24, 15, 0.35);
-  }
-  .cover-kicker {
-    font-family: var(--font-label);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--amber-500);
-    margin: 0;
-  }
-  .cover-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3vw, 2.1rem);
-    line-height: 1.2;
-    color: var(--cream-100);
-    margin: 0;
-  }
-  .cover-brand {
-    font-family: var(--font-label);
-    font-size: 0.8rem;
-    color: var(--text-on-dark-muted);
-    margin: 0;
   }
   .whats-inside {
     padding: var(--space-6) 0;
