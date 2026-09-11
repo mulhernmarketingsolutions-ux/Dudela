@@ -587,6 +587,15 @@ export type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
 export const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
 export type ShirtYear = "2017" | "2018" | "2019" | "2020" | "2021" | "2022" | "2023" | "2024" | "2025" | "2026" | "2027";
+
+// Buy a hat + shirt together and get this much off each — the ONE shared
+// source of truth for the bundle discount rate. create-cart-checkout-
+// session.ts imports this (the cart auto-applies the bundle whenever it
+// holds at least one hat and one shirt); merch.astro and the standalone
+// (now-unused-by-the-UI, but still live) create-checkout-session.ts bundle
+// endpoint each keep their own literal copy in sync with this value — see
+// the "keep in sync" comments there.
+export const BUNDLE_DISCOUNT_PERCENT = 15;
 export const SHIRT_YEARS: ShirtYear[] = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026", "2027"];
 
 // Real S→4XL sync_variant_id lists, read from /api/admin/printful-debug?all=1

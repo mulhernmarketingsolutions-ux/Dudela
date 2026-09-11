@@ -34,21 +34,22 @@ const SHIRT_BASE_PRICE = Math.round(parseFloat(SHIRT_CATALOG[0].price));
 const STICKER_PRICE = 20;
 
 // Bundle & Save — buy one hat + one shirt together, 15% off each. Must match
-// BUNDLE_DISCOUNT_PERCENT in api/create-checkout-session.ts (that's the file
-// that actually charges the card; this is only used to render the live bar's
-// estimated price below, so a mismatch would just show the wrong number, not
-// the wrong charge — but keep them in sync).
+// BUNDLE_DISCOUNT_PERCENT in lib/printful.ts (the real source of truth,
+// used by api/create-cart-checkout-session.ts — that's the file that
+// actually charges the card now; this copy is only used to render the
+// Bundle & Save section's estimated price below, so a mismatch would just
+// show the wrong number, not the wrong charge — but keep them in sync).
 //
-// REWRITTEN 2026-08-13: this used to be its own promo section with two
-// dropdowns duplicating the hat/shirt pickers below — confusing, since a
-// buyer could set a color/size down in the real product cards and then see
-// totally different options in the bundle box. Now there's no separate
-// picker at all: a slim bar fixed to the bottom of the screen just mirrors
-// whatever hat + shirt variant the cards below currently have selected (see
-// the client script's currentHat/currentShirt + updateBundleBar()), and its
-// buy link is computed from that live state. bundleHats/bundleShirts arrays
-// are gone — the cards' own embedded catalogs are the only source of truth
-// for prices/labels now.
+// REWRITTEN 2026-09-11: the discount used to be its own fixed-to-the-
+// bottom-of-the-screen bar with its own separate instant checkout
+// (?product=bundle). Now that /merch has a real multi-item cart, the
+// discount is folded into it instead (see create-cart-checkout-session.ts)
+// — this section is a normal in-flow block between Hats and Stickers that
+// mirrors whatever hat + shirt variant the cards below currently have
+// selected (see the client script's currentHat/currentShirt +
+// updateBundleSection()) and adds both to the cart on click. The old
+// ?product=bundle endpoint and its webhook branch still exist but nothing
+// in the UI links to them anymore.
 const BUNDLE_DISCOUNT_PERCENT = 15;
 
 // REWRITTEN 2026-08-13: the old version of this page had one static color
@@ -388,6 +389,38 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
   </section>
 
+  <!-- Bundle & Save — a normal, non-fixed section (unlike the old pinned
+       bundle bar) that mirrors whatever hat + shirt variant the cards above
+       currently have selected (see updateBundleSection() in the script
+       below) and lets a buyer add both to their cart at once. The 15%
+       discount itself is applied by the cart (create-cart-checkout-
+       session.ts) automatically once it holds at least one hat and one
+       shirt — this section is just the "here's the deal, here's your
+       current picks" surface, not a separate checkout path. -->
+  <section class="bundle-section section-light" id="bundle-section" aria-label="Bundle discount">
+    <div class="container bundle-section-inner">
+      <div class="bundle-section-items">
+        <img class="bundle-section-thumb" data-bundle-hat-img alt="" />
+        <span class="bundle-section-plus">+</span>
+        <img class="bundle-section-thumb" data-bundle-shirt-img alt="" />
+      </div>
+      <div class="bundle-section-text">
+        <h3>Bundle &amp; save {BUNDLE_DISCOUNT_PERCENT}%</h3>
+        <p class="bundle-section-picks" data-bundle-picks></p>
+        <p class="bundle-section-sub">Add both to your cart and the discount applies automatically — no code needed.</p>
+      </div>
+      <div class="bundle-section-right">
+        <div class="bundle-section-price">
+          <span class="bundle-section-was" data-bundle-was></span>
+          <span class="bundle-section-now" data-bundle-now></span>
+        </div>
+        <button type="button" class="btn btn-primary" id="bundle-add-to-cart">
+          Add Both to Cart
+        </button>
+      </div>
+    </div>
+  </section>
+
   <section id="stickers" class="colors section-light stickers-section">
     <div class="container">
       <div class="section-divider">
@@ -512,51 +545,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
   <SpitUpBanner />
 
-  <!-- Live Bundle bar — reflects whatever hat + shirt variant the cards
-       above currently have selected (see updateBundleBar() in the script
-       below). Starts hidden and gets an is-visible class the first time
-       both a hat and a shirt selection exist, which in practice is
-       immediately on load since both sections default to a real variant.
-
-       On mobile it can also be is-collapsed — the full bar took up a real
-       chunk of a small screen at all times. Collapsed keeps just the label,
-       live price, and a toggle; the thumbnails/picks detail/Buy button
-       tuck away. The toggle button itself only exists so there's an
-       explicit, obvious way to dismiss/reopen it — see the script below
-       for the auto-expand-then-settle behavior that also helps make it
-       clear that picking options above is what's changing this. -->
-  <div class="bundle-bar" id="bundle-bar" role="region" aria-label="Bundle discount">
-    <div class="bundle-bar-inner">
-      <div class="bundle-bar-items">
-        <img class="bundle-bar-thumb" data-bar-hat-img alt="" />
-        <span class="bundle-bar-plus">+</span>
-        <img class="bundle-bar-thumb" data-bar-shirt-img alt="" />
-        <div class="bundle-bar-text">
-          <span class="bundle-bar-label">Get both, save {BUNDLE_DISCOUNT_PERCENT}%</span>
-          <span class="bundle-bar-picks" data-bar-picks></span>
-        </div>
-      </div>
-      <div class="bundle-bar-right">
-        <div class="bundle-bar-price">
-          <span class="bundle-bar-was" data-bar-was></span>
-          <span class="bundle-bar-now" data-bar-now></span>
-        </div>
-        <a href="/api/create-checkout-session?product=bundle" class="btn btn-primary bundle-bar-buy" data-bar-buy>
-          Buy the Bundle
-        </a>
-        <button
-          type="button"
-          class="bundle-bar-toggle"
-          data-bar-toggle
-          aria-expanded="true"
-          aria-label="Minimize bundle bar"
-        >
-          <span data-bar-toggle-icon aria-hidden="true">▾</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Cart toggle + drawer — lets a buyer add several different items
        (a couple of shirt years/colors, more than one hat, extra sticker
        packs) to one order instead of the single-item Buy Now flow above
@@ -581,9 +569,18 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       <ul class="cart-lines" id="cart-lines"></ul>
     </div>
     <div class="cart-drawer-foot" id="cart-drawer-foot" hidden>
+      <p class="cart-bundle-hint" id="cart-bundle-hint" hidden></p>
       <div class="cart-subtotal">
         <span>Subtotal</span>
         <span id="cart-subtotal-amount">$0</span>
+      </div>
+      <div class="cart-bundle-discount" id="cart-bundle-discount" hidden>
+        <span>🎉 Bundle discount (hat + shirt)</span>
+        <span id="cart-bundle-discount-amount">-$0</span>
+      </div>
+      <div class="cart-total" id="cart-total-row" hidden>
+        <span>Total</span>
+        <span id="cart-total-amount">$0</span>
       </div>
       <p class="cart-note">Shipping — and any promo code — applied at checkout.</p>
       <button type="button" class="btn btn-primary cart-checkout-btn" id="cart-checkout-btn">Checkout</button>
@@ -610,14 +607,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   // toggle doesn't affect which colors are available — every (thread, color)
   // pair exists in both add-on states — so it's a simple independent switch.
 
-  // Live Bundle bar (fixed to the bottom of the screen, markup near the end
-  // of the page body) — mirrors whichever hat + shirt variant these two
+  // Bundle & Save section (a normal in-flow section between Hats and
+  // Stickers, not fixed) — mirrors whichever hat + shirt variant these two
   // sections currently have selected, so there's no separate/duplicate
-  // bundle picker anywhere on the page. REWRITTEN 2026-08-13: the old bundle
-  // section had its own two <select> dropdowns, which could disagree with
-  // whatever was actually picked in the cards below — confusing. Now the
-  // cards themselves are the only source of truth; currentHat/currentShirt
-  // just track the latest one, and updateBundleBar() repaints the bar
+  // bundle picker anywhere on the page. currentHat/currentShirt just track
+  // the latest selection; updateBundleSection() repaints the section
   // whenever either changes.
   interface BundleSelection {
     key: string;
@@ -630,8 +624,9 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   let currentShirt: BundleSelection | null = null;
 
   // Keep in sync with BUNDLE_DISCOUNT_PERCENT in this page's frontmatter and
-  // in api/create-checkout-session.ts (the actual source of truth for the
-  // charge) — this copy only drives the bar's live price preview.
+  // in lib/printful.ts (the actual source of truth for the charge, used by
+  // create-cart-checkout-session.ts) — this copy only drives the Bundle &
+  // Save section's live price preview.
   const BUNDLE_DISCOUNT_PERCENT = 15;
 
   // --- Cart -------------------------------------------------------------
@@ -649,6 +644,15 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     price: number;
     image?: string;
     qty: number;
+    // "hat" | "shirt" | "sticker" — lets the cart detect Bundle & Save
+    // eligibility (at least one hat + one shirt) without guessing from the
+    // key's shape. Set at every addToCart() call site.
+    category: "hat" | "shirt" | "sticker";
+    // Hat only: the flat "Dude to Dad" stitch surcharge already folded into
+    // `price`, in CENTS — kept separate so the bundle discount math can
+    // subtract it back out (the surcharge itself never gets discounted,
+    // matching create-cart-checkout-session.ts's server-side math).
+    addonCents?: number;
   }
   const CART_STORAGE_KEY = "dudela_cart_v1";
   // Keep in sync with MAX_CART_LINES / MAX_QTY_PER_LINE in
@@ -685,8 +689,31 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   const cartEmptyEl = document.getElementById("cart-empty");
   const cartFootEl = document.getElementById("cart-drawer-foot");
   const cartSubtotalEl = document.getElementById("cart-subtotal-amount");
+  const cartBundleHintEl = document.getElementById("cart-bundle-hint");
+  const cartBundleDiscountEl = document.getElementById("cart-bundle-discount");
+  const cartBundleDiscountAmountEl = document.getElementById("cart-bundle-discount-amount");
+  const cartTotalRowEl = document.getElementById("cart-total-row");
+  const cartTotalAmountEl = document.getElementById("cart-total-amount");
   const cartCheckoutBtn = document.getElementById("cart-checkout-btn") as HTMLButtonElement | null;
   const cartErrorEl = document.getElementById("cart-error");
+
+  // Bundle & Save, mirrored client-side purely for display — the server
+  // (create-cart-checkout-session.ts) is what actually charges the
+  // discounted amount; this just needs to match closely enough that the
+  // drawer's numbers agree with what Stripe shows a moment later. Discounts
+  // exactly ONE hat + ONE shirt (the first of each added), same scope as
+  // the real checkout logic — extra hats/shirts beyond that stay full price.
+  function computeBundleDiscountCents(): number {
+    const hatItem = cart.find((i) => i.category === "hat");
+    const shirtItem = cart.find((i) => i.category === "shirt");
+    if (!hatItem || !shirtItem) return 0;
+    const hatBaseCents = Math.round(hatItem.price * 100) - (hatItem.addonCents || 0);
+    const shirtBaseCents = Math.round(shirtItem.price * 100);
+    return (
+      Math.round(hatBaseCents * (BUNDLE_DISCOUNT_PERCENT / 100)) +
+      Math.round(shirtBaseCents * (BUNDLE_DISCOUNT_PERCENT / 100))
+    );
+  }
 
   function renderCart() {
     saveCart(cart);
@@ -728,9 +755,45 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       cartLinesEl.appendChild(li);
     });
     cartSubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+
+    const hasHat = cart.some((i) => i.category === "hat");
+    const hasShirt = cart.some((i) => i.category === "shirt");
+    const discountCents = computeBundleDiscountCents();
+
+    if (cartBundleDiscountEl && cartBundleDiscountAmountEl && cartTotalRowEl && cartTotalAmountEl) {
+      const eligible = discountCents > 0;
+      cartBundleDiscountEl.hidden = !eligible;
+      cartTotalRowEl.hidden = !eligible;
+      if (eligible) {
+        cartBundleDiscountAmountEl.textContent = `-$${(discountCents / 100).toFixed(2)}`;
+        cartTotalAmountEl.textContent = `$${(subtotal - discountCents / 100).toFixed(2)}`;
+      }
+    }
+
+    if (cartBundleHintEl) {
+      if (hasHat && !hasShirt) {
+        cartBundleHintEl.textContent = `Add a shirt and save ${BUNDLE_DISCOUNT_PERCENT}% on this hat too.`;
+        cartBundleHintEl.hidden = false;
+      } else if (hasShirt && !hasHat) {
+        cartBundleHintEl.textContent = `Add a hat and save ${BUNDLE_DISCOUNT_PERCENT}% on this shirt too.`;
+        cartBundleHintEl.hidden = false;
+      } else {
+        cartBundleHintEl.hidden = true;
+      }
+    }
   }
 
-  function addToCart(newItem: { key: string; label: string; price: number; image?: string }, qty = 1) {
+  function addToCart(
+    newItem: {
+      key: string;
+      label: string;
+      price: number;
+      image?: string;
+      category: "hat" | "shirt" | "sticker";
+      addonCents?: number;
+    },
+    qty = 1
+  ) {
     const existing = cart.find((i) => i.key === newItem.key);
     if (existing) {
       existing.qty = Math.min(CART_MAX_QTY, existing.qty + qty);
@@ -812,129 +875,78 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   });
 
   document.getElementById("sticker-add-cart")?.addEventListener("click", () => {
-    addToCart({ key: "sticker-5pack", label: "Dudela Sticker 5-Pack", price: 20, image: "/images/sticker/sticker-flat.png" });
+    addToCart({
+      key: "sticker-5pack",
+      label: "Dudela Sticker 5-Pack",
+      price: 20,
+      image: "/images/sticker/sticker-flat.png",
+      category: "sticker",
+    });
   });
 
   renderCart();
   // --- End cart -----------------------------------------------------------
 
-  const bundleBar = document.getElementById("bundle-bar");
-  const barHatImg = bundleBar?.querySelector<HTMLImageElement>("[data-bar-hat-img]");
-  const barShirtImg = bundleBar?.querySelector<HTMLImageElement>("[data-bar-shirt-img]");
-  const barPicks = bundleBar?.querySelector<HTMLElement>("[data-bar-picks]");
-  const barWas = bundleBar?.querySelector<HTMLElement>("[data-bar-was]");
-  const barNow = bundleBar?.querySelector<HTMLElement>("[data-bar-now]");
-  const barBuy = bundleBar?.querySelector<HTMLAnchorElement>("[data-bar-buy]");
-  const barToggle = bundleBar?.querySelector<HTMLButtonElement>("[data-bar-toggle]");
-  const barToggleIcon = bundleBar?.querySelector<HTMLElement>("[data-bar-toggle-icon]");
+  // Bundle & Save section — a normal in-flow section (see the markup
+  // between the Hats and Stickers sections), not a fixed/pinned bar, so no
+  // collapse/flare/mobile machinery is needed anymore: it just mirrors
+  // whichever hat + shirt variant the cards above currently have selected,
+  // same as the old bar did, and its button adds both to the cart instead
+  // of jumping straight to its own separate checkout. The actual 15%
+  // discount is applied by the cart itself (create-cart-checkout-
+  // session.ts) once it holds at least one hat and one shirt — see
+  // renderCart() above, which shows the live savings once that happens.
+  const bundleSection = document.getElementById("bundle-section");
+  const bundleHatImg = bundleSection?.querySelector<HTMLImageElement>("[data-bundle-hat-img]");
+  const bundleShirtImg = bundleSection?.querySelector<HTMLImageElement>("[data-bundle-shirt-img]");
+  const bundlePicks = bundleSection?.querySelector<HTMLElement>("[data-bundle-picks]");
+  const bundleWas = bundleSection?.querySelector<HTMLElement>("[data-bundle-was]");
+  const bundleNow = bundleSection?.querySelector<HTMLElement>("[data-bundle-now]");
+  const bundleAddBtn = document.getElementById("bundle-add-to-cart");
 
-  // Collapse/expand only really matters on mobile — on desktop the bar is a
-  // slim single row already, nothing to minimize. is-collapsed is purely a
-  // CSS switch (see the mobile media query below); this JS just decides
-  // when to flip it.
-  const isMobile = () => window.matchMedia("(max-width: 640px)").matches;
-  let userHasToggledManually = false;
-  let autoCollapseTimer: number | undefined;
-
-  function setBarCollapsed(collapsed: boolean) {
-    if (!bundleBar || !barToggle) return;
-    bundleBar.classList.toggle("is-collapsed", collapsed);
-    barToggle.setAttribute("aria-expanded", String(!collapsed));
-    barToggle.setAttribute("aria-label", collapsed ? "Show bundle details" : "Minimize bundle bar");
-    if (barToggleIcon) barToggleIcon.textContent = collapsed ? "▴" : "▾";
-  }
-
-  barToggle?.addEventListener("click", () => {
-    // Once someone has touched this control, their choice sticks — stop
-    // auto-expanding/collapsing on future updates. Forcing it back open
-    // right after someone deliberately minimized it would defeat the
-    // entire point of giving them a dismiss button.
-    userHasToggledManually = true;
-    if (autoCollapseTimer) window.clearTimeout(autoCollapseTimer);
-    setBarCollapsed(!bundleBar!.classList.contains("is-collapsed"));
-  });
-
-  // One-time "flare" — a brief bounce + glow on the collapsed pill — the
-  // first time someone scrolls far enough to plausibly be browsing
-  // products. Starting collapsed from the very first paint means nothing
-  // ever announces the bar exists on its own, so this is what invites a
-  // visitor to tap it open and notice their picks populating inside.
-  // Fires once; does nothing once the visitor has taken manual control of
-  // the toggle or the bar is already open.
-  let hasFlared = false;
-  function maybeFlareOnScroll() {
-    if (hasFlared || !bundleBar || userHasToggledManually) return;
-    if (!isMobile() || !bundleBar.classList.contains("is-collapsed")) return;
-    if (window.scrollY < 350) return;
-    hasFlared = true;
-    window.removeEventListener("scroll", maybeFlareOnScroll);
-    bundleBar.classList.add("is-flaring");
-    // Matches the two 0.9s iterations in the is-flaring animation (1.8s)
-    // plus a hair of margin so the class isn't yanked mid-animation.
-    window.setTimeout(() => bundleBar?.classList.remove("is-flaring"), 1900);
-  }
-  window.addEventListener("scroll", maybeFlareOnScroll, { passive: true });
-
-  function updateBundleBar() {
-    if (!bundleBar || !currentHat || !currentShirt) return;
-    if (barHatImg) {
-      barHatImg.src = currentHat.image;
-      barHatImg.alt = currentHat.label;
+  function updateBundleSection() {
+    if (!currentHat || !currentShirt) return;
+    if (bundleHatImg) {
+      bundleHatImg.src = currentHat.image;
+      bundleHatImg.alt = currentHat.label;
     }
-    if (barShirtImg) {
-      barShirtImg.src = currentShirt.image;
-      barShirtImg.alt = currentShirt.label;
+    if (bundleShirtImg) {
+      bundleShirtImg.src = currentShirt.image;
+      bundleShirtImg.alt = currentShirt.label;
     }
-    if (barPicks) barPicks.textContent = `${currentHat.label} + ${currentShirt.label}`;
+    if (bundlePicks) bundlePicks.textContent = `${currentHat.label} + ${currentShirt.label}`;
 
     const discountMultiplier = 1 - BUNDLE_DISCOUNT_PERCENT / 100;
     // The $1 add-on surcharge isn't discounted server-side either (see
-    // handleBundleCheckout in create-checkout-session.ts) — kept flat here
-    // to match.
+    // create-cart-checkout-session.ts's bundle-split logic) — kept flat
+    // here to match.
     const addonSurcharge = currentHat.addon ? 1 : 0;
     const fullTotal = currentHat.price + addonSurcharge + currentShirt.price;
     const discountedTotal =
       currentHat.price * discountMultiplier + addonSurcharge + currentShirt.price * discountMultiplier;
 
-    if (barWas) barWas.textContent = `$${fullTotal.toFixed(2)}`;
-    if (barNow) barNow.textContent = `$${discountedTotal.toFixed(2)}`;
-    if (barBuy) {
-      barBuy.href = `/api/create-checkout-session?product=bundle&hat=${encodeURIComponent(currentHat.key)}&shirt=${encodeURIComponent(currentShirt.key)}`;
-    }
-
-    // The very first call (page load, both sections still at their default
-    // picks) just brings the bar on screen — no pulse needed there. Every
-    // call after that means an actual selection changed, so flash the bar
-    // to make that connection obvious (otherwise a swatch click below just
-    // silently rewrites text at the bottom of the screen with nothing to
-    // draw the eye to it).
-    const wasAlreadyVisible = bundleBar.classList.contains("is-visible");
-    bundleBar.classList.add("is-visible");
-    if (wasAlreadyVisible) {
-      bundleBar.classList.remove("is-updated");
-      void bundleBar.offsetWidth; // force reflow so the animation restarts on rapid re-clicks
-      bundleBar.classList.add("is-updated");
-    }
-
-    // Mobile-only. Skipped entirely once the visitor has taken manual
-    // control of the toggle.
-    if (isMobile() && !userHasToggledManually) {
-      if (!wasAlreadyVisible) {
-        // First appearance: start collapsed right away rather than
-        // showing the full bar and taking up space nobody asked for yet —
-        // maybeFlareOnScroll() above is what invites someone to open it.
-        setBarCollapsed(true);
-      } else {
-        // A real selection changed — pop open briefly to show it (with the
-        // flash/price-bump pulse above), then settle back down.
-        setBarCollapsed(false);
-        if (autoCollapseTimer) window.clearTimeout(autoCollapseTimer);
-        autoCollapseTimer = window.setTimeout(() => {
-          if (!userHasToggledManually) setBarCollapsed(true);
-        }, 2500);
-      }
-    }
+    if (bundleWas) bundleWas.textContent = `$${fullTotal.toFixed(2)}`;
+    if (bundleNow) bundleNow.textContent = `$${discountedTotal.toFixed(2)}`;
   }
+
+  bundleAddBtn?.addEventListener("click", () => {
+    if (!currentHat || !currentShirt) return;
+    addToCart({
+      key: currentHat.key,
+      label: currentHat.label,
+      price: currentHat.price,
+      image: currentHat.image,
+      category: "hat",
+      addonCents: currentHat.addon ? 100 : 0,
+    });
+    addToCart({
+      key: currentShirt.key,
+      label: currentShirt.label,
+      price: currentShirt.price,
+      image: currentShirt.image,
+      category: "shirt",
+    });
+  });
 
   interface CardVariant {
     key: string;
@@ -1076,7 +1088,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
           addon: variant.addon,
           image: variant.front,
         };
-        updateBundleBar();
+        updateBundleSection();
       }
     }
 
@@ -1105,6 +1117,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         label: `${catalog.title} — ${variant.colorLabel}${variant.addon ? " + Stitch" : ""}`,
         price: parseFloat(variant.price) + (variant.addon ? 1 : 0),
         image: variant.front,
+        category: "hat",
+        addonCents: variant.addon ? 100 : 0,
       });
     });
 
@@ -1253,7 +1267,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         addon: false,
         image: variant.front,
       };
-      updateBundleBar();
+      updateBundleSection();
     }
 
     yearContainer.addEventListener("change", () => {
@@ -1283,6 +1297,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
         label: `${catalog.title} ${variant.year} — ${variant.colorLabel}, ${variant.size}`,
         price: parseFloat(variant.price),
         image: variant.front,
+        category: "shirt",
       });
     });
 
@@ -1380,255 +1395,104 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     max-width: 48ch;
   }
 
-  /* Live Bundle bar — fixed to the bottom of the viewport, mirrors whatever
-     hat + shirt the cards below currently have selected. Stays out of the
-     way (translated off-screen) until updateBundleBar() in the script above
-     has real data to show, which in practice is immediately on load.
-     z-index is CSS's actual maximum (2147483647) — originally set this high
-     because the SpeakPipe voicemail widget (2147483645) could cover this
-     bar's buy button on short/mobile viewports. That widget no longer loads
-     on this page at all (BaseLayout's showVoicemailWidget prop now scopes
-     it to /voicemail only), but there's no real cost to leaving this bar at
-     the actual max — cheap insurance against the next thing that floats. */
-  .bundle-bar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 2147483647;
-    background: var(--forest-900, #12180f);
-    border-top: 1px solid var(--amber-500);
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
-    transform: translateY(100%);
-    transition: transform 0.25s ease;
+  /* Bundle & Save — a normal in-flow section (not fixed/pinned like the
+     old bundle bar) between the Hats and Stickers sections. Mirrors
+     whatever hat + shirt the cards above currently have selected (see
+     updateBundleSection() in the script above) and its button adds both
+     to the cart — the 15% discount itself is applied by the cart
+     (create-cart-checkout-session.ts), shown live in the drawer once
+     eligible (see renderCart()'s bundle discount line). */
+  .bundle-section {
+    padding: var(--space-4) 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
   }
-  .bundle-bar.is-visible {
-    transform: translateY(0);
-  }
-  /* A quick background flash + price bump + thumbnail fade whenever a
-     selection actually changes (see the is-updated toggle in
-     updateBundleBar()) — makes it obvious that clicking a swatch/size below
-     is what just updated the bar, instead of it silently rewriting itself
-     at the bottom of the screen. */
-  @keyframes bundleBarFlash {
-    0% {
-      background: var(--forest-900, #12180f);
-    }
-    35% {
-      background: #24361f;
-    }
-    100% {
-      background: var(--forest-900, #12180f);
-    }
-  }
-  @keyframes bundleBarPriceBump {
-    0%,
-    100% {
-      transform: scale(1);
-    }
-    40% {
-      transform: scale(1.18);
-    }
-  }
-  @keyframes bundleBarThumbIn {
-    0% {
-      opacity: 0.25;
-      transform: scale(0.9);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  .bundle-bar.is-updated {
-    animation: bundleBarFlash 0.6s ease;
-  }
-  .bundle-bar.is-updated .bundle-bar-now {
-    display: inline-block;
-    animation: bundleBarPriceBump 0.45s ease;
-  }
-  .bundle-bar.is-updated .bundle-bar-thumb {
-    animation: bundleBarThumbIn 0.35s ease;
-  }
-  /* One-time "flare" (see maybeFlareOnScroll() in the script above) — a
-     bounce + glow ring on the collapsed pill the first time someone
-     scrolls far enough to plausibly be browsing products, since starting
-     collapsed means nothing else announces the bar exists on its own. */
-  @keyframes bundleBarFlareBounce {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    20% {
-      transform: translateY(-7px);
-    }
-    40% {
-      transform: translateY(0);
-    }
-    60% {
-      transform: translateY(-4px);
-    }
-    80% {
-      transform: translateY(0);
-    }
-  }
-  @keyframes bundleBarFlareGlow {
-    0%,
-    100% {
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(226, 125, 37, 0.55);
-    }
-    50% {
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(226, 125, 37, 0);
-    }
-  }
-  .bundle-bar.is-flaring {
-    animation: bundleBarFlareBounce 0.9s ease 2, bundleBarFlareGlow 0.9s ease 2;
-  }
-  /* No .container here on purpose — a centered, fixed-max-width box left
-     big empty margins on wide screens that made the bar feel like a
-     floating chip rather than a single continuous piece of the page. Its
-     own responsive padding stretches the real content close to both edges
-     instead, so it reads as one seamless strip rather than something
-     cropped in from the sides. */
-  .bundle-bar-inner {
+  .bundle-section-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
-    padding: 0.85rem clamp(1rem, 4vw, 3rem);
+    gap: 1.5rem 2rem;
   }
-  .bundle-bar-items {
+  .bundle-section-items {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-  .bundle-bar-thumb {
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-    background: var(--cream-100);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--forest-600);
     flex-shrink: 0;
   }
-  .bundle-bar-plus {
-    color: var(--text-on-dark-muted);
-    font-weight: 700;
-    flex-shrink: 0;
+  .bundle-section-thumb {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    background: var(--bg-light-raised);
   }
-  .bundle-bar-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-  }
-  .bundle-bar-label {
+  .bundle-section-plus {
     font-family: var(--font-label);
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--amber-500);
+    font-size: 1.1rem;
+    opacity: 0.5;
   }
-  /* Lets the full pick description wrap onto a second line instead of
-     truncating with an ellipsis — a label cut off mid-word read as broken,
-     not clean. */
-  .bundle-bar-picks {
-    display: block;
-    color: var(--cream-100);
-    font-size: 0.82rem;
-    line-height: 1.35;
+  .bundle-section-text {
+    flex: 1 1 260px;
+    min-width: 220px;
   }
-  .bundle-bar-right {
+  .bundle-section-text h3 {
+    margin: 0 0 0.3rem;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+  }
+  .bundle-section-picks {
+    margin: 0 0 0.25rem;
+    font-family: var(--font-label);
+    font-size: 0.9rem;
+    opacity: 0.75;
+  }
+  .bundle-section-sub {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.6;
+    max-width: 42ch;
+  }
+  .bundle-section-right {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
+    margin-left: auto;
   }
-  .bundle-bar-price {
+  .bundle-section-price {
     display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.15;
   }
-  .bundle-bar-was {
+  .bundle-section-was {
     font-size: 0.85rem;
-    color: var(--text-on-dark-muted);
     text-decoration: line-through;
+    opacity: 0.55;
   }
-  .bundle-bar-now {
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    color: var(--amber-500);
-  }
-  .bundle-bar-buy {
-    white-space: nowrap;
-    padding: 0.65rem 1.3rem;
-  }
-  /* Dismiss/minimize control — hidden on desktop, where the bar is already
-     a single slim row with nothing worth collapsing. */
-  .bundle-bar-toggle {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
-    border: none;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--cream-100);
-    font-size: 0.85rem;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s ease;
-  }
-  .bundle-bar-toggle:hover {
-    background: rgba(255, 255, 255, 0.16);
+  .bundle-section-now {
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--amber-600);
   }
   @media (max-width: 640px) {
-    .bundle-bar-inner {
+    .bundle-section-inner {
       justify-content: center;
       text-align: center;
-      transition: padding 0.2s ease;
     }
-    .bundle-bar-items {
+    .bundle-section-text {
       flex: 1 1 100%;
-      justify-content: center;
+      order: 3;
     }
-    .bundle-bar-toggle {
-      display: inline-flex;
-    }
-    /* Collapsed: down to one compact row — label, live price, and the
-       toggle. Thumbnails, the full pick description, the struck-through
-       "was" price, and the Buy button all tuck away until it's reopened,
-       so the bar isn't permanently eating a chunk of a small screen. */
-    .bundle-bar.is-collapsed .bundle-bar-inner {
-      padding-top: 0.55rem;
-      padding-bottom: 0.55rem;
-      flex-wrap: nowrap;
+    .bundle-section-right {
+      margin-left: 0;
+      order: 4;
+      width: 100%;
       justify-content: space-between;
     }
-    .bundle-bar.is-collapsed .bundle-bar-items {
-      flex: 0 1 auto;
-      justify-content: flex-start;
-    }
-    .bundle-bar.is-collapsed .bundle-bar-thumb,
-    .bundle-bar.is-collapsed .bundle-bar-plus,
-    .bundle-bar.is-collapsed .bundle-bar-picks,
-    .bundle-bar.is-collapsed .bundle-bar-was,
-    .bundle-bar.is-collapsed .bundle-bar-buy {
-      display: none;
-    }
-    .bundle-bar.is-collapsed .bundle-bar-now {
-      font-size: 1.1rem;
-    }
-    .bundle-bar.is-collapsed .bundle-bar-right {
-      gap: 0.6rem;
-    }
   }
+
 
   .colors {
     background: #faf9f6;
@@ -2530,16 +2394,33 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     box-shadow: 0 0 0 2px var(--bg-light-raised), 0 0 0 4px var(--forest-800);
   }
 
-  /* Reserve space at the bottom of the page for the fixed Live Bundle bar so
-     it doesn't sit on top of the footer once it's visible — global because
-     it targets <body>, which Astro's scoped styles can't reach from this
-     component. */
-  body:has(.bundle-bar.is-visible) {
-    padding-bottom: 84px;
+  /* --- Cart summary extras: bundle discount / hint / total ------------ */
+  .cart-bundle-hint {
+    margin: 0 0 0.8rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-light-raised);
+    font-size: 0.82rem;
+    line-height: 1.4;
   }
-  @media (max-width: 640px) {
-    body:has(.bundle-bar.is-visible) {
-      padding-bottom: 96px;
-    }
+  .cart-bundle-discount {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-label);
+    font-size: 0.92rem;
+    color: var(--amber-600);
+    margin: 0.3rem 0;
+  }
+  .cart-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-top: 1px solid var(--border-light);
+    padding-top: 0.5rem;
+    margin: 0.3rem 0 0.3rem;
   }
 </style>
