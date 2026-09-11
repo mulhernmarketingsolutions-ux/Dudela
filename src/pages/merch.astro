@@ -2259,18 +2259,24 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
   .cart-line {
     display: grid;
-    grid-template-columns: 48px 1fr auto auto;
+    grid-template-columns: 40px 1fr auto;
+    grid-template-areas:
+      "img info remove"
+      "img qty qty";
     align-items: center;
-    gap: 0.7rem;
+    column-gap: 0.65rem;
+    row-gap: 0.5rem;
   }
   .cart-line-img {
-    width: 48px;
-    height: 48px;
+    grid-area: img;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
     border-radius: var(--radius-sm);
     background: var(--bg-light-raised);
   }
   .cart-line-info {
+    grid-area: info;
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
@@ -2287,23 +2293,25 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     opacity: 0.65;
   }
   .cart-line-qty {
+    grid-area: qty;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.6rem;
     font-family: var(--font-label);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
   .cart-qty-btn {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: 1px solid var(--border-light);
-    background: transparent;
+    background: var(--bg-light-raised);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
+    font-size: 1rem;
     color: inherit;
   }
   .cart-qty-btn:hover {
@@ -2311,18 +2319,21 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     color: var(--amber-500);
   }
   .cart-qty-value {
-    min-width: 1.2em;
+    min-width: 1.4em;
     text-align: center;
+    font-weight: 500;
   }
   .cart-line-remove {
+    grid-area: remove;
+    align-self: start;
     background: none;
     border: none;
     cursor: pointer;
     color: inherit;
-    opacity: 0.45;
-    font-size: 1.2rem;
+    opacity: 0.6;
+    font-size: 1.3rem;
     line-height: 1;
-    padding: 0 0.2rem;
+    padding: 0.1rem 0.2rem;
   }
   .cart-line-remove:hover {
     opacity: 1;
