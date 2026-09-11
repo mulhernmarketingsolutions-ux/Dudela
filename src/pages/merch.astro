@@ -475,19 +475,31 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   </section>
 
   <!-- Affiliate pick — single-row banner, same pattern as SpitUpBanner.astro
-       (filled amber pill badge, one line of copy, one CTA) rather than a
-       card dropped into the product grid above. A bare text-only card next
-       to photo-rich shirt/hat/sticker cards read as an unfinished product
-       tile; this reads as an intentional, branded callout instead, while
-       the badge + disclosure still make clear it's not a Dudela SKU. -->
+       (badge, one line of copy, one CTA), now with the real product photo
+       so it reads as an actual recommendation rather than a wall of text.
+       REWRITTEN 2026-09-11: the badge + disclosure used to lead with
+       "Affiliate pick / not a Dudela product" in the same amber used for
+       real CTAs — accurate, but it read as a warning label ahead of any
+       reason to care, which killed click-through. Badge now reads as a
+       partnership (forest, not amber — amber stays reserved for actual
+       buttons/links per tokens.css), and the FTC-required disclosure is
+       still here but small and quiet at the bottom, not the first thing
+       a visitor reads. Still a real, honest affiliate link — nothing about
+       the disclosure's substance changed, just its volume. -->
   <section class="affiliate-banner">
     <div class="container affiliate-banner-inner">
+      <img
+        src="/images/babysense-touch-smart-wifi-baby-monitor-with-7-touchscreen-2-cam-5034224.webp"
+        alt="BabySense video baby monitor, app, and touchscreen display"
+        class="affiliate-banner-img"
+        loading="lazy"
+      />
       <div class="affiliate-banner-copy">
-        <span class="affiliate-banner-badge">Affiliate pick &middot; not a Dudela product</span>
+        <span class="affiliate-banner-badge">Partnering with BabySense</span>
         <p class="affiliate-banner-text">
           Want eyes on the crib without hovering over it? Here's the <strong>video baby monitor</strong> we'd actually point another dad toward.
         </p>
-        <p class="affiliate-banner-disclosure">Ships from the retailer, not Dudela — affiliate link, we may earn a commission if you buy.</p>
+        <p class="affiliate-banner-disclosure">We're an affiliate partner — this link may earn us a small commission at no extra cost to you.</p>
       </div>
       <a href="https://babymonitordirectllc.pxf.io/rEq1o3" class="btn btn-primary affiliate-banner-cta" target="_blank" rel="sponsored noopener">
         See baby monitors <span aria-hidden="true">→</span>
@@ -2098,11 +2110,21 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     justify-content: space-between;
     gap: 1.25rem;
   }
+  .affiliate-banner-img {
+    flex: none;
+    width: 84px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    background: var(--bg-light-raised);
+  }
   .affiliate-banner-copy {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
     max-width: 52ch;
+    flex: 1;
+    min-width: 200px;
   }
   .affiliate-banner-badge {
     display: inline-block;
@@ -2111,8 +2133,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--forest-900);
-    background: var(--amber-500);
+    color: var(--cream-100);
+    background: var(--forest-800);
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
     width: fit-content;
@@ -2125,8 +2147,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
   .affiliate-banner-disclosure {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.68rem;
+    line-height: 1.4;
     color: var(--text-on-light-muted);
+    opacity: 0.75;
   }
   .affiliate-banner-cta {
     flex: none;
@@ -2136,6 +2160,10 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     .affiliate-banner-inner {
       flex-direction: column;
       align-items: flex-start;
+    }
+    .affiliate-banner-img {
+      width: 64px;
+      height: 64px;
     }
     .affiliate-banner-cta {
       width: 100%;
