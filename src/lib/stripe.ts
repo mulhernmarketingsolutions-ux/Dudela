@@ -72,44 +72,63 @@ export async function createCheckoutSession(
     // redeem a Coupon/Promotion Code created in the Stripe Dashboard. Off by
     // default — only pass true for flows that actually have a code to offer.
     allowPromotionCodes?: boolean;
+    // Cart checkout only (create-cart-checkout-session.ts): a full list of
+    // line items, each with its own real quantity — used INSTEAD of
+    // priceId/priceData/extraLineItems above (all three are ignored when
+    // this is given), since a cart can hold any number of distinct lines
+    // rather than "one main item + flat-qty-1 extras." Every other caller
+    // is unaffected — this is purely an alternate path.
+    items?: { name: string; unitAmountCents: number; images?: string[]; quantity: number }[];
   }
 ) {
   const mode = opts.mode || "payment";
   const params: Record<string, string> = {
     mode,
-    "line_items[0][quantity]": "1",
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
   if (opts.allowPromotionCodes) {
     params["allow_promotion_codes"] = "true";
   }
-  if (opts.priceId) {
-    params["line_items[0][price]"] = opts.priceId;
-  } else if (opts.priceData) {
-    params["line_items[0][price_data][currency]"] = "usd";
-    params["line_items[0][price_data][unit_amount]"] = String(opts.priceData.unitAmountCents);
-    params["line_items[0][price_data][product_data][name]"] = opts.priceData.name;
-    // Shows the real product photo on Stripe's hosted Checkout page and on
-    // the resulting receipt/invoice — must be a publicly reachable https
-    // URL (Stripe fetches it itself), so callers pass an absolute
-    // thedudelaco.com URL, not a relative /images/... path.
-    opts.priceData.images?.forEach((img, i) => {
-      params[`line_items[0][price_data][product_data][images][${i}]`] = img;
+  if (opts.items && opts.items.length > 0) {
+    opts.items.forEach((item, i) => {
+      params[`line_items[${i}][price_data][currency]`] = "usd";
+      params[`line_items[${i}][price_data][unit_amount]`] = String(item.unitAmountCents);
+      params[`line_items[${i}][price_data][product_data][name]`] = item.name;
+      item.images?.forEach((img, j) => {
+        params[`line_items[${i}][price_data][product_data][images][${j}]`] = img;
+      });
+      params[`line_items[${i}][quantity]`] = String(item.quantity);
     });
   } else {
-    throw new Error("createCheckoutSession requires either priceId or priceData");
-  }
-  opts.extraLineItems?.forEach((item, i) => {
-    const idx = i + 1; // index 0 is always the main priceId/priceData item above
-    params[`line_items[${idx}][price_data][currency]`] = "usd";
-    params[`line_items[${idx}][price_data][unit_amount]`] = String(item.unitAmountCents);
-    params[`line_items[${idx}][price_data][product_data][name]`] = item.name;
-    item.images?.forEach((img, j) => {
-      params[`line_items[${idx}][price_data][product_data][images][${j}]`] = img;
+    params["line_items[0][quantity]"] = "1";
+    if (opts.priceId) {
+      params["line_items[0][price]"] = opts.priceId;
+    } else if (opts.priceData) {
+      params["line_items[0][price_data][currency]"] = "usd";
+      params["line_items[0][price_data][unit_amount]"] = String(opts.priceData.unitAmountCents);
+      params["line_items[0][price_data][product_data][name]"] = opts.priceData.name;
+      // Shows the real product photo on Stripe's hosted Checkout page and on
+      // the resulting receipt/invoice — must be a publicly reachable https
+      // URL (Stripe fetches it itself), so callers pass an absolute
+      // thedudelaco.com URL, not a relative /images/... path.
+      opts.priceData.images?.forEach((img, i) => {
+        params[`line_items[0][price_data][product_data][images][${i}]`] = img;
+      });
+    } else {
+      throw new Error("createCheckoutSession requires either priceId, priceData, or items");
+    }
+    opts.extraLineItems?.forEach((item, i) => {
+      const idx = i + 1; // index 0 is always the main priceId/priceData item above
+      params[`line_items[${idx}][price_data][currency]`] = "usd";
+      params[`line_items[${idx}][price_data][unit_amount]`] = String(item.unitAmountCents);
+      params[`line_items[${idx}][price_data][product_data][name]`] = item.name;
+      item.images?.forEach((img, j) => {
+        params[`line_items[${idx}][price_data][product_data][images][${j}]`] = img;
+      });
+      params[`line_items[${idx}][quantity]`] = "1";
     });
-    params[`line_items[${idx}][quantity]`] = "1";
-  });
+  }
   // Stripe rejects a session that sets both `customer` and `customer_email` —
   // prefer the known customer id so the purchase attaches to their existing
   // record instead of spinning up a new disconnected guest customer.

@@ -279,6 +279,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
               <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
                 Buy Now — ${Math.round(parseFloat(d.first.price))}
               </a>
+              <button type="button" class="btn btn-ghost btn-add-cart" data-add-cart>Add to Cart</button>
 
               <div class="detail-links">
                 <button type="button" class="detail-chip" data-open-details="shirt">
@@ -366,6 +367,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <a href={`/api/create-checkout-session?product=${d.first.key}`} class="btn btn-primary" data-buy>
               Buy Now — ${Math.round(parseFloat(d.first.price) + (d.first.addon ? 1 : 0))}
             </a>
+            <button type="button" class="btn btn-ghost btn-add-cart" data-add-cart>Add to Cart</button>
 
             <div class="detail-links">
               <button type="button" class="detail-chip" data-open-details="hat">
@@ -411,6 +413,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <a href="/api/create-checkout-session?product=sticker-5pack" class="btn btn-primary" data-buy>
               Buy Now — ${STICKER_PRICE}
             </a>
+            <button type="button" class="btn btn-ghost btn-add-cart" id="sticker-add-cart">Add to Cart</button>
           </div>
         </div>
       </div>
@@ -554,6 +557,40 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     </div>
   </div>
 
+  <!-- Cart toggle + drawer — lets a buyer add several different items
+       (a couple of shirt years/colors, more than one hat, extra sticker
+       packs) to one order instead of the single-item Buy Now flow above
+       being the only way to check out. Buy Now still works exactly as
+       before for anyone who just wants one thing fast — this is purely
+       additive. Cart state lives in localStorage (see the script below)
+       so it survives a reload. -->
+  <button type="button" class="cart-toggle" id="cart-toggle" aria-label="View cart" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1.4"/><circle cx="19" cy="21" r="1.4"/><path d="M2.5 3h2.4l2.7 12.6a2 2 0 0 0 2 1.6h8a2 2 0 0 0 2-1.6L21.5 7H6"/></svg>
+    <span class="cart-toggle-count" id="cart-toggle-count" hidden>0</span>
+  </button>
+
+  <div class="cart-backdrop" id="cart-backdrop"></div>
+
+  <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-label="Your cart" aria-hidden="true">
+    <div class="cart-drawer-head">
+      <h3>Your order</h3>
+      <button type="button" class="cart-drawer-close" id="cart-drawer-close" aria-label="Close cart">&times;</button>
+    </div>
+    <div class="cart-drawer-body">
+      <p class="cart-empty" id="cart-empty">Nothing in your order yet — add a hat, shirt, or sticker pack above.</p>
+      <ul class="cart-lines" id="cart-lines"></ul>
+    </div>
+    <div class="cart-drawer-foot" id="cart-drawer-foot" hidden>
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cart-subtotal-amount">$0</span>
+      </div>
+      <p class="cart-note">Shipping — and any promo code — applied at checkout.</p>
+      <button type="button" class="btn btn-primary cart-checkout-btn" id="cart-checkout-btn">Checkout</button>
+      <p class="cart-error" id="cart-error" hidden></p>
+    </div>
+  </aside>
+
   <Footer />
 </BaseLayout>
 
@@ -596,6 +633,190 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   // in api/create-checkout-session.ts (the actual source of truth for the
   // charge) — this copy only drives the bar's live price preview.
   const BUNDLE_DISCOUNT_PERCENT = 15;
+
+  // --- Cart -------------------------------------------------------------
+  // A lightweight multi-item cart layered on top of the single-item Buy Now
+  // flow (unchanged everywhere below) — lets a buyer add a few different
+  // things (a couple of shirt years/colors, more than one hat, a sticker
+  // pack) and check out once instead of one Stripe Checkout per item.
+  // State lives in localStorage so it survives a reload; checkout POSTs the
+  // line list to /api/create-cart-checkout-session, which builds one real
+  // multi-line-item Stripe session (see that file, and stripe-webhook.ts's
+  // isCart branch for fulfillment).
+  interface CartItem {
+    key: string;
+    label: string;
+    price: number;
+    image?: string;
+    qty: number;
+  }
+  const CART_STORAGE_KEY = "dudela_cart_v1";
+  // Keep in sync with MAX_CART_LINES / MAX_QTY_PER_LINE in
+  // create-cart-checkout-session.ts — those are the real server-side caps;
+  // these just stop a buyer from filling a cart the server would reject.
+  const CART_MAX_LINES = 10;
+  const CART_MAX_QTY = 20;
+
+  function loadCart(): CartItem[] {
+    try {
+      const raw = window.localStorage.getItem(CART_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+  function saveCart(items: CartItem[]) {
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // Private browsing / storage disabled — cart just won't survive a
+      // reload; still works fine within the current page view.
+    }
+  }
+
+  let cart: CartItem[] = loadCart();
+
+  const cartToggle = document.getElementById("cart-toggle");
+  const cartToggleCount = document.getElementById("cart-toggle-count");
+  const cartBackdrop = document.getElementById("cart-backdrop");
+  const cartDrawer = document.getElementById("cart-drawer");
+  const cartDrawerClose = document.getElementById("cart-drawer-close");
+  const cartLinesEl = document.getElementById("cart-lines");
+  const cartEmptyEl = document.getElementById("cart-empty");
+  const cartFootEl = document.getElementById("cart-drawer-foot");
+  const cartSubtotalEl = document.getElementById("cart-subtotal-amount");
+  const cartCheckoutBtn = document.getElementById("cart-checkout-btn") as HTMLButtonElement | null;
+  const cartErrorEl = document.getElementById("cart-error");
+
+  function renderCart() {
+    saveCart(cart);
+    const totalQty = cart.reduce((n, i) => n + i.qty, 0);
+    if (cartToggleCount) {
+      cartToggleCount.textContent = String(totalQty);
+      cartToggleCount.hidden = totalQty === 0;
+    }
+    if (!cartLinesEl || !cartEmptyEl || !cartFootEl || !cartSubtotalEl) return;
+    cartLinesEl.innerHTML = "";
+    if (cart.length === 0) {
+      cartEmptyEl.hidden = false;
+      cartFootEl.hidden = true;
+      return;
+    }
+    cartEmptyEl.hidden = true;
+    cartFootEl.hidden = false;
+    let subtotal = 0;
+    cart.forEach((item) => {
+      subtotal += item.price * item.qty;
+      const li = document.createElement("li");
+      li.className = "cart-line";
+      li.innerHTML = `
+        ${item.image ? `<img src="${item.image}" alt="" class="cart-line-img" />` : ""}
+        <div class="cart-line-info">
+          <span class="cart-line-label">${item.label}</span>
+          <span class="cart-line-price">$${item.price.toFixed(2)} each</span>
+        </div>
+        <div class="cart-line-qty">
+          <button type="button" class="cart-qty-btn" data-qty-down aria-label="Decrease quantity">−</button>
+          <span class="cart-qty-value">${item.qty}</span>
+          <button type="button" class="cart-qty-btn" data-qty-up aria-label="Increase quantity">+</button>
+        </div>
+        <button type="button" class="cart-line-remove" data-remove aria-label="Remove ${item.label}">&times;</button>
+      `;
+      li.querySelector("[data-qty-down]")?.addEventListener("click", () => setQty(item.key, item.qty - 1));
+      li.querySelector("[data-qty-up]")?.addEventListener("click", () => setQty(item.key, item.qty + 1));
+      li.querySelector("[data-remove]")?.addEventListener("click", () => removeFromCart(item.key));
+      cartLinesEl.appendChild(li);
+    });
+    cartSubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+  }
+
+  function addToCart(newItem: { key: string; label: string; price: number; image?: string }, qty = 1) {
+    const existing = cart.find((i) => i.key === newItem.key);
+    if (existing) {
+      existing.qty = Math.min(CART_MAX_QTY, existing.qty + qty);
+    } else {
+      if (cart.length >= CART_MAX_LINES) {
+        window.alert(
+          `You can combine up to ${CART_MAX_LINES} different items in one order — check out this cart first, or remove something to add this.`
+        );
+        return;
+      }
+      cart.push({ ...newItem, qty: Math.min(CART_MAX_QTY, qty) });
+    }
+    renderCart();
+    openCart();
+  }
+
+  function setQty(key: string, qty: number) {
+    const item = cart.find((i) => i.key === key);
+    if (!item) return;
+    if (qty < 1) {
+      removeFromCart(key);
+      return;
+    }
+    item.qty = Math.min(CART_MAX_QTY, qty);
+    renderCart();
+  }
+
+  function removeFromCart(key: string) {
+    cart = cart.filter((i) => i.key !== key);
+    renderCart();
+  }
+
+  function openCart() {
+    cartDrawer?.classList.add("is-open");
+    cartBackdrop?.classList.add("is-open");
+    cartDrawer?.setAttribute("aria-hidden", "false");
+    cartToggle?.setAttribute("aria-expanded", "true");
+  }
+  function closeCart() {
+    cartDrawer?.classList.remove("is-open");
+    cartBackdrop?.classList.remove("is-open");
+    cartDrawer?.setAttribute("aria-hidden", "true");
+    cartToggle?.setAttribute("aria-expanded", "false");
+  }
+
+  cartToggle?.addEventListener("click", () => {
+    if (cartDrawer?.classList.contains("is-open")) closeCart();
+    else openCart();
+  });
+  cartDrawerClose?.addEventListener("click", closeCart);
+  cartBackdrop?.addEventListener("click", closeCart);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeCart();
+  });
+
+  cartCheckoutBtn?.addEventListener("click", async () => {
+    if (cart.length === 0 || !cartCheckoutBtn) return;
+    cartCheckoutBtn.disabled = true;
+    cartCheckoutBtn.textContent = "Redirecting…";
+    if (cartErrorEl) cartErrorEl.hidden = true;
+    try {
+      const res = await fetch("/api/create-cart-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cart.map((i) => ({ key: i.key, qty: i.qty })) }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = (await res.json()) as { url: string };
+      window.location.href = data.url;
+    } catch (err) {
+      cartCheckoutBtn.disabled = false;
+      cartCheckoutBtn.textContent = "Checkout";
+      if (cartErrorEl) {
+        cartErrorEl.textContent = "Something went wrong starting checkout — try again in a moment.";
+        cartErrorEl.hidden = false;
+      }
+      console.error("Cart checkout failed:", err);
+    }
+  });
+
+  document.getElementById("sticker-add-cart")?.addEventListener("click", () => {
+    addToCart({ key: "sticker-5pack", label: "Dudela Sticker 5-Pack", price: 20, image: "/images/sticker/sticker-flat.png" });
+  });
+
+  renderCart();
+  // --- End cart -----------------------------------------------------------
 
   const bundleBar = document.getElementById("bundle-bar");
   const barHatImg = bundleBar?.querySelector<HTMLImageElement>("[data-bar-hat-img]");
@@ -761,6 +982,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
     const priceEl = card.querySelector<HTMLElement>("[data-price]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
+    const addCartBtn = card.querySelector<HTMLButtonElement>("[data-add-cart]");
     if (!photoFront || !photoLeft || !colorContainer || !addonToggle || !variantName || !priceEl || !buyBtn) return;
 
     // Preload every real mockup photo for this card up front so swapping
@@ -875,6 +1097,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       render();
     });
 
+    addCartBtn?.addEventListener("click", () => {
+      const variant = currentVariant();
+      if (!variant) return;
+      addToCart({
+        key: variant.key,
+        label: `${catalog.title} — ${variant.colorLabel}${variant.addon ? " + Stitch" : ""}`,
+        price: parseFloat(variant.price) + (variant.addon ? 1 : 0),
+        image: variant.front,
+      });
+    });
+
     // Prefer the hero colorway (Dark Green/Natural bill) as the starting
     // color for whichever thread ends up default — falls back to the first
     // available color if this design/thread doesn't offer it.
@@ -940,6 +1173,7 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
     const priceEl = card.querySelector<HTMLElement>("[data-price]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
+    const addCartBtn = card.querySelector<HTMLButtonElement>("[data-add-cart]");
     if (!photoFront || !photoBack || !yearContainer || !colorContainer || !sizeContainer || !variantName || !priceEl || !buyBtn) return;
 
     // Logo-close-up popover — was a thumbnail permanently sitting in the
@@ -1039,6 +1273,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       if (!btn) return;
       state.size = btn.dataset.shirtSize || state.size;
       render();
+    });
+
+    addCartBtn?.addEventListener("click", () => {
+      const variant = currentVariant();
+      if (!variant) return;
+      addToCart({
+        key: variant.key,
+        label: `${catalog.title} ${variant.year} — ${variant.colorLabel}, ${variant.size}`,
+        price: parseFloat(variant.price),
+        image: variant.front,
+      });
     });
 
     render();
@@ -2009,6 +2254,257 @@ const canceled = url.searchParams.get("purchase") === "canceled";
      two photos are the real Printful product render (sticker-flat.png)
      and a composite of that same art scattered as a 5-sticker pack
      (sticker-pack.png, built locally from the Printful asset since
+
+  /* --- Cart --------------------------------------------------------- */
+  .btn-add-cart {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.6rem;
+    border-color: var(--border-light);
+    color: var(--text-on-light);
+    background: transparent;
+  }
+  .btn-add-cart:hover {
+    border-color: var(--amber-500);
+    color: var(--amber-500);
+  }
+
+  .cart-toggle {
+    position: fixed;
+    top: 96px;
+    right: 20px;
+    z-index: 2147483000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--border-dark, #3c4930);
+    background: var(--forest-900, #12180f);
+    color: var(--cream-100, #f5efe3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s var(--ease-out);
+  }
+  .cart-toggle:hover {
+    transform: translateY(-1px);
+    border-color: var(--amber-500);
+  }
+  .cart-toggle svg {
+    width: 22px;
+    height: 22px;
+  }
+  .cart-toggle-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--amber-500);
+    color: var(--black);
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .cart-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 24, 15, 0.55);
+    z-index: 2147483100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .cart-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .cart-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 100vw);
+    background: var(--bg-light, #f5efe3);
+    color: var(--text-on-light);
+    z-index: 2147483200;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s var(--ease-out);
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .cart-drawer.is-open {
+    transform: translateX(0);
+  }
+
+  .cart-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 1.4rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    flex-shrink: 0;
+  }
+  .cart-drawer-head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+  }
+  .cart-drawer-close {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    padding: 0.2rem 0.4rem;
+  }
+  .cart-drawer-close:hover {
+    opacity: 1;
+  }
+
+  .cart-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.4rem;
+  }
+  .cart-empty {
+    opacity: 0.7;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .cart-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .cart-line {
+    display: grid;
+    grid-template-columns: 48px 1fr auto auto;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .cart-line-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    background: var(--bg-light-raised);
+  }
+  .cart-line-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .cart-line-label {
+    font-family: var(--font-label);
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .cart-line-price {
+    font-size: 0.78rem;
+    opacity: 0.65;
+  }
+  .cart-line-qty {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+  }
+  .cart-qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    color: inherit;
+  }
+  .cart-qty-btn:hover {
+    border-color: var(--amber-500);
+    color: var(--amber-500);
+  }
+  .cart-qty-value {
+    min-width: 1.2em;
+    text-align: center;
+  }
+  .cart-line-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.45;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+  }
+  .cart-line-remove:hover {
+    opacity: 1;
+    color: var(--rust-600);
+  }
+
+  .cart-drawer-foot {
+    flex-shrink: 0;
+    padding: 1rem 1.4rem 1.4rem;
+    border-top: 1px solid var(--border-light);
+  }
+  .cart-subtotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .cart-note {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    margin: 0 0 0.9rem;
+  }
+  .cart-checkout-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .cart-error {
+    color: var(--rust-600);
+    font-size: 0.82rem;
+    margin: 0.7rem 0 0;
+  }
+
+  @media (max-width: 640px) {
+    .cart-toggle {
+      top: auto;
+      bottom: 100px;
+      right: 14px;
+    }
+    .cart-drawer {
+      width: 100vw;
+    }
+  }
+
      Printful only provides the one flat mockup for this product). */
 </style>
 

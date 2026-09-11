@@ -768,7 +768,18 @@ export async function shortExternalId(raw: string): Promise<string> {
 export async function createPrintfulOrder(
   env: PrintfulEnv,
   opts: {
-    syncVariantId: number;
+    // Single-item purchases (every existing caller — real webhook orders,
+    // the hat/shirt admin test tools, the bundle's main slot) pass this.
+    // Required unless `items` below is given instead.
+    syncVariantId?: number;
+    // Cart checkout only (see create-cart-checkout-session.ts's webhook
+    // branch): an arbitrary list of (syncVariantId, quantity) pairs, one
+    // per distinct cart line, so a buyer's whole order — any mix of hats/
+    // shirts/sticker-packs, any quantities — becomes ONE Printful order/ONE
+    // Stripe charge instead of N separate ones. When given, this REPLACES
+    // syncVariantId/quantity above entirely (both are ignored) — extras
+    // (welcome sticker/postcard) still layer on via extraSyncVariantIds.
+    items?: { syncVariantId: number; quantity?: number }[];
     // Extra items to include in the SAME Printful order as syncVariantId
     // above — used for the hat+shirt bundle, so a bundle buyer gets one
     // Printful order/one Stripe charge instead of two separate orders.
@@ -777,10 +788,7 @@ export async function createPrintfulOrder(
     // "partial" status) if items are produced on different lines/timelines,
     // e.g. embroidery vs. DTG print — so this is "simpler to track," not
     // "ships in one box." Empty/omitted for every other (single-item)
-    // purchase, which is why syncVariantId above stays a required single
-    // value rather than folding everything into one items[] array — it
-    // keeps every existing single-item caller (real webhook orders, the
-    // hat/shirt admin test tools) unchanged.
+    // purchase.
     extraSyncVariantIds?: number[];
     recipient: PrintfulRecipient;
     externalId: string;
@@ -801,13 +809,20 @@ export async function createPrintfulOrder(
 ): Promise<{ id: number; status: string; costs?: PrintfulOrderCosts }> {
   const confirm = opts.confirm ?? true;
 
+  // Cart checkout passes `items` (a full list of lines); every other caller
+  // passes the single `syncVariantId` — mutually exclusive, `items` wins if
+  // both are somehow present.
+  const mainItems =
+    opts.items && opts.items.length > 0
+      ? opts.items.map((it) => ({ sync_variant_id: it.syncVariantId, quantity: it.quantity ?? 1 }))
+      : opts.syncVariantId
+        ? [{ sync_variant_id: opts.syncVariantId, quantity: opts.quantity ?? 1 }]
+        : [];
+
   const body = {
     external_id: opts.externalId,
     recipient: opts.recipient,
-    items: [
-      { sync_variant_id: opts.syncVariantId, quantity: opts.quantity ?? 1 },
-      ...(opts.extraSyncVariantIds || []).map((id) => ({ sync_variant_id: id, quantity: 1 })),
-    ],
+    items: [...mainItems, ...(opts.extraSyncVariantIds || []).map((id) => ({ sync_variant_id: id, quantity: 1 }))],
   };
 
   let lastErr = "";

@@ -452,6 +452,44 @@ export async function POST({ request, locals }: APIContext) {
       const isBundle = product === "bundle";
       const bundleHatVariant = isBundle ? getHatVariant(session.metadata?.hatColor || "") : undefined;
       const bundleShirtVariant = isBundle ? getShirtVariant(session.metadata?.shirtColor || "") : undefined;
+
+      // Cart checkout (create-cart-checkout-session.ts) — metadata.cart is a
+      // JSON array of [key, qty] tuples, one per distinct line the buyer
+      // added. Resolved once here (both the receipt-copy productInfo below
+      // AND the Printful/merch_orders fulfillment further down reuse this
+      // same list) so the two can never drift apart.
+      const isCart = product === "cart";
+      type CartResolvedLine = {
+        key: string;
+        qty: number;
+        label: string;
+        image?: string;
+        syncVariantId?: number;
+        isSticker: boolean;
+      };
+      let cartLines: CartResolvedLine[] = [];
+      if (isCart) {
+        let rawPairs: [string, number][] = [];
+        try {
+          rawPairs = JSON.parse(session.metadata?.cart || "[]");
+        } catch (err) {
+          console.error(`Failed to parse cart metadata for session ${session.id}:`, session.metadata?.cart);
+        }
+        cartLines = rawPairs
+          .map(([key, qty]) => {
+            if (key === "sticker-5pack") {
+              return { key, qty, label: "Dudela Sticker 5-Pack", image: "/images/sticker/sticker-flat.png", syncVariantId: STICKER_SYNC_VARIANT_ID, isSticker: true };
+            }
+            const hat = getHatVariant(key);
+            if (hat) return { key, qty, label: hatLabel(hat), image: hat.frontImage, syncVariantId: hat.syncVariantId, isSticker: false };
+            const shirt = getShirtVariant(key);
+            if (shirt) return { key, qty, label: shirtLabel(shirt), image: shirt.frontImage, syncVariantId: shirt.syncVariantId, isSticker: false };
+            console.error(`Unknown cart line key "${key}" in session ${session.id}`);
+            return null;
+          })
+          .filter((l): l is CartResolvedLine => l !== null);
+      }
+
       const productInfo: ProductInfo = isBundle
         ? {
             name:
@@ -474,7 +512,18 @@ export async function POST({ request, locals }: APIContext) {
                   ]
                 : undefined,
           }
-        : PRODUCTS[product] || { name: product, price: amountTotal };
+        : isCart
+          ? {
+              name:
+                cartLines.length === 1
+                  ? `${cartLines[0].label}${cartLines[0].qty > 1 ? ` x${cartLines[0].qty}` : ""}`
+                  : `Dudela Order — ${cartLines.reduce((n, l) => n + l.qty, 0)} items`,
+              price: amountTotal,
+              isMerch: true,
+              image: cartLines[0]?.image,
+              items: cartLines.map((l) => ({ name: l.qty > 1 ? `${l.label} x${l.qty}` : l.label, image: l.image })),
+            }
+          : PRODUCTS[product] || { name: product, price: amountTotal };
       // Hoisted out of the isMerch/isBundle blocks below so the internal notify
       // email (sent further down, after those branches) can include shipping
       // details for merch orders without re-parsing the session.
@@ -603,6 +652,102 @@ export async function POST({ request, locals }: APIContext) {
             ]);
           } catch (err) {
             console.error("Bundle order sheet log failed:", err);
+          }
+        }
+      } else if (isCart) {
+        ({ name: shippingName, address: shippingAddress } = extractShippingDetails(session));
+        const recipient = extractPrintfulRecipient(session, name, email);
+
+        // A cart containing a sticker-pack line already had promo codes
+        // blocked entirely at checkout (create-cart-checkout-session.ts), so
+        // there's no discount to check against — treat it like the
+        // standalone sticker-5pack rule: postcard only, unconditionally. A
+        // cart with no sticker line gets the normal welcome sticker+postcard,
+        // auto-skipped above SKIP_WELCOME_EXTRAS_DISCOUNT_THRESHOLD same as
+        // every hat/shirt/bundle order.
+        const hasSticker = cartLines.some((l) => l.isSticker);
+        const extraSyncVariantIds = hasSticker ? [POSTCARD_SYNC_VARIANT_ID] : welcomeExtrasFor(session);
+
+        // One combined Printful order for the whole cart (same reasoning as
+        // the bundle branch above) — a sticker line orders 5x its qty
+        // (matching the standalone sticker-5pack fulfillment), every other
+        // line orders its qty as-is.
+        const printfulItems = cartLines
+          .filter((l): l is CartResolvedLine & { syncVariantId: number } => typeof l.syncVariantId === "number")
+          .map((l) => ({ syncVariantId: l.syncVariantId, quantity: l.isSticker ? l.qty * 5 : l.qty }));
+
+        let cartPrintfulOrderId: number | undefined;
+        let cartCostCents: number | undefined;
+        if (printfulItems.length > 0 && recipient) {
+          try {
+            const result = await createPrintfulOrder(env, {
+              items: printfulItems,
+              extraSyncVariantIds,
+              recipient,
+              externalId: await shortExternalId(session.id),
+              confirm: isTestMode ? false : undefined,
+            });
+            cartPrintfulOrderId = result.id;
+            cartCostCents = printfulCostCents(result.costs);
+          } catch (err) {
+            const errName = err instanceof Error ? err.name : typeof err;
+            const message = err instanceof Error ? err.message : String(err);
+            const stack = err instanceof Error ? err.stack : undefined;
+            console.error(`Cart Printful order creation failed [${errName}]: ${message || "(empty message)"}`, { stack });
+          }
+        } else {
+          console.error(
+            `Skipped cart Printful order for session ${session.id}: lines=${cartLines.length} recipient=${!!recipient}`
+          );
+        }
+
+        // One merch_orders row per distinct cart line (not per unit) so
+        // "Your Orders" shows each thing bought — same pattern as the
+        // bundle's two rows, just N of them. Amount split evenly across
+        // lines purely for a sane per-row display figure (same
+        // approximation the bundle branch already uses); Stripe's own line
+        // items already show each line's real price at checkout/receipt.
+        const perLineAmount =
+          typeof session.amount_total === "number" && cartLines.length > 0
+            ? Math.round(session.amount_total / cartLines.length)
+            : undefined;
+        try {
+          for (let i = 0; i < cartLines.length; i++) {
+            const line = cartLines[i];
+            await createMerchOrder(env, {
+              sessionId: `${session.id}::${i}`,
+              color: line.qty > 1 ? `${line.key} x${line.qty}` : line.key,
+              email,
+              name,
+              shippingName: shippingName || undefined,
+              shippingAddress: shippingAddress || undefined,
+              amountTotal: perLineAmount,
+              printfulOrderId: cartPrintfulOrderId,
+            });
+          }
+        } catch (err) {
+          console.error("Cart merch order insert failed:", err);
+        }
+
+        if (isFirstDelivery) {
+          try {
+            const accessToken = await getGoogleAccessToken(env, [GOOGLE_SCOPES.sheets]);
+            await appendSheetRow(accessToken, env.GOOGLE_SHEET_ID, "Merch Orders!A:J", [
+              new Date().toISOString(),
+              name,
+              email,
+              `cart: ${cartLines.map((l) => `${l.key} x${l.qty}`).join(", ")}`,
+              shippingName || "",
+              shippingAddress || "",
+              amountTotal,
+              cartCostCents !== undefined ? `$${(cartCostCents / 100).toFixed(2)}` : "",
+              cartCostCents !== undefined && typeof session.amount_total === "number"
+                ? `$${((session.amount_total - cartCostCents) / 100).toFixed(2)}`
+                : "",
+              isTestMode ? "TEST" : "",
+            ]);
+          } catch (err) {
+            console.error("Cart order sheet log failed:", err);
           }
         }
       } else if (productInfo.isMerch) {
