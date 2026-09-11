@@ -80,12 +80,28 @@ const DESIGN_INFO: Record<Design, { title: string; tagline: string }> = {
   },
 };
 
-// Orange first: Rust Orange thread on the Dark Green/Natural bill is the
-// hero colorway (cream/green cap, orange wordmark) — that's what should
-// greet a first-time visitor, not whatever happened to be first in the
-// catalog dump.
+// Cap color is the primary selector (see the hat-card markup/client JS
+// below) — a visitor picks the physical cap first, then which thread
+// color it's stitched in, since the valid thread options actually depend
+// on the cap (e.g. a Black cap only ever ships with White or Orange
+// thread, never Black-on-Black — see HAT_CATALOG in lib/printful.ts for
+// the real, asymmetric per-design (thread, color) combinations; picking
+// thread first used to let you land on a cap/thread pair that doesn't
+// exist, which silently "flipped" the hat to a different cap on click).
+// Orange first in THREAD_ORDER because Rust Orange is the hero thread
+// wherever it's offered; COLOR_ORDER puts the hero cap colorway (Dark
+// Green/Natural bill) first for the same reason.
 const THREAD_ORDER = ["orange", "white", "black"] as const;
-const DEFAULT_COLOR_SLUG = "dark-green-natural";
+const COLOR_ORDER = ["dark-green-natural", "black-natural", "black", "white"] as const;
+
+// Each design's starting cap color. Classic keeps the original hero
+// colorway (Dark Green/Natural bill + Orange thread). Rookie defaults to
+// Black/Natural bill + Black thread — the only combo the real catalog
+// offers for that cap on this design.
+const DEFAULT_COLOR_BY_DESIGN: Record<Design, string> = {
+  classic: "dark-green-natural",
+  rookie: "black-natural",
+};
 
 function colorSlug(v: HatVariant): string {
   const prefix = `${v.design}-${v.thread}-${v.addon ? "withaddon" : "noaddon"}-`;
@@ -95,14 +111,11 @@ function colorSlug(v: HatVariant): string {
 const designs = (Object.keys(DESIGN_INFO) as Design[]).map((dkey) => {
   const variants = HAT_CATALOG.filter((v) => v.design === dkey);
 
-  const threads = THREAD_ORDER.filter((t) => variants.some((v) => v.thread === t)).map((t) => {
-    const sample = variants.find((v) => v.thread === t)!;
-    return { key: t, label: sample.threadLabel, hex: sample.threadHex };
-  });
-
   const clientVariants = variants.map((v) => ({
     key: v.key,
     thread: v.thread,
+    threadLabel: v.threadLabel,
+    threadHex: v.threadHex,
     color: colorSlug(v),
     colorLabel: v.colorLabel,
     colorHex: v.colorHex,
@@ -113,14 +126,22 @@ const designs = (Object.keys(DESIGN_INFO) as Design[]).map((dkey) => {
     left: v.leftImage,
   }));
 
-  const defaultThreadCandidates = clientVariants.filter((v) => v.thread === threads[0].key && !v.addon);
-  const first = defaultThreadCandidates.find((v) => v.color === DEFAULT_COLOR_SLUG) || defaultThreadCandidates[0];
+  const colors = COLOR_ORDER.filter((c) => clientVariants.some((v) => v.color === c)).map((c) => {
+    const sample = clientVariants.find((v) => v.color === c)!;
+    return { key: c, label: sample.colorLabel, hex: sample.colorHex, hex2: sample.colorHex2 };
+  });
+
+  const defaultColor = DEFAULT_COLOR_BY_DESIGN[dkey];
+  const defaultColorCandidates = clientVariants.filter((v) => v.color === defaultColor && !v.addon);
+  const defaultThread =
+    THREAD_ORDER.find((t) => defaultColorCandidates.some((v) => v.thread === t)) || defaultColorCandidates[0]?.thread;
+  const first = defaultColorCandidates.find((v) => v.thread === defaultThread) || defaultColorCandidates[0];
 
   return {
     key: dkey,
     title: DESIGN_INFO[dkey].title,
     tagline: DESIGN_INFO[dkey].tagline,
-    threads,
+    colors,
     variants: clientVariants,
     first,
   };
@@ -333,24 +354,24 @@ const canceled = url.searchParams.get("purchase") === "canceled";
             <p class="design-tagline">{d.tagline}</p>
 
             <div class="selector">
-              <span class="selector-label">Thread color</span>
-              <div class="thread-swatches" role="group" aria-label={`${d.title} thread color`} data-thread-swatches>
-                {d.threads.map((t, i) => (
+              <span class="selector-label">Cap color</span>
+              <div class="color-swatches" role="group" aria-label={`${d.title} cap color`} data-color-swatches>
+                {d.colors.map((c) => (
                   <button
                     type="button"
-                    class={`thread-swatch${i === 0 ? " active" : ""}`}
-                    style={`--swatch: ${t.hex}`}
-                    title={t.label}
-                    aria-label={t.label}
-                    data-thread={t.key}
+                    class={`swatch${c.key === d.first.color ? " active" : ""}`}
+                    style={`--swatch: ${c.hex}; --swatch2: ${c.hex2}`}
+                    title={c.label}
+                    aria-label={c.label}
+                    data-color={c.key}
                   />
                 ))}
               </div>
             </div>
 
             <div class="selector">
-              <span class="selector-label">Cap color</span>
-              <div class="color-swatches" role="group" aria-label={`${d.title} cap color`} data-color-swatches></div>
+              <span class="selector-label">Thread color</span>
+              <div class="thread-swatches" role="group" aria-label={`${d.title} thread color`} data-thread-swatches></div>
             </div>
 
             <button type="button" class="addon-toggle" data-addon-toggle aria-pressed="false">
@@ -951,6 +972,8 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   interface CardVariant {
     key: string;
     thread: string;
+    threadLabel: string;
+    threadHex: string;
     color: string;
     colorLabel: string;
     colorHex: string;
@@ -962,8 +985,9 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
   interface CardCatalog {
     title: string;
-    threads: Array<{ key: string; label: string; hex: string }>;
+    colors: Array<{ key: string; label: string; hex: string; hex2: string }>;
     variants: CardVariant[];
+    first: CardVariant;
   }
 
   // :not(.shirt-card) matters here — shirt cards also carry the
@@ -988,14 +1012,14 @@ const canceled = url.searchParams.get("purchase") === "canceled";
 
     const photoFront = card.querySelector<HTMLImageElement>("[data-photo-front]");
     const photoLeft = card.querySelector<HTMLImageElement>("[data-photo-left]");
-    const threadButtons = card.querySelectorAll<HTMLButtonElement>("[data-thread]");
-    const colorContainer = card.querySelector<HTMLElement>("[data-color-swatches]");
+    const colorButtons = card.querySelectorAll<HTMLButtonElement>("[data-color]");
+    const threadContainer = card.querySelector<HTMLElement>("[data-thread-swatches]");
     const addonToggle = card.querySelector<HTMLButtonElement>("[data-addon-toggle]");
     const variantName = card.querySelector<HTMLElement>("[data-variant-name]");
     const priceEl = card.querySelector<HTMLElement>("[data-price]");
     const buyBtn = card.querySelector<HTMLAnchorElement>("[data-buy]");
     const addCartBtn = card.querySelector<HTMLButtonElement>("[data-add-cart]");
-    if (!photoFront || !photoLeft || !colorContainer || !addonToggle || !variantName || !priceEl || !buyBtn) return;
+    if (!photoFront || !photoLeft || !threadContainer || !addonToggle || !variantName || !priceEl || !buyBtn) return;
 
     // Preload every real mockup photo for this card up front so swapping
     // thread/color/add-on never shows a half-loaded image or a network
@@ -1005,33 +1029,38 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       new Image().src = v.left;
     });
 
-    const state = { thread: catalog.threads[0]?.key || "", color: "", addon: false };
+    // Cap color first, thread color second: state.color drives which
+    // threads are even offered, so it's never possible to click a thread
+    // swatch that doesn't exist for the current cap (the old "flips to a
+    // different hat" bug) — an invalid thread just never renders as an
+    // option. Starting values come straight from catalog.first, which the
+    // frontmatter already resolved to this design's real default combo.
+    const state = { color: catalog.first.color, thread: catalog.first.thread, addon: false };
 
-    function variantsForThread(thread: string) {
-      return catalog.variants.filter((v) => v.thread === thread);
+    function variantsForColor(color: string) {
+      return catalog.variants.filter((v) => v.color === color);
     }
 
-    function renderColorSwatches() {
-      if (!colorContainer) return;
-      colorContainer.innerHTML = "";
+    function renderThreadSwatches() {
+      if (!threadContainer) return;
+      threadContainer.innerHTML = "";
       const seen = new Set<string>();
-      for (const v of variantsForThread(state.thread)) {
-        if (seen.has(v.color)) continue;
-        seen.add(v.color);
+      for (const v of variantsForColor(state.color)) {
+        if (seen.has(v.thread)) continue;
+        seen.add(v.thread);
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "swatch" + (v.color === state.color ? " active" : "");
-        btn.style.setProperty("--swatch", v.colorHex);
-        btn.style.setProperty("--swatch2", v.colorHex2);
-        btn.title = v.colorLabel;
-        btn.setAttribute("aria-label", v.colorLabel);
+        btn.className = "thread-swatch" + (v.thread === state.thread ? " active" : "");
+        btn.style.setProperty("--swatch", v.threadHex);
+        btn.title = v.threadLabel;
+        btn.setAttribute("aria-label", v.threadLabel);
         btn.addEventListener("click", () => {
-          if (state.color === v.color) return;
+          if (state.thread === v.thread) return;
           userInteracted = true;
-          state.color = v.color;
+          state.thread = v.thread;
           render();
         });
-        colorContainer.appendChild(btn);
+        threadContainer.appendChild(btn);
       }
     }
 
@@ -1042,13 +1071,13 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     }
 
     function render() {
-      const avail = variantsForThread(state.thread);
-      if (!avail.some((v) => v.color === state.color)) {
-        state.color = avail[0]?.color || "";
+      const avail = variantsForColor(state.color);
+      if (!avail.some((v) => v.thread === state.thread)) {
+        state.thread = avail[0]?.thread || "";
       }
 
-      threadButtons.forEach((b) => b.classList.toggle("active", b.dataset.thread === state.thread));
-      renderColorSwatches();
+      colorButtons.forEach((b) => b.classList.toggle("active", b.dataset.color === state.color));
+      renderThreadSwatches();
 
       const variant = currentVariant();
       if (!variant || !photoFront || !photoLeft || !variantName || !priceEl || !buyBtn) return;
@@ -1092,11 +1121,11 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       }
     }
 
-    threadButtons.forEach((b) => {
+    colorButtons.forEach((b) => {
       b.addEventListener("click", () => {
-        if (b.dataset.thread === state.thread) return;
+        if (b.dataset.color === state.color) return;
         userInteracted = true;
-        state.thread = b.dataset.thread || state.thread;
+        state.color = b.dataset.color || state.color;
         render();
       });
     });
@@ -1122,12 +1151,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
       });
     });
 
-    // Prefer the hero colorway (Dark Green/Natural bill) as the starting
-    // color for whichever thread ends up default — falls back to the first
-    // available color if this design/thread doesn't offer it.
-    const DEFAULT_COLOR_SLUG = "dark-green-natural";
-    const startingOptions = variantsForThread(state.thread).filter((v) => v.addon === state.addon);
-    state.color = (startingOptions.find((v) => v.color === DEFAULT_COLOR_SLUG) || startingOptions[0])?.color || "";
     render();
   });
 
@@ -2383,14 +2406,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
      Printful only provides the one flat mockup for this product). */
 </style>
 
-<!-- Cap-color swatch buttons are created client-side via document.createElement
-     (see script above) — they never get the data-astro-cid scoping attribute
-     Astro adds to elements written directly in this template, so the scoped
-     .swatch rule in the <style> block above silently never applies to them.
-     This duplicate, unscoped copy is what actually styles them. Keep it in
-     sync with .thread-swatch/.swatch above if those ever change. -->
+<!-- Thread-color swatch buttons are created client-side via document.
+     createElement (see script above) — they never get the data-astro-cid
+     scoping attribute Astro adds to elements written directly in this
+     template, so the scoped .thread-swatch rule in the <style> block above
+     silently never applies to them. This duplicate, unscoped copy is what
+     actually styles them. Cap-color swatches are server-rendered now (see
+     the hat-card markup) so the scoped .swatch rule above covers those
+     directly — no duplicate needed for them anymore. Keep this in sync
+     with .thread-swatch above if that ever changes. -->
 <style is:global>
-  .color-swatches .swatch {
+  .thread-swatches .thread-swatch {
     width: 2rem;
     height: 2rem;
     border-radius: 50%;
@@ -2398,9 +2424,9 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     cursor: pointer;
     padding: 0;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
-    background: linear-gradient(135deg, var(--swatch) 50%, var(--swatch2) 50%);
+    background: var(--swatch);
   }
-  .color-swatches .swatch.active {
+  .thread-swatches .thread-swatch.active {
     border-color: var(--forest-800);
     box-shadow: 0 0 0 2px var(--bg-light-raised), 0 0 0 4px var(--forest-800);
   }
