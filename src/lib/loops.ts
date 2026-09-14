@@ -53,6 +53,14 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
 export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
   "spit-up-society": { eventName: "member-spit-up-society", userGroup: "Member – Spit-Up Society" },
+  // Found 2026-09-14 auditing why Loops tagging looked broken for real purchases:
+  // handleBundleCheckout (create-checkout-session.ts) stamps metadata.product =
+  // "bundle" for every hat+shirt bundle order, but "bundle" was never a key in
+  // this map. sendLoopsPurchaseEvent() no-ops (console.error + return null) on
+  // an unmapped product, so every bundle buyer has silently never been tagged
+  // in Loops at all — same failure mode already called out below for the old
+  // hardcoded hat/shirt lists, just a third instance of it.
+  "bundle": { eventName: "purchase-bundle", userGroup: "Customer – Bundle" },
   // Added when the merch presale shipped — these were missing from this
   // map at launch, which meant hat buyers were silently never tagged in Loops
   // at all (sendLoopsPurchaseEvent logs an error and no-ops on an unmapped
