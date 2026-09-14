@@ -1,11 +1,19 @@
 ---
+// id values must match the `id` on each stage in Roadmap.astro's `stages`
+// array -- these used to be slugified from the label text (e.g. "New Dad"
+// -> "new-dad"), which doesn't match Roadmap's actual ids ("first-night",
+// "8wk", "third-tri", "sleep-regression", etc). Roadmap.astro silently
+// no-ops on an unknown id (selectStage() returns false), so every button
+// except "Hospital" landed on whatever the default panel happened to be
+// instead of the stage it named. Mapped by hand here since these six
+// broad buckets don't line up 1:1 with Roadmap's more granular stages.
 const stages = [
-  "Trying to Conceive",
-  "First Trimester",
-  "Third Trimester",
-  "Hospital",
-  "New Dad",
-  "Sleep",
+  { label: "Trying to Conceive", id: "ttc" },
+  { label: "First Trimester", id: "8wk" },
+  { label: "Third Trimester", id: "third-tri" },
+  { label: "Hospital", id: "hospital" },
+  { label: "New Dad", id: "first-night" },
+  { label: "Sleep", id: "sleep-regression" },
 ];
 ---
 <section class="stage-picker section-light">
@@ -13,8 +21,8 @@ const stages = [
     <h2>Where are you today?</h2>
     <div class="stage-options">
       {stages.map((s) => (
-        <a href={`/prepare?stage=${encodeURIComponent(s.toLowerCase().replace(/\s+/g, "-"))}`} class="stage-option">
-          {s}
+        <a href={`/prepare?stage=${encodeURIComponent(s.id)}#roadmap`} class="stage-option">
+          {s.label}
         </a>
       ))}
     </div>
