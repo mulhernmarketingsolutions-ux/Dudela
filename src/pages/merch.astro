@@ -2482,11 +2482,69 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     flex-direction: column;
     gap: 0.9rem;
   }
-  /* Compact single-row layout — a small thumbnail (not a hero photo) so
-     each line stays short and a full cart doesn't force scrolling to see
-     the checkout button, plus real brand-colored qty/remove buttons
-     (forest fill, amber hover, rust remove) instead of thin gray outlines
-     that were easy to miss against the photo. */
+  .cart-drawer-foot {
+    flex-shrink: 0;
+    padding: 1rem 1.4rem 1.4rem;
+    border-top: 1px solid var(--border-light);
+  }
+  .cart-subtotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .cart-note {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    margin: 0 0 0.9rem;
+  }
+  .cart-checkout-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .cart-error {
+    color: var(--rust-600);
+    font-size: 0.82rem;
+    margin: 0.7rem 0 0;
+  }
+
+  @media (max-width: 640px) {
+    .cart-toggle {
+      top: auto;
+      bottom: 100px;
+      right: 14px;
+    }
+    .cart-drawer {
+      width: 100vw;
+    }
+  }
+
+     Printful only provides the one flat mockup for this product). */
+</style>
+
+<!-- Thread-color swatch buttons are created client-side via document.
+     createElement (see script above) — they never get the data-astro-cid
+     scoping attribute Astro adds to elements written directly in this
+     template, so the scoped .thread-swatch rule in the <style> block above
+     silently never applies to them. This duplicate, unscoped copy is what
+     actually styles them. Cap-color swatches are server-rendered now (see
+     the hat-card markup) so the scoped .swatch rule above covers those
+     directly — no duplicate needed for them anymore. Keep this in sync
+     with .thread-swatch above if that ever changes. -->
+<style is:global>
+  /* Cart line rows (<li class="cart-line">, its image, qty stepper, and
+     remove button) are built client-side via li.innerHTML in the cart
+     script above — same as the thread-swatch buttons below, they never
+     get the data-astro-cid scoping attribute, so the scoped .cart-line*
+     rules that used to live in the component <style> block above silently
+     never applied. Without a width/height on .cart-line-img, the bare
+     <img> rendered at its natural size (300px+), pushing the qty stepper,
+     promo field, and Checkout button out of view. Moved here, unscoped,
+     so they actually take effect. Keep in sync with the cart-line markup
+     in the script above if that ever changes. */
   .cart-line {
     display: grid;
     grid-template-columns: 34px 1fr auto auto;
@@ -2560,59 +2618,6 @@ const canceled = url.searchParams.get("purchase") === "canceled";
     opacity: 1;
   }
 
-  .cart-drawer-foot {
-    flex-shrink: 0;
-    padding: 1rem 1.4rem 1.4rem;
-    border-top: 1px solid var(--border-light);
-  }
-  .cart-subtotal {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-family: var(--font-label);
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 0.3rem;
-  }
-  .cart-note {
-    font-size: 0.78rem;
-    opacity: 0.6;
-    margin: 0 0 0.9rem;
-  }
-  .cart-checkout-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  .cart-error {
-    color: var(--rust-600);
-    font-size: 0.82rem;
-    margin: 0.7rem 0 0;
-  }
-
-  @media (max-width: 640px) {
-    .cart-toggle {
-      top: auto;
-      bottom: 100px;
-      right: 14px;
-    }
-    .cart-drawer {
-      width: 100vw;
-    }
-  }
-
-     Printful only provides the one flat mockup for this product). */
-</style>
-
-<!-- Thread-color swatch buttons are created client-side via document.
-     createElement (see script above) — they never get the data-astro-cid
-     scoping attribute Astro adds to elements written directly in this
-     template, so the scoped .thread-swatch rule in the <style> block above
-     silently never applies to them. This duplicate, unscoped copy is what
-     actually styles them. Cap-color swatches are server-rendered now (see
-     the hat-card markup) so the scoped .swatch rule above covers those
-     directly — no duplicate needed for them anymore. Keep this in sync
-     with .thread-swatch above if that ever changes. -->
-<style is:global>
   .thread-swatches .thread-swatch {
     width: 2rem;
     height: 2rem;
@@ -2629,6 +2634,17 @@ const canceled = url.searchParams.get("purchase") === "canceled";
   }
 
   /* --- Cart summary extras: bundle discount / hint / total ------------ */
+  /* .cart-bundle-discount / .cart-total / .cart-promo-discount below all
+     set display:flex, which — same author-vs-UA-stylesheet cascade issue
+     as the cart-line fix above — beats the browser's default [hidden]
+     { display: none }, so the element kept showing (as "-$0" / "$0") even
+     while JS had it hidden. These three explicit overrides make hidden
+     win again. */
+  .cart-bundle-discount[hidden],
+  .cart-total[hidden],
+  .cart-promo-discount[hidden] {
+    display: none;
+  }
   .cart-bundle-hint {
     margin: 0 0 0.8rem;
     padding: 0.6rem 0.8rem;
