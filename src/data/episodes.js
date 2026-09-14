@@ -37,6 +37,23 @@ export function slugify(title) {
 }
 
 const episodeEntries = [
+  // Published 2026-09-15 (Podbean scheduled for midnight the night before
+  // the Sept 15 newsletter goes out, matching the usual cadence of
+  // publishing ahead of the mid-morning send). This is the episode where
+  // John and Michael publicly introduce "The Womb Watch" by name and
+  // announce Michael and Abigail's second pregnancy in full. Apple link
+  // intentionally left unset — new episodes take a bit to show up in
+  // Apple's public catalog/lookup API. Falls back to the show-level
+  // APPLE_URL until the real per-episode link exists.
+  {
+    title: "Run it back - The Dudela Family is Growing",
+    date: "2026-09-15",
+    downloads: 0,
+    link: "https://thedudelapodcast.podbean.com/e/run-it-back-the-dudela-family-is-growing/",
+    apple: null,
+    img: "/images/podcast/ep-family-is-growing.jpg",
+    description: "Michael and Abigail are expecting baby girl number two, due on Christmas Day. Mike and John talk through what's different the second time around, from earlier symptoms to getting their toddler ready to become a big sister. Plus, we introduce The Womb Watch: real-time updates on the pregnancy, only inside the Spit-Up Society.",
+  },
   // Published 2026-09-01 (Podbean auto-published at 1am so the other
   // platforms have time to catch up before the newsletter goes out
   // mid-morning). Apple link intentionally left unset — same reasoning as

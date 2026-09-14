@@ -42,6 +42,7 @@ const platforms = [
             <div class="episode-info">
               <h3>{ep.number === null ? ep.title : `Episode ${ep.number}: ${ep.title}`}</h3>
               <p class="episode-date">{formatDate(ep.date)}</p>
+              {ep.description && <p class="episode-desc">{ep.description}</p>}
               <div class="episode-links">
                 <a href={ep.link} target="_blank" rel="noopener" class="listen-link">Podbean</a>
                 <a href={ep.apple} target="_blank" rel="noopener" class="listen-link">Apple</a>
@@ -159,6 +160,13 @@ const platforms = [
     font-size: 0.85rem;
     color: var(--text-on-light-muted);
     margin: 0 0 0.6rem;
+  }
+  .episode-desc {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-on-light-muted);
+    margin: 0 0 0.75rem;
+    max-width: 54ch;
   }
   .episode-links {
     display: flex;
