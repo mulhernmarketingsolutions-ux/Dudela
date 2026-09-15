@@ -50,7 +50,7 @@ const episodeEntries = [
     date: "2026-09-15",
     downloads: 0,
     link: "https://thedudelapodcast.podbean.com/e/run-it-back-the-dudela-family-is-growing/",
-    apple: null,
+    apple: "https://podcasts.apple.com/us/podcast/run-it-back-the-dudela-family-is-growing/id1807603921?i=1000789722682",
     img: "/images/podcast/ep-family-is-growing.jpg",
     description: "Michael and Abigail are expecting baby girl number two, due on Christmas Day. Mike and John talk through what's different the second time around, from earlier symptoms to getting their toddler ready to become a big sister. Plus, we introduce The Womb Watch: real-time updates on the pregnancy, only inside the Spit-Up Society.",
   },
