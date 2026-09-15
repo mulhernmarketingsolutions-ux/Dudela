@@ -75,7 +75,7 @@ const CONFIRMATIONS: Record<string, { subject: string; body: string }> = {
   },
   "newsletter": {
     subject: "You're on the list",
-    body: "Welcome to the Dudela Newsletter — one email a week, no fluff. First one lands soon.",
+    body: "Welcome to the Dudela Newsletter — one email every other week, no fluff. First one lands soon.",
   },
 };
 
