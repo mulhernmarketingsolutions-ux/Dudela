@@ -24,13 +24,15 @@ const links: { label: string; href: string; tag: string | null; sub?: string; ex
 
   { label: "The Dudela Prep Kit", href: "/offers/prep", tag: "$37" },
   { label: "Steady Dad: Before Birth Workshop", href: "/workshop", tag: "$100" },
-  { label: "Steady Dad Cohort", href: "/cohort", tag: "Waitlist" },
   // The highest-value offer on the site had no path from the link-in-bio
   // page at all — cold social traffic could reach everything up through
-  // the Cohort but never discover 1:1 coaching exists.
+  // the Workshop but never discover 1:1 coaching exists.
   { label: "The Turn — 1:1 Coaching", sub: "With John & Mike", href: "/turn", tag: "$1,800" },
   { label: "Taking Cara Babies", sub: "The sleep resource we recommend to every dad", href: "https://www.takingcarababies.com?sca_ref=11694397.hvn2tySyLaykC", tag: null, external: true },
   { label: "Leave Us a Voicemail", href: "/voicemail", tag: null },
+  // Quiet, last-in-the-list on purpose — a brand looking for it will scroll
+  // to find it; it shouldn't compete with the consumer offers above it.
+  { label: "Partner with Dudela", sub: "For brands, not dads", href: "/partners", tag: null },
 ];
 ---
 <BaseLayout title="Start Here — Dudela" description="Everything Dudela, in one place.">

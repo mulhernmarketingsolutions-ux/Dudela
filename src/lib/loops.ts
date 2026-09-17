@@ -43,6 +43,15 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
   // dashboard for this eventName — it should notify John/Mike-facing content
   // if anything, not pitch the applicant more free content.
   "turn-application": { eventName: "turn-application", userGroup: "Applicant – The Turn" },
+
+  // Sponsorship/partnership inquiries from /partners. Kept entirely separate
+  // from every consumer magnet above on purpose (see partner-inquiry.ts) —
+  // a brand asking about a newsletter placement should never enter a
+  // top-of-funnel dad nurture sequence, and a dad signing up for the free
+  // guide should never be tagged like a sponsor lead. Build a dedicated
+  // "New Partner Inquiry" workflow in Loops for this eventName that
+  // notifies John/Mike, not one that pitches the sender free content.
+  "partner-inquiry": { eventName: "partner-inquiry", userGroup: "Inquiry – Partnership" },
 };
 
 // Maps each Stripe `product` value (see create-checkout-session.ts) to the Loops event

@@ -1,0 +1,463 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+// Audience figures below were checked live on 2026-09-17 (Instagram,
+// TikTok, YouTube, Facebook, and LinkedIn insights/about pages, logged in
+// as the account owner/admin on each). Podcast download totals were not
+// re-verifiable live in this pass (Podbean's dashboard wasn't reachable),
+// so no download number is stated here on purpose rather than repeating a
+// stale figure — update this comment and the copy below once that's
+// pulled directly from Podbean.
+const audience = [
+  { label: "Instagram", value: "390", note: "followers" },
+  { label: "TikTok", value: "155", note: "followers" },
+  { label: "YouTube", value: "25", note: "subscribers" },
+  { label: "Facebook", value: "59", note: "followers" },
+  { label: "LinkedIn", value: "53", note: "followers" },
+];
+---
+<BaseLayout
+  title="Partner with Dudela"
+  description="Sponsorship and partnership opportunities with Dudela — newsletter, social, and podcast placements for brands that actually fit expecting and new dads."
+>
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container">
+      <p class="eyebrow">Partner with Dudela</p>
+      <h1>Reach dads at the exact moment they're paying attention.</h1>
+      <p class="hero-sub">
+        Dudela is a fatherhood preparation brand for expecting and first-time dads. If your
+        product or service actually belongs in that conversation, here's how we work together.
+      </p>
+    </div>
+  </section>
+
+  <section class="who section-light">
+    <div class="container who-grid">
+      <div>
+        <p class="eyebrow">Who We Serve</p>
+        <h2>Expecting and first-time dads, at the moment they're actually looking for help.</h2>
+        <p class="body-text">
+          Dudela reaches dads through a free prep guide, a paid Prep Kit, a live workshop, a
+          $5/mo community, and 1:1 coaching, plus a podcast and social content that all point
+          back to the same thing: practical help for guys who want to show up steady for their
+          families. The audience skips past generic parenting content because it's built by two
+          dads who've actually been through it, not a brand voice.
+        </p>
+      </div>
+      <div class="audience-numbers">
+        {audience.map((a) => (
+          <div class="audience-stat">
+            <span class="audience-value">{a.value}</span>
+            <span class="audience-label">{a.label}</span>
+            <span class="audience-note">{a.note}</span>
+          </div>
+        ))}
+      </div>
+      <p class="audience-caveat">
+        These are our real, current numbers, checked directly on each platform. We'd rather show
+        you an honest audience than an impressive one.
+      </p>
+    </div>
+  </section>
+
+  <section class="founders section-dark">
+    <div class="container founders-grid">
+      <div class="founder-card">
+        <img src="/images/founder-john.jpg" alt="John Mulhern" class="founder-photo" />
+        <h3>John Mulhern</h3>
+        <p>
+          Co-founder. His wife Viv had a high-risk twin pregnancy and a month in the NICU after
+          their daughters were born at 34 weeks. That's the credibility Dudela is built on, not a
+          marketing angle.
+        </p>
+      </div>
+      <div class="founder-card">
+        <img src="/images/founder-mike.jpg" alt="Mike Colander" class="founder-photo" />
+        <h3>Mike Colander</h3>
+        <p>
+          Co-founder. His wife Abigail's fully mapped-out birth plan changed in ninety seconds
+          with an emergency C-section. He runs production and most of the on-camera content.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="opportunities section-light">
+    <div class="container">
+      <p class="eyebrow">What's Available</p>
+      <h2>Three real places to show up, no bundled packages you don't need.</h2>
+      <div class="opportunities-grid">
+        <div class="opportunity-card">
+          <h3>Newsletter</h3>
+          <p>
+            Every other Tuesday, timed to a new podcast episode. Goes to dads who opted in
+            directly, not a purchased list.
+          </p>
+        </div>
+        <div class="opportunity-card">
+          <h3>Social</h3>
+          <p>
+            Instagram is our main channel, one to two posts a week plus Stories and Highlights.
+            Facebook, TikTok, and YouTube carry the same content to a smaller, growing audience.
+          </p>
+        </div>
+        <div class="opportunity-card">
+          <h3>Podcast</h3>
+          <p>
+            Real conversations between John and Mike, released every other week. A mention or a
+            dedicated segment both fit naturally into the format we already have.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fit section-dark">
+    <div class="container fit-grid">
+      <div>
+        <p class="eyebrow">What Makes a Good Fit</p>
+        <h2>We turn down more than we take.</h2>
+        <p class="body-text">
+          We say yes to products and services that actually help expecting and new dads, brands
+          we'd recommend even without a partnership attached, and people who want a real
+          conversation instead of a script. We default to affiliate or cross-promotion
+          arrangements over one-off paid placements, and any paid placement is disclosed clearly
+          to the audience, every time. We say no to anything generic, anything that asks us to
+          fake enthusiasm, and anything aimed at parents broadly instead of the dads specifically.
+        </p>
+      </div>
+      <div>
+        <p class="eyebrow">Work You Can Look At</p>
+        <p class="body-text">
+          We don't have past sponsor placements to point to yet, this page exists because we're
+          opening that up. What we can show you is the real thing: the
+          <a href="/podcast">podcast</a>, the <a href="/guide">free guide</a>, and the accounts
+          linked in the footer below. Judge the fit off of that, not a pitch deck.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="inquiry section-light" id="inquiry">
+    <div class="container inquiry-inner">
+      <p class="eyebrow">Get In Touch</p>
+      <h2>Tell us what you have in mind.</h2>
+      <p class="body-text inquiry-sub">
+        This goes straight to John and Mike, not a shared inbox. We read every one and reply
+        personally, usually within a couple of days.
+      </p>
+
+      <form class="inquiry-form" id="partner-form">
+        <input type="hidden" name="source" value="/partners" />
+        <div class="form-row">
+          <label>
+            Name
+            <input type="text" name="name" required />
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Company
+            <input type="text" name="company" />
+          </label>
+          <label>
+            Website
+            <input type="text" name="website" placeholder="yourcompany.com" />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Timing
+            <input type="text" name="timing" placeholder="e.g. flexible, or a specific launch date" />
+          </label>
+          <label>
+            Budget range <span class="optional">(optional)</span>
+            <input type="text" name="budget" placeholder="Helps us suggest the right fit, not required" />
+          </label>
+        </div>
+        <label class="form-full">
+          Desired placement or idea
+          <textarea name="placement" rows="4" placeholder="What did you have in mind? Newsletter, social, podcast, something else?"></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary inquiry-submit">Send Inquiry</button>
+        <p id="partner-form-status" class="form-status"></p>
+      </form>
+
+      <div id="partner-form-confirm" class="inquiry-confirm" style="display:none;">
+        <p class="confirm-headline">Got it.</p>
+        <p class="body-text">
+          John or Mike will personally read this and reply within a couple of days.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  const form = document.getElementById("partner-form") as HTMLFormElement | null;
+  const status = document.getElementById("partner-form-status") as HTMLParagraphElement | null;
+  const confirm = document.getElementById("partner-form-confirm") as HTMLDivElement | null;
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+    btn.disabled = true;
+    if (status) status.textContent = "Sending…";
+    try {
+      const res = await fetch("/api/partner-inquiry", { method: "POST", body: new FormData(form) });
+      const data = await res.json();
+      if (data.ok) {
+        if (status) status.textContent = "";
+        form.style.display = "none";
+        if (confirm) confirm.style.display = "block";
+      } else {
+        if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    } catch {
+      if (status) status.textContent = "Something went wrong. Please try again.";
+      btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .page-hero,
+  .hero {
+    padding: 9rem 0 3.5rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    max-width: 20ch;
+    margin: 0.5rem 0 1rem;
+  }
+  .hero-sub {
+    color: var(--text-on-dark-muted);
+    max-width: 52ch;
+  }
+  .who {
+    padding: var(--space-6) 0;
+  }
+  .who-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .who h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    margin: 0.5rem 0 1rem;
+    max-width: 28ch;
+  }
+  .body-text {
+    color: var(--text-on-light-muted);
+    max-width: 60ch;
+  }
+  .founders .body-text,
+  .fit .body-text {
+    color: var(--text-on-dark-muted);
+  }
+  .audience-numbers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  .audience-stat {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    text-align: center;
+  }
+  .audience-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--rust-600);
+  }
+  .audience-label {
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .audience-note {
+    font-size: 0.75rem;
+    color: var(--text-on-light-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .audience-caveat {
+    grid-column: 1 / -1;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+  .founders {
+    padding: var(--space-6) 0;
+  }
+  .founders-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .founder-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .founder-photo {
+    width: 100%;
+    max-width: 220px;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+  }
+  .founder-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin: 0;
+    color: var(--cream-100);
+  }
+  .opportunities {
+    padding: var(--space-6) 0;
+  }
+  .opportunities h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    max-width: 32ch;
+    margin: 0.5rem 0 2rem;
+  }
+  .opportunities-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .opportunity-card {
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+  }
+  .opportunity-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem;
+  }
+  .opportunity-card p {
+    color: var(--text-on-light-muted);
+    margin: 0;
+  }
+  .fit {
+    padding: var(--space-6) 0;
+  }
+  .fit h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .fit-grid {
+    display: grid;
+    gap: 2.5rem;
+  }
+  .fit a {
+    color: var(--amber-500);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .inquiry {
+    padding: var(--space-6) 0 var(--space-7);
+  }
+  .inquiry-inner {
+    max-width: 640px;
+  }
+  .inquiry h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    margin: 0.5rem 0 1rem;
+  }
+  .inquiry-sub {
+    margin-bottom: 2rem;
+  }
+  .inquiry-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+  @media (min-width: 640px) {
+    .form-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .inquiry-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-on-light-muted);
+  }
+  .optional {
+    opacity: 0.6;
+    font-weight: 400;
+  }
+  .inquiry-form input,
+  .inquiry-form textarea {
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: var(--white);
+    color: var(--text-on-light);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    resize: vertical;
+  }
+  .inquiry-submit {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+  }
+  .form-status {
+    color: var(--text-on-light-muted);
+    font-size: 0.9rem;
+    min-height: 1.2em;
+  }
+  .inquiry-confirm {
+    margin-top: 1rem;
+  }
+  .confirm-headline {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--rust-600);
+    margin: 0 0 0.75rem;
+  }
+
+  @media (min-width: 900px) {
+    .who-grid {
+      grid-template-columns: 1.2fr 1fr;
+      align-items: start;
+    }
+    .audience-numbers {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .founders-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .opportunities-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .fit-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
