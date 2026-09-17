@@ -3,101 +3,47 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 
-// Server-rendered (not statically prerendered) specifically so the seats
-// counter below actually ticks down week over week without needing a new
-// deploy — a prerendered page would freeze whatever number was true at
-// build time forever, which is worse than not having a counter at all.
-export const prerender = false;
-
-// Real scarcity, on a timer: starts at STARTING_SEATS the week this page
-// went live and drops by one seat per elapsed week, floored at MIN_SEATS
-// so it never claims to be sold out — that's not something a pure time-based
-// counter (not tied to actual signups) can honestly promise. If real signup
-// tracking is ever wired up (a Sheet/D1 count instead of this timer), swap
-// the computation below for that — everything downstream just reads
-// `seatsLeft`.
-const LAUNCH_WEEK_START = new Date("2026-08-14T00:00:00-06:00");
-const STARTING_SEATS = 10;
-const MIN_SEATS = 3;
-const weeksElapsed = Math.floor((Date.now() - LAUNCH_WEEK_START.getTime()) / (7 * 24 * 60 * 60 * 1000));
-const seatsLeft = Math.max(MIN_SEATS, STARTING_SEATS - Math.max(0, weeksElapsed));
+// The Steady Dad Cohort never actually launched — no confirmed date, no
+// signups (checked the Loops audience 2026-09-17: zero contacts tagged
+// "Lead – Steady Dad Cohort"), so there's nothing to preserve by keeping
+// the old waitlist page live. Retiring it from active promotion rather
+// than deleting the route, since it may still be linked from old posts —
+// visitors land somewhere honest instead of a 404 or a stale October 2026
+// promise. Repurposed toward the two offers that actually run today: the
+// live Workshop and 1:1 coaching with The Turn.
 ---
 <BaseLayout
-  title="Steady Dad Cohort — Waitlist — Dudela"
-  description="Four sessions, one group of dads, live with John and Mike. Kicking off October 2026. Join the waitlist — seats are capped."
+  title="Steady Dad Cohort — Dudela"
+  description="The group cohort isn't running right now. Here's what's actually available today: the live Workshop and 1:1 coaching with The Turn."
 >
   <Nav />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Steady Dad Cohort</p>
-      <h1>Four sessions. One group of dads. Kicking off October 2026.</h1>
+      <h1>The group cohort isn't running right now.</h1>
       <p class="hero-sub">
-        A live group program — dads going through the framework together, on Thursday nights,
-        with John and Mike running every session. Not a video course. A real cohort, capped small
-        on purpose.
+        We floated a live group program — dads going through the framework together — but it
+        never actually launched, and we don't have a date to give you. Rather than leave you on a
+        waitlist for something that isn't happening, here's what's real today.
       </p>
 
-      <div class="seats-badge">
-        <span class="seats-num">{seatsLeft}</span>
-        <span class="seats-label">seats left on the waitlist</span>
+      <div class="resources-row">
+        <a href="/workshop" class="btn btn-primary">Live Workshop, $100 &rarr;</a>
+        <a href="/turn" class="btn btn-ghost">1:1 with The Turn &rarr;</a>
       </div>
-
-      <form class="email-form" id="cohort-form">
-        <input type="hidden" name="magnet" value="cohort-waitlist" />
-        <input type="hidden" name="source" value="/cohort" />
-        <input type="text" name="name" placeholder="First name" />
-        <input type="email" name="email" placeholder="you@email.com" required />
-        <button type="submit" class="btn btn-primary">Join the Waitlist</button>
-      </form>
-      <p id="cohort-form-status" class="form-status"></p>
-
-      <div id="cohort-resources" class="cohort-resources" style="display:none;">
-        <p class="resources-kicker">You're on the list. In the meantime:</p>
-        <div class="resources-row">
-          <a href="/guide" class="btn btn-ghost">Get the Free Dad Prep Guide</a>
-          <a href="/kit" class="btn btn-ghost">Get the Prep Kit</a>
-        </div>
-        <p class="turn-note">
-          Not able to wait for October, or want something more personal than a group?
-          <a href="/turn">John and Mike also work 1:1 &rarr;</a>
-        </p>
-      </div>
+      <p class="turn-note">
+        Want something free first? <a href="/guide">Get the Dad Prep Guide</a> or
+        <a href="/kit">the Prep Kit</a>.
+      </p>
     </div>
   </section>
 
-  <script>
-    const form = document.getElementById("cohort-form") as HTMLFormElement | null;
-    const status = document.getElementById("cohort-form-status") as HTMLParagraphElement | null;
-    const resources = document.getElementById("cohort-resources") as HTMLDivElement | null;
-    form?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
-      btn.disabled = true;
-      if (status) status.textContent = "Adding you to the list…";
-      try {
-        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
-        const data = await res.json();
-        if (data.ok) {
-          if (status) status.textContent = "";
-          form.style.display = "none";
-          if (resources) resources.style.display = "block";
-        } else {
-          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
-          btn.disabled = false;
-        }
-      } catch {
-        if (status) status.textContent = "Something went wrong. Please try again.";
-        btn.disabled = false;
-      }
-    });
-  </script>
-
   <section class="details section-light">
     <div class="container details-grid">
-      <div><h3>Four Thursday nights</h3><p>Live, not recorded. The whole point is going through it together, in real time.</p></div>
-      <div><h3>Small, on purpose</h3><p>Capped so every guy actually gets seen — not a webinar with 200 people on mute.</p></div>
-      <div><h3>October 2026</h3><p>Exact dates confirmed to waitlist members first, before this opens up publicly.</p></div>
+      <div><h3>Live Workshop</h3><p>A 90-minute live session with John and Mike. Real questions, real answers, no script.</p></div>
+      <div><h3>The Turn</h3><p>1:1 coaching if you want direct, personal access instead of a group setting.</p></div>
+      <div><h3>If the cohort comes back</h3><p>We'll announce it through the newsletter and podcast first — no waitlist to manage in the meantime.</p></div>
     </div>
   </section>
 
@@ -120,60 +66,7 @@ const seatsLeft = Math.max(MIN_SEATS, STARTING_SEATS - Math.max(0, weeksElapsed)
   }
   .hero-sub {
     color: var(--text-on-dark-muted);
-    margin-bottom: 1.5rem;
-  }
-  .seats-badge {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    background: var(--forest-700);
-    border: 1px solid var(--amber-500);
-    border-radius: 999px;
-    padding: 0.6rem 1.25rem;
     margin-bottom: 1.75rem;
-  }
-  .seats-num {
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    color: var(--amber-500);
-  }
-  .seats-label {
-    font-family: var(--font-label);
-    font-size: 0.8rem;
-    color: var(--text-on-dark-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .email-form {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .email-form input {
-    flex: 1;
-    min-width: 160px;
-    padding: 0.9rem 1.1rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--forest-600);
-    background: var(--forest-700);
-    color: var(--cream-100);
-    font-family: var(--font-sans);
-  }
-  .form-status {
-    color: var(--text-on-dark-muted);
-    font-size: 0.9rem;
-    margin-top: 0.9rem;
-    min-height: 1.2em;
-  }
-  .cohort-resources {
-    margin-top: 1.5rem;
-  }
-  .resources-kicker {
-    font-family: var(--font-label);
-    font-size: 0.85rem;
-    color: var(--amber-500);
-    margin-bottom: 0.9rem;
   }
   .resources-row {
     display: flex;
