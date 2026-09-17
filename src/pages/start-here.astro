@@ -1,32 +1,28 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-// Mirrors the real link-in-bio page (used in Instagram/TikTok bios), plus
-// the Prep Kit checkout (own Stripe checkout, see /api/create-checkout-session)
-// and the Taking Cara Babies sleep affiliate link.
-//
-// Laid out in three tiers by priority, not just one flat list:
-//   1. The podcast — the single highest-intent thing IG traffic is looking
-//      for, gets its own featured card up top. Links to /podcast (the
-//      on-site episode list + Apple/Spotify/YouTube follow links) rather
-//      than straight to Spotify, so it doesn't pick one platform for people.
-//   2. New Merch + Spit-Up Society — the two things we're actively pushing
-//      right now, one step down from the podcast.
-//   3. Everything else, below a divider.
-const podcastLink = {
-  label: "The Dudela Podcast",
-  sub: "John & Mike, unfiltered — new episode every other Tuesday",
-  href: "/podcast",
+// Lead with the free guide, then podcast and hospital preparation.
+// Keep other existing offers available further down the page.
+const featuredLink = {
+  label: "Baby’s coming. Start here.",
+  sub: "Free: 15 Things Every Dad Should Do Before the Baby Arrives",
+  href: "/offers/guide?utm_source=instagram&utm_medium=bio&utm_campaign=dad_guide",
 };
 
 const tierTwoLinks = [
+  { label: "The Dudela Podcast", sub: "Real conversations with John and Mike", href: "/podcast", tag: null },
+  { label: "Free Hospital Bag Checklist", sub: "For her, baby, and you", href: "/offers/bag", tag: "Free" },
+];
+
+const otherOffers = [
   { label: "Shop New Merch", sub: "Fresh shirt designs just dropped", href: "/merch#shirts", tag: null },
   { label: "Join the Spit-Up Society", sub: "Live Q&A calls, twice a month", href: "/join/spit-up-society", tag: "$5/mo" },
 ];
 
-const links = [
-  { label: "Get the Free Dad Prep Guide", href: "/guide", tag: "Free" },
-  { label: "The Dudela Prep Kit", href: "/api/create-checkout-session?product=prep-kit", tag: "$37" },
+const links: { label: string; href: string; tag: string | null; sub?: string; external?: boolean }[] = [
+  ...otherOffers,
+
+  { label: "The Dudela Prep Kit", href: "/offers/prep", tag: "$37" },
   { label: "Steady Dad: Before Birth Workshop", href: "/workshop", tag: "$100" },
   { label: "Steady Dad Cohort", href: "/cohort", tag: "Waitlist" },
   // The highest-value offer on the site had no path from the link-in-bio
@@ -43,10 +39,10 @@ const links = [
       <a href="/" class="wordmark"><img src="/logo/dudela-wordmark-cream.png" alt="Dudela" /></a>
       <p class="tagline">Turning Dudes Into Dads</p>
 
-      <a href={podcastLink.href} class="podcast-hero">
-        <span class="podcast-hero-eyebrow">Listen Now</span>
-        <span class="podcast-hero-title">{podcastLink.label}</span>
-        <span class="podcast-hero-sub">{podcastLink.sub}</span>
+      <a href={featuredLink.href} class="podcast-hero">
+        <span class="podcast-hero-eyebrow">Get the free guide</span>
+        <span class="podcast-hero-title">{featuredLink.label}</span>
+        <span class="podcast-hero-sub">{featuredLink.sub}</span>
       </a>
 
       <div class="tier-two">

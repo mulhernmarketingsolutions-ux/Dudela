@@ -117,7 +117,7 @@ function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: st
       </a>
     </div>
     <p style="color:#4a5540;font-size:14px;line-height:1.6;margin:0 0 4px;">
-      Want to go five times deeper? The <a href="https://thedudelaco.com/kit" style="color:#c66815;font-weight:700;text-decoration:none;">Dudela Prep Kit</a> is the next step when you're ready.
+      Want more structure? The <a href="https://thedudelaco.com/offers/prep" style="color:#c66815;font-weight:700;text-decoration:none;">Dudela Prep Kit</a> has practical tools and a pregnancy roadmap when you're ready.
     </p>
     <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
   `);
@@ -184,7 +184,8 @@ export async function POST({ request, locals }: APIContext) {
   }
 
   try {
-    await sendLoopsEvent(env, { email, name, magnet, source });
+    const result = await sendLoopsEvent(env, { email, name, magnet, source });
+    if (!result) errors.push("loops");
   } catch (err) {
     console.error("Lead magnet Loops event failed:", err);
     errors.push("loops");
