@@ -3,19 +3,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 
-// Audience figures below were checked live on 2026-09-17 (Instagram,
-// TikTok, YouTube, Facebook, and LinkedIn insights/about pages, logged in
-// as the account owner/admin on each). Podcast download totals were not
-// re-verifiable live in this pass (Podbean's dashboard wasn't reachable),
-// so no download number is stated here on purpose rather than repeating a
-// stale figure — update this comment and the copy below once that's
-// pulled directly from Podbean.
-const audience = [
-  { label: "Instagram", value: "390", note: "followers" },
-  { label: "TikTok", value: "155", note: "followers" },
-  { label: "YouTube", value: "25", note: "subscribers" },
-  { label: "Facebook", value: "59", note: "followers" },
-  { label: "LinkedIn", value: "53", note: "followers" },
+// 2026-09-26: swapped exact per-platform follower counts (small, and not
+// the actual selling point) for the number that matters — lifetime podcast
+// downloads. Confirmed 12,000+ per John/Mike (dudela.md). Channels below
+// are described qualitatively on purpose, not with a stale exact count
+// that needs re-checking every time someone visits this page.
+const channels = [
+  { label: "Podcast", detail: "New episode every other week — real conversations, not scripted content." },
+  { label: "Newsletter", detail: "Every other Tuesday, straight to dads who opted in directly. No purchased list." },
+  { label: "Instagram + TikTok", detail: "Growing weekly. Small list, high engagement — the audience skips generic parenting content on sight." },
 ];
 ---
 <BaseLayout
@@ -39,28 +35,24 @@ const audience = [
     <div class="container who-grid">
       <div>
         <p class="eyebrow">Who We Serve</p>
-        <h2>Expecting and first-time dads, at the moment they're actually looking for help.</h2>
+        <h2>Thousands of dads, at the exact moment they're paying attention.</h2>
         <p class="body-text">
-          Dudela reaches dads through a free prep guide, a paid Prep Kit, a live workshop, a
-          $5/mo community, and 1:1 coaching, plus a podcast and social content that all point
-          back to the same thing: practical help for guys who want to show up steady for their
-          families. The audience skips past generic parenting content because it's built by two
-          dads who've actually been through it, not a brand voice.
+          Dudela reaches expecting and first-time dads through a free prep guide, a paid Prep
+          Kit, a live workshop, a $5/mo community, and 1:1 coaching, plus a podcast with over
+          <strong>12,000 lifetime downloads</strong> and social content that all point back to
+          the same thing: practical help for guys who want to show up steady for their families.
+          The audience skips past generic parenting content because it's built by two dads who've
+          actually been through it, not a brand voice.
         </p>
       </div>
-      <div class="audience-numbers">
-        {audience.map((a) => (
-          <div class="audience-stat">
-            <span class="audience-value">{a.value}</span>
-            <span class="audience-label">{a.label}</span>
-            <span class="audience-note">{a.note}</span>
+      <div class="channel-list">
+        {channels.map((c) => (
+          <div class="channel-item">
+            <span class="channel-label">{c.label}</span>
+            <span class="channel-detail">{c.detail}</span>
           </div>
         ))}
       </div>
-      <p class="audience-caveat">
-        These are our real, current numbers, checked directly on each platform. We'd rather show
-        you an honest audience than an impressive one.
-      </p>
     </div>
   </section>
 
@@ -266,41 +258,29 @@ const audience = [
   .fit .body-text {
     color: var(--text-on-dark-muted);
   }
-  .audience-numbers {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-  }
-  .audience-stat {
+  .channel-list {
     display: flex;
     flex-direction: column;
-    padding: 1.25rem;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    text-align: center;
+    gap: 1.1rem;
   }
-  .audience-value {
+  .channel-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--rust-600);
+    border-radius: var(--radius-md);
+  }
+  .channel-label {
     font-family: var(--font-display);
-    font-size: 2rem;
+    font-size: 1.1rem;
     color: var(--rust-600);
   }
-  .audience-label {
-    font-family: var(--font-label);
-    font-weight: 700;
-    font-size: 0.85rem;
-  }
-  .audience-note {
-    font-size: 0.75rem;
+  .channel-detail {
+    font-size: 0.9rem;
     color: var(--text-on-light-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .audience-caveat {
-    grid-column: 1 / -1;
-    font-family: var(--font-label);
-    font-size: 0.85rem;
-    color: var(--text-on-light-muted);
-    margin: 0;
+    line-height: 1.5;
   }
   .founders {
     padding: var(--space-6) 0;
@@ -446,9 +426,6 @@ const audience = [
     .who-grid {
       grid-template-columns: 1.2fr 1fr;
       align-items: start;
-    }
-    .audience-numbers {
-      grid-template-columns: repeat(3, 1fr);
     }
     .founders-grid {
       grid-template-columns: repeat(2, 1fr);

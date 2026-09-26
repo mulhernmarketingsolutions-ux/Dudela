@@ -91,6 +91,16 @@ export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: str
   ...Object.fromEntries(
     SHIRT_CATALOG.map((shirt) => [shirt.key, { eventName: "purchase-shirt", userGroup: "Customer – Shirt" }])
   ),
+  // Found 2026-09-26 during a full funnel audit: neither of these was ever a
+  // key here, so every sticker-5pack sale and every multi-item cart checkout
+  // (create-cart-checkout-session.ts stamps metadata.product = "sticker-5pack"
+  // or "cart") has silently never been tagged in Loops at all — same
+  // no-op-on-unmapped-product failure mode as the bundle/hat/shirt gaps
+  // above, just never caught until this pass. "cart" covers every possible
+  // multi-item combination with one shared tag rather than per-line-item
+  // tags, since Loops events take one product key per purchase event.
+  "sticker-5pack": { eventName: "purchase-sticker", userGroup: "Customer – Sticker" },
+  "cart": { eventName: "purchase-cart", userGroup: "Customer – Cart Order" },
 };
 
 // Fired on customer.subscription.deleted — separate from PURCHASE_EVENTS since it's a
