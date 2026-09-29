@@ -37,6 +37,7 @@ export function slugify(title) {
 }
 
 const episodeEntries = [
+  { title: "Baby Tech & Fatherhood with Babysense CEO Elad Erdan", date: "2026-09-29", downloads: 0, link: "https://thedudelapodcast.podbean.com/e/baby-tech-fatherhood-with-babysense-ceo-elad-erdan/", apple: null, description: "What does the CEO of a baby monitor company think parents actually need at 3 AM? John and Michael sit down with Elad Erdan, CEO of Babysense and dad of two, to talk baby monitors, sleep, parenting anxiety, marriage, career, and the Dad Renaissance." },
   // Published 2026-09-15 (Podbean scheduled for midnight the night before
   // the Sept 15 newsletter goes out, matching the usual cadence of
   // publishing ahead of the mid-morning send). This is the episode where
