@@ -56,8 +56,17 @@ const featured = picks
 
     <section class="offer" id="guide" aria-label={open ? "BabySense Pro giveaway" : "Free Dad Prep Guide"}>
       <div class="visual">
-        <img class="cover" src="/images/free-guide-cover.png" alt="15 Things Every Dad Should Do Before the Baby Arrives cover" />
-        {open && <p class="caption">Every entrant gets the free guide.</p>}
+        {open ? (
+          <div class="prize" aria-hidden="true">
+            <span>Dudela x BabySense</span>
+            <p class="win">Win</p>
+            <h3>A BabySense Pro<br />baby monitor</h3>
+            <div class="rule"></div>
+            <small>Shipped free by BabySense.<br />Winner drawn October 28.</small>
+          </div>
+        ) : (
+          <img class="cover" src="/images/free-guide-cover.png" alt="15 Things Every Dad Should Do Before the Baby Arrives cover" />
+        )}
       </div>
       <div class="details">
         {open ? (
@@ -65,7 +74,7 @@ const featured = picks
             <p class="eyebrow">Giveaway · Ends {GIVEAWAY.endLabel.replace(/, 2026$/, "")}</p>
             <h2>Win a BabySense Pro.</h2>
             <ol class="steps">
-              <li><span>1</span><div>Enter your email below. You'll get our free Dad Prep Guide right away.</div></li>
+              <li><span>1</span><div>Enter your email below.</div></li>
               <li><span>2</span><div>Follow <a href={GIVEAWAY.instagram} target="_blank" rel="noopener">{GIVEAWAY.instagramHandle}</a> on Instagram.</div></li>
             </ol>
           </>
@@ -88,6 +97,7 @@ const featured = picks
           <label for="email">{open ? "Your email" : "Where should we send it?"}</label>
           <input id="email" type="email" name="email" autocomplete="email" placeholder="Your email address" required />
           <button type="submit" class="btn btn-primary">{open ? "Enter the giveaway" : "Send me the free guide"} <span aria-hidden="true">↗</span></button>
+          {open && <p class="bonus"><strong>Bonus:</strong> our free Dad Prep Guide lands in your inbox the second you enter.</p>}
           <p class="fine">
             {open
               ? <>Entering joins the Dudela newsletter. Unsubscribe anytime. No purchase necessary. <a href="/babysense/rules">Official rules</a>.</>
@@ -210,7 +220,13 @@ const featured = picks
   .steps a,.fine a{color:var(--rust-600);overflow-wrap:anywhere}
   .offer>*,.monitor>*,.hero>*{min-width:0}
   .notice{font-size:14px;line-height:1.6;background:var(--cream-200);border-radius:6px;padding:12px 14px;margin:0 0 8px}
-  .caption{font-size:12px;color:#4a5540;margin:26px 0 0}
+  .bonus{font-size:14px;line-height:1.5;margin:14px 0 0}
+  .prize{background:var(--forest-800);color:var(--cream-100);box-shadow:10px 15px 0 #b4bcaa;padding:32px;width:100%;max-width:300px;transform:rotate(-3deg)}
+  .prize>span{font-family:var(--font-label);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark-muted)}
+  .prize .win{font-family:var(--font-display);font-size:64px;line-height:1;color:var(--amber-500);margin:24px 0 6px}
+  .prize h3{font-family:var(--font-display);font-weight:400;font-size:30px;line-height:1.1;margin:0}
+  .prize .rule{border-top:1px solid var(--forest-500);margin:24px 0}
+  .prize small{font-size:12px;line-height:1.6;color:var(--text-on-dark-muted)}
   .visual{flex-direction:column}
   .code{color:var(--cream-100)!important;margin:-8px 0 18px!important}
   .code strong{color:var(--amber-500);letter-spacing:.04em}
@@ -243,6 +259,9 @@ const featured = picks
     .offer,.monitor{grid-template-columns:1fr}
     .visual{padding:28px;order:2}
     .cover{max-height:240px}
+    .prize{max-width:240px;padding:24px}
+    .prize .win{font-size:48px}
+    .prize h3{font-size:24px}
     .details{padding:24px}
     .eps{grid-template-columns:1fr}
     .ep{flex-direction:row;align-items:center}
