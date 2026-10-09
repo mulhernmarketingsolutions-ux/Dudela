@@ -4,9 +4,9 @@
 // /api/lead-magnet (which refuses to tag an entry outside the window).
 // All times are Mountain Time.
 export const GIVEAWAY = {
-  start: new Date("2026-10-13T00:00:00-06:00"),
+  start: new Date("2026-10-09T00:00:00-06:00"),
   end: new Date("2026-10-27T23:59:59-06:00"),
-  startLabel: "Tuesday, October 13, 2026",
+  startLabel: "Friday, October 9, 2026",
   endLabel: "Tuesday, October 27, 2026",
   drawLabel: "Wednesday, October 28, 2026",
   prize: "BabySense Pro baby monitor",
