@@ -157,7 +157,7 @@ function giveawayEntryEmailHtml(name: string, guideUrl: string) {
     <div style="margin:0 0 28px;">
       <a href="${guideUrl}" style="display:inline-block;background:#f5efe3;color:#1c2319;border:2px solid #1c2319;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Download the guide</a>
     </div>
-    <p style="color:#4a5540;font-size:14px;line-height:1.6;margin:0 0 6px;">Can't wait for the draw? Use code <strong style="color:#1c2319;">DudeLA10</strong> for 10% off at <a href="https://babymonitordirectllc.pxf.io/rEq1o3" style="color:#c66815;font-weight:700;text-decoration:none;">BabySense</a>.</p>
+    <p style="color:#4a5540;font-size:14px;line-height:1.6;margin:0 0 6px;">Can't wait for the draw? Get 10% off with code <strong style="color:#1c2319;">DudeLA10</strong>, applied automatically through <a href="https://babymonitordirectllc.pxf.io/rEq1o3?u=https%3A%2F%2Fwww.babysensemonitors.com%2Fdiscount%2FDudeLA10" style="color:#c66815;font-weight:700;text-decoration:none;">our BabySense link</a>.</p>
     <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">John &amp; Mike, Dudela</p>
     <p style="color:#8a9280;font-size:12px;line-height:1.5;margin:18px 0 0;">No purchase necessary. <a href="https://thedudelaco.com/babysense/rules" style="color:#8a9280;">Official rules</a>.</p>
   `);
