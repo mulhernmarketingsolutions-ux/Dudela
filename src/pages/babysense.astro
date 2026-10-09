@@ -39,7 +39,9 @@ const featured = picks
   <main>
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Welcome, BabySense family</p>
+        {open
+          ? <a class="live" href="#guide"><span class="dot"></span>Live giveaway · Win a BabySense Pro</a>
+          : <p class="eyebrow">Welcome, BabySense family</p>}
         <h1>Turn scared dudes into steady dads.</h1>
         <p class="sub">We're John and Mike, two Denver dads behind The Dudela Co. We help expecting and first-time dads get ready for the biggest job they'll ever have, with practical tools, a podcast, and zero fluff.</p>
         <div class="hero-ctas">
@@ -48,21 +50,34 @@ const featured = picks
         </div>
       </div>
       <div class="hero-media">
-        {VIDEO_SRC
-          ? <video src={VIDEO_SRC} poster="/videos/babysense-intro-poster.jpg" controls playsinline preload="metadata"></video>
-          : <img src="/images/founder-john.jpg" alt="John Mulhern, co-founder of Dudela" />}
+        {VIDEO_SRC ? (
+          <div class="player" data-player>
+            <video src={VIDEO_SRC} poster="/videos/babysense-intro-poster.jpg" playsinline preload="none" aria-label="Intro video from John"></video>
+            <button class="play" type="button" aria-label="Play John's 47-second intro">
+              <span class="ring"></span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+            </button>
+            <div class="player-label"><strong>Meet John</strong><span>47 sec · sound on</span></div>
+          </div>
+        ) : <img src="/images/founder-john.jpg" alt="John Mulhern, co-founder of Dudela" />}
       </div>
     </section>
 
-    <section class="offer" id="guide" aria-label={open ? "BabySense Pro giveaway" : "Free Dad Prep Guide"}>
+    <section class={`offer reveal${open ? " is-open" : ""}`} id="guide" aria-label={open ? "BabySense Pro giveaway" : "Free Dad Prep Guide"}>
       <div class="visual">
         {open ? (
-          <div class="prize" aria-hidden="true">
-            <span>Dudela x BabySense</span>
-            <p class="win">Win</p>
-            <h3>A BabySense Pro<br />baby monitor</h3>
-            <div class="rule"></div>
-            <small>Shipped free by BabySense.<br />Winner drawn October 28.</small>
+          <div class="prize-wrap">
+            <div class="prize-photo">
+              <span class="sticker" aria-hidden="true">Win<br />it</span>
+              <img src={GIVEAWAY.prizeImage} alt="BabySense Pro video baby monitor with camera and split-screen parent unit" />
+            </div>
+            <div class="countdown" data-end={GIVEAWAY.end.toISOString()} aria-label="Time left to enter">
+              <div><b data-d>--</b><i>days</i></div>
+              <div><b data-h>--</b><i>hrs</i></div>
+              <div><b data-m>--</b><i>min</i></div>
+              <div><b data-s>--</b><i>sec</i></div>
+            </div>
+            <p class="prize-note">Shipped free by BabySense · Winner drawn Oct 28</p>
           </div>
         ) : (
           <img class="cover" src="/images/free-guide-cover.png" alt="15 Things Every Dad Should Do Before the Baby Arrives cover" />
@@ -72,7 +87,7 @@ const featured = picks
         {open ? (
           <>
             <p class="eyebrow">Giveaway · Ends {GIVEAWAY.endLabel.replace(/, 2026$/, "")}</p>
-            <h2>Win a BabySense Pro.</h2>
+            <h2 class="win-h"><em>Win</em> a BabySense Pro.</h2>
             <ol class="steps">
               <li><span>1</span><div>Enter your email below.</div></li>
               <li><span>2</span><div>Follow <a href={GIVEAWAY.instagram} target="_blank" rel="noopener">{GIVEAWAY.instagramHandle}</a> on Instagram.</div></li>
@@ -96,7 +111,7 @@ const featured = picks
           <input type="hidden" name="source" value="/babysense" />
           <label for="email">{open ? "Your email" : "Where should we send it?"}</label>
           <input id="email" type="email" name="email" autocomplete="email" placeholder="Your email address" required />
-          <button type="submit" class="btn btn-primary">{open ? "Enter the giveaway" : "Send me the free guide"} <span aria-hidden="true">↗</span></button>
+          <button type="submit" class={`btn btn-primary${open ? " shine" : ""}`}>{open ? "Enter the giveaway" : "Send me the free guide"} <span aria-hidden="true">↗</span></button>
           {open && <p class="bonus"><strong>Bonus:</strong> our free Dad Prep Guide lands in your inbox the second you enter.</p>}
           <p class="fine">
             {open
@@ -109,7 +124,7 @@ const featured = picks
       </div>
     </section>
 
-    <section class="podcast" id="podcast">
+    <section class="podcast reveal" id="podcast">
       <p class="eyebrow">The Dudela Podcast</p>
       <h2>Real talk from two dads who've been there.</h2>
       <div class="eps">
@@ -127,7 +142,7 @@ const featured = picks
       </div>
     </section>
 
-    <section class="monitor">
+    <section class="monitor reveal">
       <img src="/images/babysense-touch-smart-wifi-baby-monitor-with-7-touchscreen-2-cam-5034224.webp" alt="BabySense video baby monitor with touchscreen display and app" loading="lazy" />
       <div>
         <p class="eyebrow">The monitor in our house</p>
@@ -144,6 +159,52 @@ const featured = picks
 </BaseLayout>
 
 <script>
+  // Video: custom poster + play button; native controls appear once playing.
+  document.querySelectorAll<HTMLElement>("[data-player]").forEach((player) => {
+    const video = player.querySelector("video")!;
+    const play = () => {
+      player.classList.add("playing");
+      video.controls = true;
+      video.play().catch(() => { player.classList.remove("playing"); video.controls = false; });
+    };
+    player.querySelector(".play")!.addEventListener("click", play);
+    video.addEventListener("ended", () => {
+      player.classList.remove("playing");
+      video.controls = false;
+      player.querySelector(".player-label span")!.textContent = "Watch again";
+    });
+  });
+
+  // Countdown to the end of the giveaway entry window.
+  const countdown = document.querySelector<HTMLElement>(".countdown");
+  if (countdown) {
+    const end = new Date(countdown.dataset.end!).getTime();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const set = (k: string, v: string) => (countdown.querySelector(`[data-${k}]`)!.textContent = v);
+    const tick = () => {
+      const left = Math.max(0, end - Date.now());
+      set("d", String(Math.floor(left / 864e5)));
+      set("h", pad(Math.floor(left / 36e5) % 24));
+      set("m", pad(Math.floor(left / 6e4) % 60));
+      set("s", pad(Math.floor(left / 1e3) % 60));
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // Fade sections up as they scroll in. Only hides them once JS is running,
+  // so the page still shows everything if scripts fail.
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduce && "IntersectionObserver" in window) {
+    document.documentElement.classList.add("js-reveal");
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+  }
+
   const form = document.querySelector<HTMLFormElement>("#offer-form");
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -199,7 +260,48 @@ const featured = picks
   .hero{display:grid;grid-template-columns:1.25fr 1fr;gap:48px;align-items:center;margin-bottom:64px}
   .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
   .hero-media{justify-self:center;width:100%;max-width:340px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:var(--forest-800);box-shadow:10px 14px 0 var(--cream-300)}
-  .hero-media img,.hero-media video{width:100%;height:100%;object-fit:cover;display:block}
+  .hero-media>img{width:100%;height:100%;object-fit:cover;display:block}
+  .player{position:relative;width:100%;height:100%;cursor:pointer}
+  .player video{width:100%;height:100%;object-fit:cover;display:block;background:var(--forest-800)}
+  .player::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(18,24,15,.78) 0%,rgba(18,24,15,0) 42%);pointer-events:none;transition:opacity .3s}
+  .play{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;border:0;background:var(--amber-500);color:var(--black);display:grid;place-items:center;cursor:pointer;z-index:2;box-shadow:0 12px 30px rgba(0,0,0,.35);transition:transform .35s var(--ease-out),background .2s}
+  .play svg{width:34px;height:34px;fill:currentColor;margin-left:5px}
+  .play .ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--amber-500);animation:ring 2.2s var(--ease-out) infinite}
+  .player:hover .play{transform:scale(1.08);background:var(--amber-600)}
+  .player-label{position:absolute;left:20px;right:20px;bottom:18px;z-index:2;color:var(--cream-100);display:flex;flex-direction:column;gap:2px;pointer-events:none;transition:opacity .3s}
+  .player-label strong{font-family:var(--font-display);font-weight:400;font-size:28px;line-height:1}
+  .player-label span{font-family:var(--font-label);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-on-dark-muted)}
+  .player.playing .play,.player.playing .player-label,.player.playing::after{opacity:0;pointer-events:none}
+  .player.playing{cursor:default}
+  @keyframes ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+
+  .live{display:inline-flex;align-items:center;gap:10px;background:var(--forest-800);color:var(--cream-100);font-family:var(--font-label);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 16px 9px 12px;border-radius:999px;text-decoration:none;transition:transform .25s var(--ease-out)}
+  .live:hover{transform:translateY(-1px)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--amber-500);box-shadow:0 0 0 0 rgba(226,125,37,.7);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(226,125,37,.7)}70%{box-shadow:0 0 0 10px rgba(226,125,37,0)}100%{box-shadow:0 0 0 0 rgba(226,125,37,0)}}
+
+  .win-h{font-size:clamp(34px,4.4vw,48px)!important}
+  .win-h em{font-style:italic;color:var(--amber-600)}
+  .prize-wrap{width:100%;max-width:340px}
+  .prize-photo{position:relative;background:#fff;border-radius:12px;padding:22px;box-shadow:10px 14px 0 #b4bcaa;transition:transform .5s var(--ease-out)}
+  .offer:hover .prize-photo{transform:translateY(-4px) rotate(-.6deg)}
+  .prize-photo img{width:100%;aspect-ratio:1;object-fit:contain;display:block}
+  .sticker{position:absolute;top:-18px;right:-14px;z-index:2;width:78px;height:78px;border-radius:50%;background:var(--amber-500);color:var(--black);display:grid;place-items:center;text-align:center;font-family:var(--font-display);font-style:italic;font-size:24px;line-height:.9;transform:rotate(12deg);box-shadow:0 8px 18px rgba(28,35,25,.25);animation:wobble 3.2s ease-in-out infinite}
+  @keyframes wobble{0%,100%{transform:rotate(12deg) scale(1)}50%{transform:rotate(4deg) scale(1.07)}}
+  .prize-note{font-size:12px;color:#4a5540;text-align:center;margin:12px 0 0}
+  .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:22px 0 0}
+  .countdown div{background:var(--forest-800);border-radius:6px;padding:8px 4px;text-align:center}
+  .countdown b{display:block;font-family:var(--font-label);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--cream-100)}
+  .countdown i{font-style:normal;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-on-dark-muted)}
+  .shine{position:relative;overflow:hidden}
+  .shine::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:shine 3.6s ease-in-out infinite}
+  @keyframes shine{0%,60%{left:-60%}100%{left:130%}}
+
+  :global(.js-reveal) .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+  :global(.js-reveal) .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    .play .ring,.dot,.shine::after,.sticker{animation:none}
+  }
 
   .offer{display:grid;grid-template-columns:1fr 1.2fr;border:1px solid var(--cream-300);border-radius:12px;overflow:hidden;background:#fffaf1;margin-bottom:72px;scroll-margin-top:24px}
   .visual{background:#dce0d2;display:flex;align-items:center;justify-content:center;padding:36px}
@@ -221,12 +323,6 @@ const featured = picks
   .offer>*,.monitor>*,.hero>*{min-width:0}
   .notice{font-size:14px;line-height:1.6;background:var(--cream-200);border-radius:6px;padding:12px 14px;margin:0 0 8px}
   .bonus{font-size:14px;line-height:1.5;margin:14px 0 0}
-  .prize{background:var(--forest-800);color:var(--cream-100);box-shadow:10px 15px 0 #b4bcaa;padding:32px;width:100%;max-width:300px;transform:rotate(-3deg)}
-  .prize>span{font-family:var(--font-label);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-on-dark-muted)}
-  .prize .win{font-family:var(--font-display);font-size:64px;line-height:1;color:var(--amber-500);margin:24px 0 6px}
-  .prize h3{font-family:var(--font-display);font-weight:400;font-size:30px;line-height:1.1;margin:0}
-  .prize .rule{border-top:1px solid var(--forest-500);margin:24px 0}
-  .prize small{font-size:12px;line-height:1.6;color:var(--text-on-dark-muted)}
   .visual{flex-direction:column}
   .code{color:var(--cream-100)!important;margin:-8px 0 18px!important}
   .code strong{color:var(--amber-500);letter-spacing:.04em}
@@ -259,9 +355,8 @@ const featured = picks
     .offer,.monitor{grid-template-columns:1fr}
     .visual{padding:28px;order:2}
     .cover{max-height:240px}
-    .prize{max-width:240px;padding:24px}
-    .prize .win{font-size:48px}
-    .prize h3{font-size:24px}
+    .prize-wrap{max-width:260px}
+    .offer.is-open .visual{order:0;padding:30px 28px 22px}
     .details{padding:24px}
     .eps{grid-template-columns:1fr}
     .ep{flex-direction:row;align-items:center}

@@ -43,7 +43,6 @@ const MAGNETS: Record<string, { subject: string; fileName: string; url: string; 
     fileName: "Dudela – 15 Things Every Dad Should Do Before the Baby Arrives.pdf",
     url: "https://thedudelaco.com/downloads/dudela-15-things.pdf",
     displayName: "15 Things Every Dad Should Do Before the Baby Arrives",
-    intro: "You're entered to win a BabySense Pro. We draw the winner on October 28 and will email you if it's you. Make sure you're following @the_dudela_official on Instagram to complete your entry.",
   },
   "sleep-survival-guide": {
     subject: "Your Sleep Survival Guide is here",
@@ -138,6 +137,32 @@ function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: st
   `);
 }
 
+// BabySense Pro giveaway entry confirmation (/babysense, Oct 2026). Its own
+// template rather than the generic delivery email: the entry is the headline,
+// the Instagram follow (second half of the entry) is the one action, and the
+// free guide is the bonus underneath.
+function giveawayEntryEmailHtml(name: string, guideUrl: string) {
+  const firstName = name ? name.split(" ")[0] : "there";
+  const p = "color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;";
+  return emailShell(`
+    <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#4a5540;margin:0 0 10px;font-weight:700;">Dudela x BabySense</p>
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:32px;line-height:1.15;color:#1c2319;margin:0 0 20px;">You're entered to win a <em style="color:#c66815;">BabySense Pro.</em></h1>
+    <p style="${p}">Hey ${firstName}, you're officially in. We draw one winner on <strong>Wednesday, October 28</strong> and will email you directly if it's you.</p>
+    <div style="background:#1c2319;border-radius:10px;padding:22px 22px 24px;margin:26px 0;">
+      <p style="color:#e27d25;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin:0 0 8px;">One more step</p>
+      <p style="color:#f5efe3;font-size:16px;line-height:1.55;margin:0 0 18px;">Follow <strong>@the_dudela_official</strong> on Instagram. It's part of your entry, and it's where we share giveaway updates.</p>
+      <a href="https://www.instagram.com/the_dudela_official/" style="display:inline-block;background:#e27d25;color:#12180f;padding:13px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Follow on Instagram</a>
+    </div>
+    <p style="${p}"><strong>Your bonus:</strong> our free guide, <em>15 Things Every Dad Should Do Before the Baby Arrives</em>. Two dads, no fluff. Save it somewhere you'll actually look at it again.</p>
+    <div style="margin:0 0 28px;">
+      <a href="${guideUrl}" style="display:inline-block;background:#f5efe3;color:#1c2319;border:2px solid #1c2319;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Download the guide</a>
+    </div>
+    <p style="color:#4a5540;font-size:14px;line-height:1.6;margin:0 0 6px;">Can't wait for the draw? Use code <strong style="color:#1c2319;">DudeLA10</strong> for 10% off at <a href="https://babymonitordirectllc.pxf.io/rEq1o3" style="color:#c66815;font-weight:700;text-decoration:none;">BabySense</a>.</p>
+    <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">John &amp; Mike, Dudela</p>
+    <p style="color:#8a9280;font-size:12px;line-height:1.5;margin:18px 0 0;">No purchase necessary. <a href="https://thedudelaco.com/babysense/rules" style="color:#8a9280;">Official rules</a>.</p>
+  `);
+}
+
 function confirmationEmailHtml(name: string, body: string) {
   const firstName = name ? name.split(" ")[0] : "there";
   return emailShell(`
@@ -217,7 +242,13 @@ export async function POST({ request, locals }: APIContext) {
   // submission actually went through.
   const magnetInfo = MAGNETS[magnet];
   try {
-    if (magnetInfo) {
+    if (magnet === "babysense-giveaway" && magnetInfo) {
+      await sendEmail(env, {
+        to: email,
+        subject: magnetInfo.subject,
+        html: giveawayEntryEmailHtml(name, magnetInfo.url),
+      });
+    } else if (magnetInfo) {
       await sendEmail(env, {
         to: email,
         subject: magnetInfo.subject,

@@ -10,6 +10,8 @@ export const GIVEAWAY = {
   endLabel: "Tuesday, October 27, 2026",
   drawLabel: "Wednesday, October 28, 2026",
   prize: "BabySense Pro baby monitor",
+  // Official product photo from BabySense's own Shopify store (1-camera Pro).
+  prizeImage: "https://cdn.shopify.com/s/files/1/0427/9572/9059/files/babysense-pro-video-baby-monitor-with-1-camera-non-wifi-split-screen-night-light-sound-machine-3200127.png?v=1780014248",
   instagram: "https://www.instagram.com/the_dudela_official/",
   instagramHandle: "@the_dudela_official",
 };
