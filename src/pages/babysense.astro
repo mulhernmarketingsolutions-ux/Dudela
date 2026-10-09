@@ -1,0 +1,213 @@
+---
+// /babysense: landing page for traffic sent by BabySense as part of the
+// cross-promo (Oct 2026). These visitors don't know Dudela yet, so the page
+// leads with who we are, captures email on the free guide, then the podcast,
+// then closes the loop with John's own BabySense monitor + affiliate link.
+//
+// VIDEO: drop John's vertical intro video (1080x1920 mp4) in /public/videos/
+// and set VIDEO_SRC below. Until then the founder photo fills the slot.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { episodes, SPOTIFY_URL, APPLE_URL } from "../data/episodes.js";
+
+const VIDEO_SRC: string | null = "/videos/babysense-intro.mp4";
+const AFFILIATE_URL = "https://babymonitordirectllc.pxf.io/rEq1o3";
+
+// Picked for BabySense's audience: the episode with BabySense's own CEO,
+// the most-listened episode, and John's twins episode (ties to the
+// monitor story).
+const picks = [
+  "Baby Tech & Fatherhood with Babysense CEO Elad Erdan",
+  "What Should I Focus On Right Now? Pregame for Fatherhood Before Baby Arrives",
+  "Surviving Twins: What the First Year Actually Looks Like",
+];
+// Episode-specific Apple link when we have one, otherwise the Podbean episode page.
+const featured = picks
+  .map(t => episodes.find(ep => ep.title === t))
+  .filter(Boolean)
+  .map(ep => ({ ...ep, href: ep.apple !== APPLE_URL ? ep.apple : ep.link }));
+---
+<BaseLayout title="Welcome from BabySense | Dudela" description="Two dads helping expecting and first-time dads get ready. Free guide, podcast, and the baby monitor we actually use.">
+  <header><a href="/" aria-label="Dudela home"><img src="/logo/dudela-logo-white-full.png" alt="Dudela" width="128" /></a><span>Turn scared dudes into steady dads</span></header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Welcome, BabySense family</p>
+        <h1>Turn scared dudes into steady dads.</h1>
+        <p class="sub">We're John and Mike, two Denver dads behind The Dudela Co. We help expecting and first-time dads get ready for the biggest job they'll ever have, with practical tools, a podcast, and zero fluff.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#guide">Get the free guide <span aria-hidden="true">↓</span></a>
+          <a class="btn btn-quiet" href="#podcast">Listen to the podcast</a>
+        </div>
+      </div>
+      <div class="hero-media">
+        {VIDEO_SRC
+          ? <video src={VIDEO_SRC} poster="/videos/babysense-intro-poster.jpg" controls playsinline preload="metadata"></video>
+          : <img src="/images/founder-john.jpg" alt="John Mulhern, co-founder of Dudela" />}
+      </div>
+    </section>
+
+    <section class="offer" id="guide" aria-label="Free Dad Prep Guide">
+      <div class="visual">
+        <img class="cover" src="/images/free-guide-cover.png" alt="15 Things Every Dad Should Do Before the Baby Arrives cover" />
+      </div>
+      <div class="details">
+        <p class="eyebrow">Free Dad Prep Guide</p>
+        <h2>15 Things Every Dad Should Do Before the Baby Arrives</h2>
+        <ul>
+          <li><span aria-hidden="true">✓</span>Practical steps for your head, home, and partnership</li>
+          <li><span aria-hidden="true">✓</span>Conversation starters to use with your partner</li>
+          <li><span aria-hidden="true">✓</span>A clear place to start before baby arrives</li>
+        </ul>
+        <form id="offer-form" data-download="/downloads/dudela-15-things.pdf">
+          <input type="hidden" name="magnet" value="free-guide" />
+          <input type="hidden" name="source" value="/babysense" />
+          <label for="email">Where should we send it?</label>
+          <input id="email" type="email" name="email" autocomplete="email" placeholder="Your email address" required />
+          <button type="submit" class="btn btn-primary">Send me the free guide <span aria-hidden="true">↗</span></button>
+          <p class="fine">We'll send your free guide and Dudela emails. Unsubscribe anytime.</p>
+          <p id="status" role="status" aria-live="polite"></p>
+        </form>
+        <p class="forward"><strong>Mom here?</strong> Grab it and forward it to him. Most dads won't ask for directions, but they'll read a list.</p>
+      </div>
+    </section>
+
+    <section class="podcast" id="podcast">
+      <p class="eyebrow">The Dudela Podcast</p>
+      <h2>Real talk from two dads who've been there.</h2>
+      <div class="eps">
+        {featured.map(ep => (
+          <a class="ep" href={ep.href} target="_blank" rel="noopener">
+            <img src={ep.img} alt="" loading="lazy" />
+            <div><span class="ep-num">{ep.number ? `Episode ${ep.number}` : "Bonus"}</span><h3>{ep.title}</h3></div>
+          </a>
+        ))}
+      </div>
+      <div class="listen">
+        <a class="btn btn-quiet" href={SPOTIFY_URL} target="_blank" rel="noopener">Spotify</a>
+        <a class="btn btn-quiet" href={APPLE_URL} target="_blank" rel="noopener">Apple Podcasts</a>
+        <a class="btn btn-quiet" href="/podcast">All episodes</a>
+      </div>
+    </section>
+
+    <section class="monitor">
+      <img src="/images/babysense-touch-smart-wifi-baby-monitor-with-7-touchscreen-2-cam-5034224.webp" alt="BabySense video baby monitor with touchscreen display and app" loading="lazy" />
+      <div>
+        <p class="eyebrow">The monitor in our house</p>
+        <h2>We bought ours before the twins came home.</h2>
+        <p>When Viv and I found out we were having twins, a BabySense monitor was one of the first things we got. It's still the one we'd point another dad toward.</p>
+        <a class="btn btn-primary" href={AFFILIATE_URL} target="_blank" rel="sponsored noopener">See BabySense monitors <span aria-hidden="true">→</span></a>
+        <p class="fine">We're a BabySense affiliate partner. This link may earn us a small commission at no extra cost to you.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>© {new Date().getFullYear()} The Dudela Co.</span><a href="/">thedudelaco.com</a><a href="/terms">Terms</a><a href="mailto:dude@thedudelaco.com">Need a hand?</a></footer>
+</BaseLayout>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("#offer-form");
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = form.querySelector<HTMLButtonElement>("button")!;
+    const status = document.querySelector<HTMLElement>("#status")!;
+    const body = new FormData(form);
+    const query = new URLSearchParams(location.search);
+    const attribution = new URLSearchParams();
+    for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
+      const value = query.get(key);
+      if (value) attribution.set(key, value.slice(0, 100));
+    }
+    body.set("source", location.pathname + (attribution.size ? `?${attribution}` : ""));
+    button.disabled = true;
+    status.textContent = "Getting your download ready…";
+    try {
+      const response = await fetch("/api/lead-magnet", { method: "POST", body });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error("delivery");
+      status.textContent = data.warnings?.includes("confirmation-email")
+        ? "We couldn't send the email. Your download is ready below."
+        : "You're all set. Check your inbox, or download it here.";
+      const link = document.createElement("a");
+      link.href = form.dataset.download!;
+      link.textContent = "Get your free download";
+      link.style.display = "block";
+      status.append(link);
+      button.textContent = "Your download is ready";
+      form.querySelector<HTMLInputElement>("#email")!.disabled = true;
+    } catch {
+      status.textContent = "We couldn't send that. Please try again.";
+      button.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  :global(body){background:var(--cream-100);color:var(--forest-900)}
+  header{background:var(--forest-800);color:var(--text-on-dark-muted);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px max(24px,calc((100vw - 1060px)/2))}
+  header img{height:44px;width:auto}
+  header span{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  main{max-width:1060px;margin:auto;padding:48px 24px 24px}
+  .eyebrow{font-family:var(--font-label);font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:700;color:var(--text-on-light-muted);margin:0}
+  h1{font-family:var(--font-display);font-weight:400;font-size:clamp(42px,6vw,68px);line-height:1.03;margin:16px 0}
+  h2{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,3.6vw,38px);line-height:1.1;margin:12px 0 16px}
+  .sub{color:var(--text-on-light-muted);font-size:17px;line-height:1.7;max-width:52ch}
+  .btn-quiet{border:1px solid var(--forest-500);color:var(--forest-900);background:transparent}
+  .btn-quiet:hover{background:var(--cream-200)}
+
+  .hero{display:grid;grid-template-columns:1.25fr 1fr;gap:48px;align-items:center;margin-bottom:64px}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+  .hero-media{justify-self:center;width:100%;max-width:340px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:var(--forest-800);box-shadow:10px 14px 0 var(--cream-300)}
+  .hero-media img,.hero-media video{width:100%;height:100%;object-fit:cover;display:block}
+
+  .offer{display:grid;grid-template-columns:1fr 1.2fr;border:1px solid var(--cream-300);border-radius:12px;overflow:hidden;background:#fffaf1;margin-bottom:72px;scroll-margin-top:24px}
+  .visual{background:#dce0d2;display:flex;align-items:center;justify-content:center;padding:36px}
+  .cover{max-height:360px;max-width:100%;object-fit:contain;box-shadow:8px 12px 20px #1c231922;transform:rotate(-3deg)}
+  .details{padding:36px}
+  ul{list-style:none;padding:0;margin:18px 0 24px}
+  li{display:flex;gap:12px;font-size:14px;margin:10px 0}
+  li span{color:var(--forest-500)}
+  label{font-size:13px;display:block;margin-bottom:8px}
+  input[type=email]{width:100%;background:#fff;border:1px solid #b9b5a7;border-radius:4px;padding:14px;font:inherit;font-size:16px;margin-bottom:12px}
+  form .btn{display:flex;width:100%;justify-content:space-between;padding:16px 20px}
+  button:disabled{opacity:.6;cursor:default}
+  .fine{font-size:11px;color:var(--text-on-light-muted);line-height:1.6;margin:12px 0 0}
+  #status{font-size:13px}
+  .forward{font-size:14px;line-height:1.6;margin:22px 0 0;padding-top:18px;border-top:1px solid var(--cream-300)}
+
+  .podcast{margin-bottom:72px;scroll-margin-top:24px}
+  .eps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:24px 0}
+  .ep{display:flex;flex-direction:column;background:#fffaf1;border:1px solid var(--cream-300);border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .2s var(--ease-out)}
+  .ep:hover{transform:translateY(-2px)}
+  .ep img{width:100%;aspect-ratio:1;object-fit:cover}
+  .ep div{padding:16px}
+  .ep-num{font-family:var(--font-label);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-on-light-muted)}
+  .ep h3{font-size:16px;line-height:1.35;font-weight:600;margin:6px 0 0}
+  .listen{display:flex;gap:10px;flex-wrap:wrap}
+
+  .monitor{display:grid;grid-template-columns:1fr 1.2fr;gap:40px;align-items:center;background:var(--forest-800);color:var(--text-on-dark);border-radius:12px;padding:40px;margin-bottom:48px}
+  .monitor img{width:100%;border-radius:8px;background:#fff}
+  .monitor .eyebrow,.monitor .fine{color:var(--text-on-dark-muted)}
+  .monitor p:not(.eyebrow):not(.fine){color:var(--text-on-dark-muted);line-height:1.7;margin:0 0 24px}
+
+  footer{max-width:1060px;margin:auto;padding:24px;border-top:1px solid var(--cream-300);display:flex;gap:24px;flex-wrap:wrap;font-size:11px;color:var(--text-on-light-muted)}
+  footer span{margin-right:auto}
+  footer a{color:inherit}
+
+  @media(max-width:760px){
+    main{padding-top:32px}
+    header span{display:none}
+    .hero{grid-template-columns:1fr;gap:32px;margin-bottom:48px}
+    .hero-media{max-width:280px}
+    .offer,.monitor{grid-template-columns:1fr}
+    .visual{padding:28px}
+    .cover{max-height:240px}
+    .details{padding:24px}
+    .eps{grid-template-columns:1fr}
+    .ep{flex-direction:row;align-items:center}
+    .ep img{width:96px;height:96px;flex-shrink:0}
+    .ep div{padding:12px 14px}
+    .monitor{padding:24px;gap:24px}
+    .offer,.podcast{margin-bottom:48px}
+  }
+</style>
