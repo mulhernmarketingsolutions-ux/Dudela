@@ -18,6 +18,12 @@ export interface LoopsEnv {
 // Keep this in sync with the tags in "Dudela Email System & Welcome Sequence.md".
 export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "free-guide": { eventName: "lead-free-guide", userGroup: "Lead – Free Guide" },
+  // BabySense cross-promo (/babysense, Oct 2026). Same eventName as the free
+  // guide on purpose, so the existing free-guide welcome/nurture workflow
+  // still fires; only the userGroup differs, so these leads can be counted
+  // and reported back to BabySense separately.
+  "babysense-free-guide": { eventName: "lead-free-guide", userGroup: "Lead – BabySense" },
+  "babysense-giveaway": { eventName: "lead-free-guide", userGroup: "Lead – BabySense Giveaway" },
   // These two were missing entirely — sendLoopsEvent() falls back to
   // LOOPS_EVENTS["newsletter"] for any unmapped magnet, so submitting either
   // form was silently tagging people "Lead – Newsletter" instead of

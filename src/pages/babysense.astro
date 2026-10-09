@@ -4,10 +4,17 @@
 // leads with who we are, captures email on the free guide, then the podcast,
 // then closes the loop with John's own BabySense monitor + affiliate link.
 //
-// VIDEO: drop John's vertical intro video (1080x1920 mp4) in /public/videos/
-// and set VIDEO_SRC below. Until then the founder photo fills the slot.
+// VIDEO: John's intro, 720x1280 H.264 in /public/videos/. Set VIDEO_SRC to null
+// to fall back to the founder photo.
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { episodes, SPOTIFY_URL, APPLE_URL } from "../data/episodes.js";
+import { GIVEAWAY, giveawayState, BABYSENSE_CODE } from "../data/babysenseGiveaway";
+
+// Rendered on request (not at build) so the giveaway switches on and off
+// by itself on the dates in data/babysenseGiveaway.ts.
+export const prerender = false;
+const state = giveawayState();
+const open = state === "open";
 
 const VIDEO_SRC: string | null = "/videos/babysense-intro.mp4";
 const AFFILIATE_URL = "https://babymonitordirectllc.pxf.io/rEq1o3";
@@ -36,7 +43,7 @@ const featured = picks
         <h1>Turn scared dudes into steady dads.</h1>
         <p class="sub">We're John and Mike, two Denver dads behind The Dudela Co. We help expecting and first-time dads get ready for the biggest job they'll ever have, with practical tools, a podcast, and zero fluff.</p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="#guide">Get the free guide <span aria-hidden="true">↓</span></a>
+          <a class="btn btn-primary" href="#guide">{open ? "Enter to win a BabySense Pro" : "Get the free guide"} <span aria-hidden="true">↓</span></a>
           <a class="btn btn-quiet" href="#podcast">Listen to the podcast</a>
         </div>
       </div>
@@ -47,28 +54,48 @@ const featured = picks
       </div>
     </section>
 
-    <section class="offer" id="guide" aria-label="Free Dad Prep Guide">
+    <section class="offer" id="guide" aria-label={open ? "BabySense Pro giveaway" : "Free Dad Prep Guide"}>
       <div class="visual">
         <img class="cover" src="/images/free-guide-cover.png" alt="15 Things Every Dad Should Do Before the Baby Arrives cover" />
+        {open && <p class="caption">Every entrant gets the free guide.</p>}
       </div>
       <div class="details">
-        <p class="eyebrow">Free Dad Prep Guide</p>
-        <h2>15 Things Every Dad Should Do Before the Baby Arrives</h2>
-        <ul>
-          <li><span aria-hidden="true">✓</span>Practical steps for your head, home, and partnership</li>
-          <li><span aria-hidden="true">✓</span>Conversation starters to use with your partner</li>
-          <li><span aria-hidden="true">✓</span>A clear place to start before baby arrives</li>
-        </ul>
-        <form id="offer-form" data-download="/downloads/dudela-15-things.pdf">
-          <input type="hidden" name="magnet" value="free-guide" />
+        {open ? (
+          <>
+            <p class="eyebrow">Giveaway · Ends {GIVEAWAY.endLabel.replace(/, 2026$/, "")}</p>
+            <h2>Win a BabySense Pro.</h2>
+            <ol class="steps">
+              <li><span>1</span><div>Enter your email below. You'll get our free Dad Prep Guide right away.</div></li>
+              <li><span>2</span><div>Follow <a href={GIVEAWAY.instagram} target="_blank" rel="noopener">{GIVEAWAY.instagramHandle}</a> on Instagram.</div></li>
+            </ol>
+          </>
+        ) : (
+          <>
+            <p class="eyebrow">Free Dad Prep Guide</p>
+            <h2>15 Things Every Dad Should Do Before the Baby Arrives</h2>
+            {state === "before" && <p class="notice">Heads up: our BabySense Pro giveaway opens {GIVEAWAY.startLabel.replace(/, 2026$/, "")}. Grab the guide now and come back then to enter.</p>}
+            {state === "closed" && <p class="notice">The BabySense Pro giveaway has closed. Thanks to everyone who entered. The guide is still free.</p>}
+            <ul>
+              <li><span aria-hidden="true">✓</span>Practical steps for your head, home, and partnership</li>
+              <li><span aria-hidden="true">✓</span>Conversation starters to use with your partner</li>
+              <li><span aria-hidden="true">✓</span>A clear place to start before baby arrives</li>
+            </ul>
+          </>
+        )}
+        <form id="offer-form" data-download="/downloads/dudela-15-things.pdf" data-giveaway={open ? "1" : undefined}>
+          <input type="hidden" name="magnet" value={open ? "babysense-giveaway" : "babysense-free-guide"} />
           <input type="hidden" name="source" value="/babysense" />
-          <label for="email">Where should we send it?</label>
+          <label for="email">{open ? "Your email" : "Where should we send it?"}</label>
           <input id="email" type="email" name="email" autocomplete="email" placeholder="Your email address" required />
-          <button type="submit" class="btn btn-primary">Send me the free guide <span aria-hidden="true">↗</span></button>
-          <p class="fine">We'll send your free guide and Dudela emails. Unsubscribe anytime.</p>
+          <button type="submit" class="btn btn-primary">{open ? "Enter the giveaway" : "Send me the free guide"} <span aria-hidden="true">↗</span></button>
+          <p class="fine">
+            {open
+              ? <>Entering joins the Dudela newsletter. Unsubscribe anytime. No purchase necessary. <a href="/babysense/rules">Official rules</a>.</>
+              : "We'll send your free guide and Dudela emails. Unsubscribe anytime."}
+          </p>
           <p id="status" role="status" aria-live="polite"></p>
         </form>
-        <p class="forward"><strong>Mom here?</strong> Grab it and forward it to him. Most dads won't ask for directions, but they'll read a list.</p>
+        <p class="forward"><strong>Mom here?</strong> {open ? "Enter, then forward the guide to him." : "Grab it and forward it to him."} Most dads won't ask for directions, but they'll read a list.</p>
       </div>
     </section>
 
@@ -96,6 +123,7 @@ const featured = picks
         <p class="eyebrow">The monitor in our house</p>
         <h2>We bought ours before the twins came home.</h2>
         <p>When Viv and I found out we were having twins, a BabySense monitor was one of the first things we got. It's still the one we'd point another dad toward.</p>
+        <p class="code">Use code <strong>{BABYSENSE_CODE}</strong> for 10% off.</p>
         <a class="btn btn-primary" href={AFFILIATE_URL} target="_blank" rel="sponsored noopener">See BabySense monitors <span aria-hidden="true">→</span></a>
         <p class="fine">We're a BabySense affiliate partner. This link may earn us a small commission at no extra cost to you.</p>
       </div>
@@ -125,15 +153,18 @@ const featured = picks
       const response = await fetch("/api/lead-magnet", { method: "POST", body });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error("delivery");
+      const entered = form.dataset.giveaway === "1";
       status.textContent = data.warnings?.includes("confirmation-email")
         ? "We couldn't send the email. Your download is ready below."
-        : "You're all set. Check your inbox, or download it here.";
+        : entered
+          ? "You're entered. Last step: follow @the_dudela_official on Instagram. Your free guide is in your inbox, or download it here."
+          : "You're all set. Check your inbox, or download it here.";
       const link = document.createElement("a");
       link.href = form.dataset.download!;
       link.textContent = "Get your free download";
       link.style.display = "block";
       status.append(link);
-      button.textContent = "Your download is ready";
+      button.textContent = entered ? "You\u2019re entered" : "Your download is ready";
       form.querySelector<HTMLInputElement>("#email")!.disabled = true;
     } catch {
       status.textContent = "We couldn't send that. Please try again.";
@@ -173,6 +204,16 @@ const featured = picks
   button:disabled{opacity:.6;cursor:default}
   .fine{font-size:11px;color:var(--text-on-light-muted);line-height:1.6;margin:12px 0 0}
   #status{font-size:13px}
+  .steps{list-style:none;padding:0;margin:18px 0 24px}
+  .steps li{display:flex;gap:12px;align-items:baseline;font-size:15px;line-height:1.5;margin:12px 0}
+  .steps li span{flex:none;width:24px;height:24px;border-radius:50%;background:var(--forest-800);color:var(--cream-100);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .steps a,.fine a{color:var(--rust-600);overflow-wrap:anywhere}
+  .offer>*,.monitor>*,.hero>*{min-width:0}
+  .notice{font-size:14px;line-height:1.6;background:var(--cream-200);border-radius:6px;padding:12px 14px;margin:0 0 8px}
+  .caption{font-size:12px;color:#4a5540;margin:26px 0 0}
+  .visual{flex-direction:column}
+  .code{color:var(--cream-100)!important;margin:-8px 0 18px!important}
+  .code strong{color:var(--amber-500);letter-spacing:.04em}
   .forward{font-size:14px;line-height:1.6;margin:22px 0 0;padding-top:18px;border-top:1px solid var(--cream-300)}
 
   .podcast{margin-bottom:72px;scroll-margin-top:24px}
@@ -200,7 +241,7 @@ const featured = picks
     .hero{grid-template-columns:1fr;gap:32px;margin-bottom:48px}
     .hero-media{max-width:280px}
     .offer,.monitor{grid-template-columns:1fr}
-    .visual{padding:28px}
+    .visual{padding:28px;order:2}
     .cover{max-height:240px}
     .details{padding:24px}
     .eps{grid-template-columns:1fr}

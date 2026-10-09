@@ -1,0 +1,56 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { GIVEAWAY } from "../../data/babysenseGiveaway";
+---
+<BaseLayout title="BabySense Pro Giveaway: Official Rules | Dudela" description="Official rules for the Dudela x BabySense Pro giveaway.">
+  <Nav />
+  <section class="page-hero section-dark">
+    <div class="container rules-head">
+      <p class="eyebrow">Dudela x BabySense</p>
+      <h1>BabySense Pro Giveaway: Official Rules</h1>
+    </div>
+  </section>
+  <section class="section-light">
+  <main class="rules container">
+    <p class="lead"><strong>No purchase necessary to enter or win.</strong> A purchase will not increase your chances of winning.</p>
+
+    <h2>1. Sponsor</h2>
+    <p>This giveaway is sponsored by The Dudela Co. ("Dudela"). The prize is provided by Babysense. Contact: <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a>.</p>
+
+    <h2>2. Entry period</h2>
+    <p>The giveaway starts at 12:00 a.m. Mountain Time on {GIVEAWAY.startLabel} and ends at 11:59 p.m. Mountain Time on {GIVEAWAY.endLabel}. Entries received outside this window will not be counted.</p>
+
+    <h2>3. Who can enter</h2>
+    <p>Open to legal residents of the 50 United States and the District of Columbia who are 18 or older at the time of entry. Employees of Dudela and Babysense, and their immediate family and household members, are not eligible. Void where prohibited.</p>
+
+    <h2>4. How to enter</h2>
+    <p>Enter your email address on <a href="/babysense">thedudelaco.com/babysense</a> during the entry period and follow <a href={GIVEAWAY.instagram} target="_blank" rel="noopener">{GIVEAWAY.instagramHandle}</a> on Instagram. Entering adds you to the Dudela email newsletter, which you can unsubscribe from at any time. Limit one entry per person and per email address. Entries made through automated means will be disqualified.</p>
+
+    <h2>5. Prize</h2>
+    <p>One (1) winner will receive one (1) {GIVEAWAY.prize}, shipped directly by Babysense to an address in the United States. The prize cannot be transferred or exchanged for cash. If the prize becomes unavailable, a prize of equal or greater value may be substituted.</p>
+
+    <h2>6. Winner selection and notification</h2>
+    <p>One winner will be selected at random from all eligible entries on or about {GIVEAWAY.drawLabel}. Odds of winning depend on the number of eligible entries received. The winner will be notified by email and must reply within 72 hours with their shipping details, or an alternate winner may be selected.</p>
+
+    <h2>7. Your information</h2>
+    <p>Dudela uses entrants' email addresses to run the giveaway and send the Dudela newsletter. To deliver the prize, Dudela will share the winner's name, shipping address, email, and phone number with Babysense. We do not sell entrant information.</p>
+
+    <h2>8. General</h2>
+    <p>By entering, you agree to these rules. Dudela may disqualify anyone who tampers with the entry process or violates these rules, and may modify or cancel the giveaway if it cannot run as planned. The winner is responsible for any taxes on the prize. This giveaway is not sponsored, endorsed, or administered by, or associated with, Instagram or Meta.</p>
+  </main>
+  </section>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero{padding:9rem 0 3rem}
+  .page-hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(2rem,4.5vw,2.8rem);line-height:1.1;margin:.5rem 0 0}
+  .rules-head{max-width:720px}
+  .rules{max-width:720px;padding-top:3rem;padding-bottom:4rem}
+  h2{font-size:1.05rem;font-weight:600;margin:2rem 0 .5rem}
+  p{line-height:1.7;color:var(--text-on-light-muted)}
+  .lead{color:var(--text-on-light);font-size:1.05rem}
+  a{color:var(--rust-600)}
+</style>

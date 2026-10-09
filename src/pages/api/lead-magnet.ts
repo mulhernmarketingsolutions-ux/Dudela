@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 import { getGoogleAccessToken, appendSheetRow, GOOGLE_SCOPES } from "../../lib/google";
 import { sendLoopsEvent } from "../../lib/loops";
 import { sendEmail } from "../../lib/email";
+import { giveawayState } from "../../data/babysenseGiveaway";
 
 export const prerender = false;
 
@@ -24,12 +25,25 @@ export const prerender = false;
 // PDF's public URL. Drop real PDF files in /public/downloads/ and update the url — until
 // then this map is empty-safe: if a magnet isn't listed here, the generic CONFIRMATIONS
 // email below is sent instead, so submitters always hear something back.
-const MAGNETS: Record<string, { subject: string; fileName: string; url: string; displayName: string }> = {
+const MAGNETS: Record<string, { subject: string; fileName: string; url: string; displayName: string; intro?: string }> = {
   "free-guide": {
     subject: "Your free guide — 15 Things Every Dad Should Do Before the Baby Arrives",
     fileName: "Dudela – 15 Things Every Dad Should Do Before the Baby Arrives.pdf",
     url: "https://thedudelaco.com/downloads/dudela-15-things.pdf",
     displayName: "15 Things Every Dad Should Do Before the Baby Arrives",
+  },
+  "babysense-free-guide": {
+    subject: "Your free guide — 15 Things Every Dad Should Do Before the Baby Arrives",
+    fileName: "Dudela – 15 Things Every Dad Should Do Before the Baby Arrives.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-15-things.pdf",
+    displayName: "15 Things Every Dad Should Do Before the Baby Arrives",
+  },
+  "babysense-giveaway": {
+    subject: "You're entered to win a BabySense Pro (+ your free guide)",
+    fileName: "Dudela – 15 Things Every Dad Should Do Before the Baby Arrives.pdf",
+    url: "https://thedudelaco.com/downloads/dudela-15-things.pdf",
+    displayName: "15 Things Every Dad Should Do Before the Baby Arrives",
+    intro: "You're entered to win a BabySense Pro. We draw the winner on October 28 and will email you if it's you. Make sure you're following @the_dudela_official on Instagram to complete your entry.",
   },
   "sleep-survival-guide": {
     subject: "Your Sleep Survival Guide is here",
@@ -103,12 +117,13 @@ function emailShell(innerHtml: string) {
   `;
 }
 
-function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: string; displayName: string }) {
+function deliveryEmailHtml(name: string, magnetInfo: { fileName: string; url: string; displayName: string; intro?: string }) {
   const firstName = name ? name.split(" ")[0] : "there";
   return emailShell(`
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+    ${magnetInfo.intro ? `<p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">${magnetInfo.intro}</p>` : ""}
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
-      Here it is — <strong>${magnetInfo.displayName}</strong>.
+      ${magnetInfo.intro ? "And as promised, here's your free guide" : "Here it is"} — <strong>${magnetInfo.displayName}</strong>.
       Straight from us, no fluff. Save it somewhere you'll actually look at it again.
     </p>
     <div style="text-align:center;margin:30px 0 26px;">
@@ -157,7 +172,13 @@ export async function POST({ request, locals }: APIContext) {
 
   const email = (body.email || "").trim();
   const name = (body.name || "").trim();
-  const magnet = (body.magnet || "guide").trim();
+  let magnet = (body.magnet || "guide").trim();
+  // Giveaway entries only count inside the entry window. A stale tab or a
+  // replayed request outside it still gets the free guide, just not tagged
+  // as a giveaway entrant.
+  if (magnet === "babysense-giveaway" && giveawayState() !== "open") {
+    magnet = "babysense-free-guide";
+  }
   const source = (body.source || "").trim();
 
   if (!email || !email.includes("@")) {
