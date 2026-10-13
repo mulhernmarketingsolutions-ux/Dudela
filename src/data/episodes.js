@@ -37,7 +37,19 @@ export function slugify(title) {
 }
 
 const episodeEntries = [
-  { title: "Baby Tech & Fatherhood with Babysense CEO Elad Erdan", date: "2026-09-29", downloads: 0, link: "https://thedudelapodcast.podbean.com/e/baby-tech-fatherhood-with-babysense-ceo-elad-erdan/", apple: null, description: "What does the CEO of a baby monitor company think parents actually need at 3 AM? John and Michael sit down with Elad Erdan, CEO of Babysense and dad of two, to talk baby monitors, sleep, parenting anxiety, marriage, career, and the Dad Renaissance." },
+  // Published 2026-10-13 (Podbean, just after midnight ahead of the 10am
+  // newsletter). Art served from Podbean's CDN. Apple link left unset until
+  // Apple's catalog picks it up; falls back to the show-level APPLE_URL.
+  {
+    title: "Decide Who You're Going to Let Down",
+    date: "2026-10-13",
+    downloads: 0,
+    link: "https://thedudelapodcast.podbean.com/e/decide-who-youre-going-to-let-down/",
+    apple: null,
+    img: "https://pbcdn1.podbean.com/imglogo/ep-logo/pbblog21310544/Decide_Who_You_re_Going_to_Let_Down8ebck.jpg",
+    description: "You can't be everything to everyone, so who are you willing to let down? John and Michael talk competing demands from work, friends, family, and home, why keeping score in a marriage breeds resentment, giving commitments a defined season, and protecting time for the people who matter most. Plus the Brain Dump exercise and two challenges for the next two weeks.",
+  },
+  { title: "Baby Tech & Fatherhood with Babysense CEO Elad Erdan", date: "2026-09-29", downloads: 0, link: "https://thedudelapodcast.podbean.com/e/baby-tech-fatherhood-with-babysense-ceo-elad-erdan/", apple: null, img: "https://pbcdn1.podbean.com/imglogo/ep-logo/pbblog21310544/Baby_Tech_Fatherhood_with_Babysense_CEO_Elad_Erdanag6e6.jpg", description: "What does the CEO of a baby monitor company think parents actually need at 3 AM? John and Michael sit down with Elad Erdan, CEO of Babysense and dad of two, to talk baby monitors, sleep, parenting anxiety, marriage, career, and the Dad Renaissance." },
   // Published 2026-09-15 (Podbean scheduled for midnight the night before
   // the Sept 15 newsletter goes out, matching the usual cadence of
   // publishing ahead of the mid-morning send). This is the episode where
