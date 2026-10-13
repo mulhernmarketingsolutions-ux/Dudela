@@ -1,5 +1,6 @@
 ---
 import "../styles/tokens.css";
+import { episodes } from "../data/episodes.js";
 
 export interface Props {
   title?: string;
@@ -31,11 +32,31 @@ const {
 
 const ogImageUrl = new URL(ogImage ?? "/og-image.jpg", Astro.site ?? Astro.url).toString();
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+// New-episode pulse: every link to /podcast gets a soft amber pulse on the
+// day the newest episode drops and the day after (the every-other-Tuesday
+// release, so Tuesday + Wednesday). Keyed off the newest date in
+// episodes.js, so it turns on by itself whenever a new episode is added
+// there, and off again two days later. Checked client-side in Mountain
+// time because marketing pages are prerendered. Preview anytime with ?pulse=1.
+const latestEpisodeDate = episodes[0]?.date ?? "";
 ---
 <!doctype html>
-<html lang="en">
+<html lang="en" data-latest-episode={latestEpisodeDate}>
   <head>
     <meta charset="UTF-8" />
+    <script is:inline>
+      (function () {
+        try {
+          var d = document.documentElement;
+          var latest = d.getAttribute("data-latest-episode");
+          var forced = /[?&]pulse=1\b/.test(location.search);
+          if (!latest && !forced) return;
+          var today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Denver" }).format(new Date());
+          var days = (Date.parse(today) - Date.parse(latest)) / 864e5;
+          if (forced || (days >= 0 && days <= 1)) d.classList.add("new-episode-window");
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Stops iOS Safari from auto-detecting number-like sequences (dates,
          phone numbers, the "01" "02" stage/episode indices sprinkled all
@@ -72,6 +93,40 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toStri
       rel="stylesheet"
     />
 
+    <style is:global>
+      .new-episode-window a[href="/podcast"]:not(.btn) {
+        position: relative;
+      }
+      .new-episode-window a[href="/podcast"]:not(.btn)::after {
+        content: "";
+        position: absolute;
+        top: -0.15em;
+        right: -0.6em;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--amber-500, #e27d25);
+        animation: dudela-dot-pulse 1.8s ease-out infinite;
+        pointer-events: none;
+      }
+      .new-episode-window a.btn[href="/podcast"] {
+        animation: dudela-btn-pulse 2.2s ease-out infinite;
+      }
+      @keyframes dudela-dot-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(226, 125, 37, 0.7); }
+        70% { box-shadow: 0 0 0 8px rgba(226, 125, 37, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(226, 125, 37, 0); }
+      }
+      @keyframes dudela-btn-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(226, 125, 37, 0.55); }
+        70% { box-shadow: 0 0 0 12px rgba(226, 125, 37, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(226, 125, 37, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .new-episode-window a[href="/podcast"]:not(.btn)::after,
+        .new-episode-window a.btn[href="/podcast"] { animation: none; }
+      }
+    </style>
   </head>
   <body>
     <slot />
