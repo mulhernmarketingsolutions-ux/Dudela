@@ -20,6 +20,9 @@ export interface Props {
   type?: "website" | "article";
   publishedTime?: string; // ISO 8601 (e.g. "2026-09"), article type only
   ogImage?: string; // absolute or root-relative override of the default OG image
+  // Ad landing pages (e.g. /get-the-kit) set this so they don't compete with
+  // the on-site pages in search results.
+  noindex?: boolean;
 }
 const {
   title = "Dudela — Turning Dudes Into Dads",
@@ -28,6 +31,7 @@ const {
   type = "website",
   publishedTime,
   ogImage,
+  noindex = false,
 } = Astro.props;
 
 const ogImageUrl = new URL(ogImage ?? "/og-image.jpg", Astro.site ?? Astro.url).toString();
@@ -58,6 +62,7 @@ const latestEpisodeDate = episodes[0]?.date ?? "";
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {noindex && <meta name="robots" content="noindex" />}
     <!-- Stops iOS Safari from auto-detecting number-like sequences (dates,
          phone numbers, the "01" "02" stage/episode indices sprinkled all
          over this site) and rendering them as blue underlined links. -->
