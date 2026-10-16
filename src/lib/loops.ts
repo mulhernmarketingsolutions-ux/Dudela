@@ -68,6 +68,8 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
 export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
   "spit-up-society": { eventName: "member-spit-up-society", userGroup: "Member – Spit-Up Society" },
+  // The Dudela Workshop ($147, first Thursdays) — added 2026-10-16.
+  "workshop": { eventName: "purchase-workshop", userGroup: "Customer – Workshop" },
   // Found 2026-09-14 auditing why Loops tagging looked broken for real purchases:
   // handleBundleCheckout (create-checkout-session.ts) stamps metadata.product =
   // "bundle" for every hat+shirt bundle order, but "bundle" was never a key in

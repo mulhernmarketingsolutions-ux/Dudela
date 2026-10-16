@@ -1,0 +1,46 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { WORKSHOP_TIME, WORKSHOP_MIN_DADS } from "../../data/workshop";
+---
+<BaseLayout title="You're in — The Dudela Workshop" description="Your seat in The Dudela Workshop is saved.">
+  <Nav />
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Seat saved</p>
+      <h1>You're in.</h1>
+      <p class="hero-sub" id="session-line">
+        Your seat in The Dudela Workshop is saved, {WORKSHOP_TIME} on Zoom. A receipt is on its way to your inbox now.
+      </p>
+      <p class="hero-note">
+        We'll email your Zoom link and a short prep note before the session. If your date doesn't reach
+        {WORKSHOP_MIN_DADS} dads, we'll reach out and you choose: the next date, a 1:1 call, or a full refund.
+      </p>
+      <a href="/kit" class="btn btn-ghost">Don't have the Prep Kit yet? Grab it here</a>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var sid = p.get("session_id");
+    if (!sid || !window.fbq) return;
+    var key = "dudela_px_purchase_" + sid;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) {}
+    fbq("track", "Purchase", { value: 147, currency: "USD", content_name: "Dudela Workshop" }, { eventID: sid });
+  })();
+</script>
+
+<style>
+  .hero { padding: 9rem 0 5rem; text-align: center; }
+  .hero-inner { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, 3.5rem); margin: 0.5rem 0 1.25rem; }
+  .hero-sub { color: var(--text-on-dark-muted); margin-bottom: 1rem; }
+  .hero-note { color: var(--text-on-dark-muted); font-size: 0.92rem; margin-bottom: 1.75rem; }
+  .btn-ghost { color: var(--cream-100); }
+</style>

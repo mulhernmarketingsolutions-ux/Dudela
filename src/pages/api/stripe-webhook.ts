@@ -1,3 +1,4 @@
+import { findWorkshopDate } from "../../data/workshop";
 import type { APIContext } from "astro";
 import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
@@ -91,6 +92,9 @@ type ProductInfo = {
   url?: string;
   isMerch?: boolean;
   isBundle?: boolean;
+  // The Dudela Workshop: receipt confirms the seat + date instead of a download.
+  isWorkshop?: boolean;
+  sessionLabel?: string;
   // Relative /images/... path — resolved to an absolute thedudelaco.com
   // URL in receiptEmailHtml/notifyEmailHtml, same reasoning as
   // create-checkout-session.ts's priceData.image (email clients need a
@@ -112,6 +116,11 @@ export const PRODUCTS: Record<string, ProductInfo> = {
     name: "The Spit-Up Society",
     price: "$5/mo",
     isSubscription: true,
+  },
+  "workshop": {
+    name: "The Dudela Workshop",
+    price: "$147",
+    isWorkshop: true,
   },
   // Every buyable hat — see lib/printful.ts HAT_CATALOG, the single source
   // of truth for the real (design, thread color, add-on, cap color) combos
@@ -294,6 +303,22 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
     `);
   }
 
+  if (product.isWorkshop) {
+    return emailShell(`
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+      Your seat in <strong>The Dudela Workshop</strong> (${product.price}) is saved${product.sessionLabel ? ` for <strong>${product.sessionLabel}, 7:00–8:30pm MT</strong>` : ""}. This receipt confirms your purchase.
+    </p>
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+      We'll email your Zoom link and a short prep note before the session. It's a small group, 3 to 5 dads, so come with whatever's on your mind.
+    </p>
+    <p style="color:#1c2319;font-size:15px;line-height:1.6;margin:0 0 18px;">
+      If your date doesn't reach 3 dads, we'll reach out and you choose: move to the next date, swap it for a 1:1 call with John or Mike, or a full refund.
+    </p>
+    <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
+  `);
+  }
+
   const deliveryBlock = product.url
     ? `
       <div style="text-align:center;margin:30px 0 26px;">
@@ -323,7 +348,8 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
 // L", which reads like a database dump in an inbox and gets truncated by
 // most mail clients anyway. The full details still show inside the email
 // body, where there's room to do it justice.
-function receiptSubject(product: { name: string; isSubscription?: boolean; isBundle?: boolean; isMerch?: boolean }): string {
+function receiptSubject(product: { name: string; isSubscription?: boolean; isBundle?: boolean; isMerch?: boolean; isWorkshop?: boolean }): string {
+  if (product.isWorkshop) return "Your Dudela Workshop seat is saved!";
   if (product.isSubscription) return "Welcome to the Spit-Up Society!";
   if (product.isBundle) return "Your Dudela bundle is confirmed!";
   if (product.isMerch) return "Your Dudela order is confirmed!";
@@ -523,7 +549,13 @@ export async function POST({ request, locals }: APIContext) {
               image: cartLines[0]?.image,
               items: cartLines.map((l) => ({ name: l.qty > 1 ? `${l.label} x${l.qty}` : l.label, image: l.image })),
             }
-          : PRODUCTS[product] || { name: product, price: amountTotal };
+          : product === "workshop"
+            ? {
+                ...PRODUCTS.workshop,
+                sessionLabel: findWorkshopDate(session.metadata?.sessionDate)?.label,
+                name: `The Dudela Workshop${findWorkshopDate(session.metadata?.sessionDate) ? ` (${findWorkshopDate(session.metadata?.sessionDate)!.label})` : ""}`,
+              }
+            : PRODUCTS[product] || { name: product, price: amountTotal };
       // Hoisted out of the isMerch/isBundle blocks below so the internal notify
       // email (sent further down, after those branches) can include shipping
       // details for merch orders without re-parsing the session.

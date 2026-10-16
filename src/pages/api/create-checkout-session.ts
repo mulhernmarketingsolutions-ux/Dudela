@@ -1,3 +1,4 @@
+import { findWorkshopDate, isBookable } from "../../data/workshop";
 import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
 import { getAuthedMember } from "../../lib/auth";
@@ -48,6 +49,14 @@ const PRODUCTS: Record<
     priceEnvVar: "STRIPE_PRICE_PREP_KIT",
     returnPath: "/kit",
     thankYouPath: "/kit/thank-you",
+    mode: "payment",
+  },
+  // The Dudela Workshop (live small group, first Thursdays). Needs a
+  // ?date=YYYY-MM-DD that matches src/data/workshop.ts — checked in GET below.
+  "workshop": {
+    priceEnvVar: "STRIPE_PRICE_WORKSHOP",
+    returnPath: "/workshop",
+    thankYouPath: "/workshop/thank-you",
     mode: "payment",
   },
   "spit-up-society": {
@@ -165,6 +174,13 @@ const PRODUCTS: Record<
 // One discount only, whichever applies — never both.
 const BUNDLE_DISCOUNT_PERCENT = 15;
 
+// Fallback Stripe Price ids for products whose env var hasn't been added in
+// the Cloudflare dashboard yet. Price ids aren't secret (they're visible in
+// every Checkout URL), so a code fallback is safe; the env var still wins.
+const PRICE_ID_FALLBACKS: Record<string, string> = {
+  STRIPE_PRICE_WORKSHOP: "price_1URFfyI01jg8VCLkxBFm2nAW", // The Dudela Workshop, $147 (created 2026-10-16)
+};
+
 export async function GET({ request, locals, cookies }: APIContext) {
   const env = (locals as any).runtime.env;
   const url = new URL(request.url);
@@ -193,7 +209,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
 
   let priceId: string | undefined;
   if (productConfig.priceEnvVar) {
-    priceId = env[productConfig.priceEnvVar];
+    priceId = env[productConfig.priceEnvVar] || PRICE_ID_FALLBACKS[productConfig.priceEnvVar];
     if (!priceId) {
       console.error(`Missing env var ${productConfig.priceEnvVar} for product "${product}"`);
       return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
@@ -201,6 +217,17 @@ export async function GET({ request, locals, cookies }: APIContext) {
   } else if (!productConfig.priceData) {
     console.error(`Product "${product}" has neither priceEnvVar nor priceData configured`);
     return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
+  }
+
+  // Workshop seats are per date — reject a missing, unknown, or past date
+  // rather than charging for a session that isn't on the calendar.
+  let workshopDate: string | undefined;
+  if (product === "workshop") {
+    const d = findWorkshopDate(url.searchParams.get("date"));
+    if (!d || !isBookable(d.iso)) {
+      return Response.redirect(`${origin}/workshop#dates`, 303);
+    }
+    workshopDate = d.iso;
   }
 
   // No scarcity/sold-out gate here — every hat and shirt is print-to-order
@@ -234,7 +261,11 @@ export async function GET({ request, locals, cookies }: APIContext) {
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
       customerId: existingCustomerId,
       customerEmail: existingCustomerId ? undefined : email,
-      metadata: productConfig.merchColor ? { product, color: productConfig.merchColor } : { product },
+      metadata: productConfig.merchColor
+        ? { product, color: productConfig.merchColor }
+        : workshopDate
+          ? { product, sessionDate: workshopDate }
+          : { product },
       collectShipping: productConfig.shipping,
       // Only relevant for one-time purchases (subscriptions already invoice
       // automatically) — generates a real Stripe Invoice for the purchase so

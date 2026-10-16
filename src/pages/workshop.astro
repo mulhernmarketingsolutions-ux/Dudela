@@ -2,170 +2,115 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import { WORKSHOP_DATES, WORKSHOP_PRICE, WORKSHOP_TIME, WORKSHOP_MIN_DADS, WORKSHOP_MAX_DADS } from "../data/workshop";
+// Replaced the old "Steady Dad — Fall Cohort Waitlist" page 2026-10-16.
+// Dates live in src/data/workshop.ts. Past dates are hidden client-side
+// (this page is prerendered), and the checkout route rejects them too.
 ---
-<BaseLayout title="Steady Dad Live Workshop — Fall Cohort Waitlist — Dudela" description="A 90-minute live workshop for expecting dads. Small group, practical, real. Join the waitlist for the Fall cohort.">
+<BaseLayout title="The Dudela Workshop — Live with John & Mike — Dudela" description={`A live 90-minute small-group workshop on Zoom for expecting dads. First Thursday of every month, ${WORKSHOP_TIME}. ${WORKSHOP_PRICE}.`}>
   <Nav />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
-      <p class="eyebrow">Steady Dad Live Workshop</p>
-      <h1>90 minutes, live, with dads who get it.</h1>
+      <p class="eyebrow">The Dudela Workshop</p>
+      <h1>Build your plan with dads who get it.</h1>
       <p class="hero-sub">
-        A small-group live session with John and Mike — real questions, real answers, no
-        script. The Fall cohort isn't open yet. Get on the waitlist and we'll email you the
-        second doors open, plus first pick of the time slot.
+        90 minutes, live on Zoom, with John and Mike and a handful of other expecting dads.
+        You bring the questions you've been carrying around. You leave with a plan you and your
+        partner can actually use.
       </p>
+      <p class="hero-meta">First Thursday of every month &middot; {WORKSHOP_TIME} &middot; {WORKSHOP_PRICE}</p>
+      <a href="#dates" class="btn btn-primary">Pick your date</a>
+    </div>
+  </section>
 
-      <form class="email-form" id="workshop-form">
-        <input type="hidden" name="magnet" value="fall-cohort-waitlist" />
-        <input type="hidden" name="source" value="/workshop" />
-        <input type="text" name="name" placeholder="First name" />
-        <input type="email" name="email" placeholder="you@email.com" required />
-        <button type="submit" class="btn btn-primary">Join the Waitlist</button>
-      </form>
-      <p id="workshop-form-status" class="form-status"></p>
+  <section class="details section-light">
+    <div class="container details-grid">
+      <div><h3>Small on purpose</h3><p>{WORKSHOP_MIN_DADS} to {WORKSHOP_MAX_DADS} dads. Not a webinar. Everyone talks, everyone gets heard.</p></div>
+      <div><h3>Built on the Prep Kit</h3><p>We work through the same six pillars: your head, your money, your partner, the birth, the dad you want to be, and the first days home.</p></div>
+      <div><h3>Real dads, real stories</h3><p>John's twins spent a month in the NICU. Mike's birth plan changed in 90 seconds. We'll tell you what we wish we'd known.</p></div>
+    </div>
+  </section>
 
-      <div id="workshop-resources" class="workshop-resources" style="display:none;">
-        <p class="resources-kicker">You're on the list. In the meantime:</p>
-        <div class="resources-row">
-          <a href="/guide" class="btn btn-ghost">Get the Free Dad Prep Guide</a>
-          <a href="/podcast" class="btn btn-ghost">Listen to the Podcast</a>
-        </div>
+  <section class="dates section-light" id="dates">
+    <div class="container dates-inner">
+      <p class="eyebrow">Upcoming sessions</p>
+      <h2>Pick your Thursday.</h2>
+      <p class="dates-sub">All sessions run {WORKSHOP_TIME} on Zoom. Your Zoom link and a short prep note arrive by email before the session.</p>
+      <ul class="date-list">
+        {WORKSHOP_DATES.map((d) => (
+          <li class="date-row" data-iso={d.iso}>
+            <div>
+              <p class="date-label">{d.label}</p>
+              <p class="date-time">{WORKSHOP_TIME} &middot; Zoom</p>
+            </div>
+            <a class="btn btn-primary" href={`/api/create-checkout-session?product=workshop&date=${d.iso}`}>Save my seat &middot; {WORKSHOP_PRICE}</a>
+          </li>
+        ))}
+      </ul>
+      <p class="no-dates" id="no-dates" hidden>New dates are on the way. Check back soon, or <a href="/guide">grab the free guide</a> in the meantime.</p>
+
+      <div class="guarantee">
+        <h3>Our small-group promise</h3>
+        <p>
+          A session runs once at least {WORKSHOP_MIN_DADS} dads are in. If yours doesn't fill, you choose:
+          move to the next date, swap it for a 1:1 call with John or Mike, or get a full refund. No awkward
+          half-empty room, no lost money.
+        </p>
       </div>
     </div>
   </section>
 
-  <script>
-    const form = document.getElementById("workshop-form") as HTMLFormElement | null;
-    const status = document.getElementById("workshop-form-status") as HTMLParagraphElement | null;
-    const resources = document.getElementById("workshop-resources") as HTMLDivElement | null;
-    form?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
-      btn.disabled = true;
-      if (status) status.textContent = "Adding you to the list…";
-      try {
-        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
-        const data = await res.json();
-        if (data.ok) {
-          if (status) status.textContent = "";
-          form.style.display = "none";
-          if (resources) resources.style.display = "block";
-        } else {
-          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
-          btn.disabled = false;
-        }
-      } catch {
-        if (status) status.textContent = "Something went wrong. Please try again.";
-        btn.disabled = false;
-      }
-    });
-  </script>
-
-  <section class="details section-light">
-    <div class="container details-grid">
-      <div><h3>Small group</h3><p>Not a webinar. A real conversation, capped so everyone gets heard.</p></div>
-      <div><h3>90 minutes</h3><p>Focused, live, no fluff — built around the same framework as everything else we make.</p></div>
-      <div><h3>$100</h3><p>One session. No subscription. Pricing and exact dates confirmed when the cohort opens.</p></div>
-    </div>
+  <section class="turn section-light">
     <div class="container">
       <p class="turn-note">
-        Don't want to wait for the Fall cohort, or want it more personal than a group session?
-        <a href="/turn">John and Mike also work 1:1 &rarr;</a>
+        Haven't grabbed the Prep Kit yet? <a href="/kit">Start there for $37 &rarr;</a><br />
+        Want it fully 1:1? <a href="/turn">The Turn: 1:1 Coaching with John &amp; Mike &rarr;</a>
       </p>
     </div>
   </section>
+
+  <script>
+    // Hide sessions whose booking cutoff (5pm MT day-of) has passed.
+    const rows = document.querySelectorAll<HTMLLIElement>(".date-row");
+    let visible = 0;
+    rows.forEach((row) => {
+      const iso = row.dataset.iso;
+      if (iso && new Date() >= new Date(`${iso}T17:00:00-07:00`)) row.remove();
+      else visible++;
+    });
+    if (visible === 0) document.getElementById("no-dates")?.removeAttribute("hidden");
+    if (new URLSearchParams(location.search).get("purchase") === "canceled") {
+      document.getElementById("dates")?.scrollIntoView();
+    }
+  </script>
 
   <Footer />
 </BaseLayout>
 
 <style>
-  .hero {
-    padding: 9rem 0 4rem;
-    text-align: center;
-  }
-  .hero-inner {
-    max-width: 560px;
-    margin: 0 auto;
-  }
-  .hero h1 {
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 4.5vw, 3rem);
-    margin: 0.5rem 0 1.25rem;
-  }
-  .hero-sub {
-    color: var(--text-on-dark-muted);
-    margin-bottom: 1.75rem;
-  }
-  .email-form {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .email-form input {
-    flex: 1;
-    min-width: 160px;
-    padding: 0.9rem 1.1rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--forest-600);
-    background: var(--forest-700);
-    color: var(--cream-100);
-    font-family: var(--font-sans);
-  }
-  .form-status {
-    color: var(--text-on-dark-muted);
-    font-size: 0.9rem;
-    margin-top: 0.9rem;
-    min-height: 1.2em;
-  }
-  .workshop-resources {
-    margin-top: 1.5rem;
-  }
-  .resources-kicker {
-    font-family: var(--font-label);
-    font-size: 0.85rem;
-    color: var(--amber-500);
-    margin-bottom: 0.9rem;
-  }
-  .resources-row {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .resources-row .btn-ghost {
-    color: var(--cream-100);
-  }
-  .details {
-    padding: var(--space-6) 0;
-  }
-  .details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-  }
-  .details-grid h3 {
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    margin: 0 0 0.5rem;
-  }
-  .details-grid p {
-    color: var(--text-on-light-muted);
-    margin: 0;
-    font-size: 0.92rem;
-  }
-  .turn-note {
-    margin-top: 2rem;
-    padding-top: 1.75rem;
-    border-top: 1px solid var(--border-light);
-    font-family: var(--font-label);
-    font-size: 0.9rem;
-    color: var(--text-on-light-muted);
-    text-align: center;
-  }
-  .turn-note a {
-    color: var(--rust-600);
-    font-weight: 700;
-  }
+  .hero { padding: 9rem 0 4rem; text-align: center; }
+  .hero-inner { max-width: 600px; margin: 0 auto; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.5vw, 3rem); margin: 0.5rem 0 1.25rem; }
+  .hero-sub { color: var(--text-on-dark-muted); margin-bottom: 1rem; }
+  .hero-meta { font-family: var(--font-label); color: var(--amber-500); font-size: 0.9rem; margin-bottom: 1.75rem; }
+  .details { padding: var(--space-6) 0 0; }
+  .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+  .details-grid h3 { font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 0.5rem; }
+  .details-grid p { color: var(--text-on-light-muted); margin: 0; font-size: 0.95rem; }
+  .dates { padding: var(--space-6) 0; }
+  .dates-inner { max-width: 720px; margin: 0 auto; }
+  .dates h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3.5vw, 2.2rem); margin: 0.4rem 0 0.6rem; }
+  .dates-sub { color: var(--text-on-light-muted); margin: 0 0 1.5rem; }
+  .date-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+  .date-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.25rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+  .date-label { font-family: var(--font-display); font-size: 1.15rem; margin: 0; }
+  .date-time { font-family: var(--font-label); font-size: 0.85rem; color: var(--text-on-light-muted); margin: 0.2rem 0 0; }
+  .no-dates { margin-top: 1rem; color: var(--text-on-light-muted); }
+  .guarantee { margin-top: 2rem; padding: 1.25rem 1.5rem; border-left: 3px solid var(--rust-600); background: rgba(0,0,0,0.03); border-radius: var(--radius-sm); }
+  .guarantee h3 { font-family: var(--font-display); font-size: 1.1rem; margin: 0 0 0.4rem; }
+  .guarantee p { margin: 0; color: var(--text-on-light-muted); font-size: 0.95rem; }
+  .turn { padding: 0 0 var(--space-6); }
+  .turn-note { padding-top: 1.75rem; border-top: 1px solid var(--border-light); font-family: var(--font-label); font-size: 0.9rem; color: var(--text-on-light-muted); text-align: center; line-height: 1.9; }
+  .turn-note a { color: var(--rust-600); font-weight: 700; }
 </style>
