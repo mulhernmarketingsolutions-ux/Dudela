@@ -230,7 +230,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
       priceId,
       priceData,
       mode: productConfig.mode,
-      successUrl: `${origin}${productConfig.thankYouPath}`,
+      successUrl: `${origin}${productConfig.thankYouPath}?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
       customerId: existingCustomerId,
       customerEmail: existingCustomerId ? undefined : email,

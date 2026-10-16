@@ -41,6 +41,19 @@ import Footer from "../../components/Footer.astro";
   <Footer />
 </BaseLayout>
 
+<!-- Meta Pixel Purchase event. Deduped per Stripe session (session_id is
+     appended to the success URL in create-checkout-session.ts) so a refresh
+     or revisit of this page doesn't count as a second sale. -->
+<script is:inline>
+  (function () {
+    var sid = new URLSearchParams(location.search).get("session_id");
+    if (!sid || !window.fbq) return;
+    var key = "dudela_px_purchase_" + sid;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) {}
+    fbq("track", "Purchase", { value: 37, currency: "USD", content_name: "Prep Kit" }, { eventID: sid });
+  })();
+</script>
+
 <style>
   .hero {
     padding: 9rem 0 5rem;
