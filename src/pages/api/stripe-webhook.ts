@@ -2,6 +2,7 @@ import { findWorkshopDate } from "../../data/workshop";
 import type { APIContext } from "astro";
 import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
+import { sendMetaPurchase } from "../../lib/meta-capi";
 import { sendEmail } from "../../lib/email";
 import {
   upsertMemberFromStripe,
@@ -485,6 +486,26 @@ export async function POST({ request, locals }: APIContext) {
           await sendLoopsPurchaseEvent(env, { email, name, product });
         } catch (err) {
           console.error("Loops purchase event failed:", err);
+        }
+        // Server-side Purchase for Meta ads (see lib/meta-capi.ts). fbp/fbc/ip/ua
+        // were captured into metadata by create-checkout-session.ts.
+        try {
+          const m = session.metadata || {};
+          await sendMetaPurchase(env, {
+            eventId: session.id,
+            email,
+            name,
+            value: typeof session.amount_total === "number" ? session.amount_total / 100 : 0,
+            currency: session.currency,
+            product,
+            fbp: m.fbp,
+            fbc: m.fbc,
+            ip: m.ip,
+            userAgent: m.ua,
+            sourceUrl: m.src,
+          });
+        } catch (err) {
+          console.error("Meta CAPI purchase failed:", err);
         }
       }
 

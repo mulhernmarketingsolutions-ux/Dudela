@@ -264,11 +264,14 @@ export async function GET({ request, locals, cookies }: APIContext) {
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
       customerId: existingCustomerId,
       customerEmail: existingCustomerId ? undefined : email,
-      metadata: productConfig.merchColor
-        ? { product, color: productConfig.merchColor }
-        : workshopDate
-          ? { product, sessionDate: workshopDate }
-          : { product },
+      metadata: {
+        ...(productConfig.merchColor
+          ? { product, color: productConfig.merchColor }
+          : workshopDate
+            ? { product, sessionDate: workshopDate }
+            : { product }),
+        ...metaMatchData(request, cookies),
+      },
       collectShipping: productConfig.shipping,
       // Only relevant for one-time purchases (subscriptions already invoice
       // automatically) — generates a real Stripe Invoice for the purchase so
@@ -354,4 +357,22 @@ async function handleBundleCheckout(
     console.error("Bundle checkout session creation failed:", err);
     return new Response("Checkout is temporarily unavailable. Try again shortly.", { status: 500 });
   }
+}
+
+// Browser identifiers Meta uses to match a server-side Purchase back to the
+// ad click (see lib/meta-capi.ts). Carried through Stripe metadata because the
+// webhook never sees the buyer's browser. Stripe caps values at 500 chars.
+function metaMatchData(request: Request, cookies: any): Record<string, string> {
+  const out: Record<string, string> = {};
+  const fbp = cookies.get("_fbp")?.value;
+  const fbc = cookies.get("_fbc")?.value;
+  const ip = request.headers.get("cf-connecting-ip");
+  const ua = request.headers.get("user-agent");
+  const src = request.headers.get("referer");
+  if (fbp) out.fbp = fbp.slice(0, 500);
+  if (fbc) out.fbc = fbc.slice(0, 500);
+  if (ip) out.ip = ip.slice(0, 500);
+  if (ua) out.ua = ua.slice(0, 500);
+  if (src) out.src = src.split("?")[0].slice(0, 500);
+  return out;
 }

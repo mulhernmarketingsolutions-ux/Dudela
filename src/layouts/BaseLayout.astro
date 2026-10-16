@@ -154,7 +154,11 @@ const latestEpisodeDate = episodes[0]?.date ?? "";
     </script>
     <noscript><img height="1" width="1" style="display:none" alt=""
       src="https://www.facebook.com/tr?id=1645170497121257&ev=PageView&noscript=1" /></noscript>
-  </head>
+  <!-- Keep the Meta ad click id (fbclid) as a first-party _fbc cookie, even
+     when the pixel script is blocked, so server-side Purchases (lib/meta-capi.ts)
+     still match back to the ad. Same format the pixel itself writes. -->
+<script is:inline>(function(){try{var id=new URLSearchParams(location.search).get("fbclid");if(!id||/(^|; )_fbc=/.test(document.cookie))return;document.cookie="_fbc=fb.1."+Date.now()+"."+id+"; path=/; max-age=7776000; SameSite=Lax; Secure";}catch(e){}})();</script>
+</head>
   <body>
     <slot />
 
