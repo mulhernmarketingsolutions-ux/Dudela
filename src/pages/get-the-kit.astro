@@ -1,17 +1,31 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-// Ad landing page for the Prep Kit (built 2026-10-16). Deliberately NO Nav or
-// Footer: one job, one button. Warm/on-site visitors use /kit instead.
-// noindex so it doesn't compete with /kit in search.
+// Ad landing page for the Prep Kit. v2 rebuilt 2026-10-16 per John: this
+// page does the heavy lifting for cold traffic. No Nav/Footer, one job.
+// noindex so it doesn't compete with /kit (the warm, on-site version).
 const BUY = "/api/create-checkout-session?product=prep-kit";
 const track = "window.fbq && fbq('track', 'InitiateCheckout', { value: 37, currency: 'USD', content_name: 'Prep Kit' })";
 const quotes = [
   { who: "Jessica", where: "New mom in Nebraska", text: "The biggest thing? I didn't have to ask him to do every little thing. We actually talked about what I needed, and he started handling stuff. That took a lot off me." },
   { who: "Sam", where: "Expecting dad in Colorado", text: "Honestly, I needed someone to spell it out. 'Be supportive' could mean anything. Now I have a much better idea of what to actually do." },
-  { who: "Craig", where: "Expecting dad in California", text: "We did the exercises together, which I thought might be awkward. Ended up having a really good conversation about what we were both worried about. Abigail's Corner was probably my favorite part." },
+  { who: "Craig", where: "Expecting dad in California", text: "We did the exercises together, which I thought might be awkward. Ended up having a really good conversation about what we were both worried about. Abigail's Corner was probably my favorite part. Having that perspective from a BCBA helped the advice click for me. I came away with a few things I could take responsibility for right away." },
+];
+const sheets = [
+  { img: "sheet-readiness", name: "The Readiness Map", line: "Find your gaps in 10 minutes." },
+  { img: "sheet-ownership", name: "The Ownership Plan", line: "Who owns what. Owns, not \"helps with.\"" },
+  { img: "sheet-birth-brief", name: "Birth Support Brief", line: "Her wishes, your job, and the backup plan." },
+  { img: "sheet-first72", name: "First 72 Hours Plan", line: "Feeding, sleep, rest, meals, visitors." },
+];
+const faqs = [
+  ["Is this a physical book?", "No. It's a 31-page PDF you download the second you check out. Read it on your phone, or print the worksheets and fill them out together. Most couples print them."],
+  ["Is it only for first-time dads?", "It's built for first-timers, but plenty of second-time dads use it to do it better than last time, especially the money, ownership, and first-days-home tools."],
+  ["We're due soon. Is it too late?", "No. If the birth is close, start with Hospital Logistics, the Birth Support Brief, and the First 72 Hours Plan. You can do those in one evening."],
+  ["Is this medical advice?", "No, and we say so plainly. The kit helps you prepare and know what to ask. For anything medical, it points you to your care team, plus trusted CDC and AAP resources."],
+  ["Can my partner use it too?", "That's the whole idea. The tools are built for two people. Several have questions for her to answer in her own words."],
+  ["What if it's not for us?", "Email us within 30 days and we'll refund the $37. No forms, no questions."],
 ];
 ---
-<BaseLayout title="The Dudela Prep Kit — A real plan for expecting dads" description="Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, real stories from two dads who've been there. $37, instant download." noindex>
+<BaseLayout title="The Dudela Prep Kit — A one-hour plan for the birth and the first days home" description="A 31-page plan expecting dads and their partners work through together. 6 pillars, 9 printable tools, real stories. $37, instant download, 30-day money-back guarantee." noindex>
   <div class="lp">
     <header class="brand"><span>DUDELA</span></header>
 
@@ -19,15 +33,20 @@ const quotes = [
     <section class="hero">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="label">For expecting dads</p>
-          <h1>You don't have to know everything. You do need somewhere honest to start.</h1>
-          <p class="lede">The Dudela Prep Kit is a 31-page plan you and your partner work through together: what matters during the birth, who owns what at home, and how you'll handle the first days with a newborn.</p>
+          <p class="label">For expecting dads, and the partners who love them</p>
+          <h1>A one-hour plan for the birth and the first days home.</h1>
+          <p class="lede">You don't have to know everything. You do need somewhere honest to start. The Dudela Prep Kit is a 31-page plan you and your partner work through together, written by two dads who didn't get the birth they planned for.</p>
           <a href={BUY} class="cta" onclick={track}>Get the Prep Kit · $37</a>
-          <p class="fine">Instant download · Read it on your phone or print it</p>
+          <ul class="trust">
+            <li>Instant download</li><li>Print it or use it on your phone</li><li>30-day money-back guarantee</li>
+          </ul>
         </div>
-        <div class="phones">
-          <div class="phone back"><img src="/images/kit-phones/kit-phone-readiness.jpg" alt="The Readiness Map page" /></div>
-          <div class="phone front"><img src="/images/kit-phones/kit-phone-cover.jpg" alt="The Dudela Prep Kit cover" /></div>
+        <div class="devices" aria-hidden="true">
+          <div class="laptop">
+            <div class="screen"><img src="/images/kit-lp/laptop-spread.jpg" alt="" /></div>
+            <div class="base"></div>
+          </div>
+          <div class="phone"><img src="/images/kit-phones/kit-phone-readiness.jpg" alt="" /></div>
         </div>
       </div>
     </section>
@@ -37,12 +56,12 @@ const quotes = [
       <div class="wrap narrow">
         <h2>Someone asks if you're excited. You say "Yeah, absolutely."</h2>
         <p>Because explaining the other six feelings would take a while.</p>
-        <p>You want this baby more than anything. You're also quietly wondering what you signed up for. She's doing most of the reading and the planning, and you're starting to feel like a passenger. Everyone says "be supportive." Nobody says what that means on a Tuesday night.</p>
+        <p>You want this baby more than anything. You're also quietly wondering what you signed up for. She's doing most of the reading and the planning, and you're starting to feel like a passenger in your own family. Everyone says "be supportive." Nobody says what that means on a Tuesday night.</p>
         <p class="strong">Nobody handed you a plan. This is the plan.</p>
       </div>
     </section>
 
-    <!-- STORY + PHOTOS -->
+    <!-- STORY -->
     <section class="band">
       <div class="wrap">
         <p class="label center">Two dads who've been there</p>
@@ -52,14 +71,14 @@ const quotes = [
             <img src="/images/john-viv-walking.jpg" alt="John and Viv walking with their twin daughters" />
             <figcaption>
               <strong>John &amp; Viv</strong>
-              <p>Our twins came at 34 weeks and spent a month in the NICU. I'd hold it together upstairs, break for a few minutes in the parking garage, then go back up.</p>
+              <p>I spent years in ministry as a Community Life Director, walking with people through big life moments. Then our twins came at 34 weeks and spent a month in the NICU, and I learned how little I actually knew. I'd hold it together upstairs, break for a few minutes in the parking garage, then go back up.</p>
             </figcaption>
           </figure>
           <figure class="story">
             <img src="/images/mike-abigail.jpg" alt="Mike and Abigail" />
             <figcaption>
               <strong>Mike &amp; Abigail</strong>
-              <p>The birth plan turned into an emergency C-section in about ninety seconds. The plan was gone. She still needed me there.</p>
+              <p>The birth plan turned into an emergency C-section in about ninety seconds. The plan was gone. She still needed me there. Abigail is a Board Certified Behavior Analyst, and her pages in the kit turn "be more helpful" into routines you can actually keep.</p>
             </figcaption>
           </figure>
         </div>
@@ -67,43 +86,32 @@ const quotes = [
       </div>
     </section>
 
-    <!-- INSIDE -->
+    <!-- WORKSHEETS -->
     <section class="band alt">
       <div class="wrap">
-        <p class="label center">What's inside</p>
-        <h2 class="center">Six pillars. Nine tools you actually fill out.</h2>
-        <div class="trio">
-          <div>
-            <div class="phone sm"><img src="/images/kit-phones/kit-phone-readiness.jpg" alt="Readiness Map" /></div>
-            <h3>Find your gaps in 10 minutes</h3>
-            <p>The Readiness Map shows what's handled, what's not, and the one thing to do today.</p>
-          </div>
-          <div>
-            <div class="phone sm"><img src="/images/kit-phones/kit-phone-abigail.jpg" alt="Abigail's Corner" /></div>
-            <h3>Her side of it, too</h3>
-            <p>Abigail's Corner, from a Board Certified Behavior Analyst, turns "be more helpful" into routines you can keep.</p>
-          </div>
-          <div>
-            <div class="phone sm"><img src="/images/kit-phones/kit-phone-first72.jpg" alt="First 72 Hours Plan" /></div>
-            <h3>The first days home, mapped</h3>
-            <p>Feeding support, safe sleep, rest, meals, and visitors, planned before you're exhausted.</p>
-          </div>
+        <p class="label center">Not another book to skim</p>
+        <h2 class="center">Print it. Fill it out. Do it together.</h2>
+        <p class="center sub narrow-c">Nine worksheets you actually write on, built so the two of you end up with the same plan instead of two different ones in your heads.</p>
+        <div class="sheets">
+          {sheets.map((s, i) => (
+            <figure class={`sheet s${i}`}>
+              <div class="paper"><img src={`/images/kit-lp/${s.img}.jpg`} alt={`${s.name} worksheet`} /></div>
+              <figcaption><strong>{s.name}</strong><span>{s.line}</span></figcaption>
+            </figure>
+          ))}
         </div>
-        <ul class="checks">
-          <li>Get Your Head Right</li><li>Get Your Money Ready</li><li>Be The Partner She Needs</li>
-          <li>Know What You're Walking Into</li><li>Decide What Kind of Dad You Want to Be</li><li>First Days Home Playbook</li>
-        </ul>
-        <div class="center"><a href={BUY} class="cta" onclick={track}>Get the Prep Kit · $37</a></div>
+        <div class="center"><a href={BUY} class="cta" onclick={track}>Get the Prep Kit · $37</a><p class="fine">30-day money-back guarantee</p></div>
       </div>
     </section>
 
-    <!-- HOUR -->
+    <!-- FIRST HOUR -->
     <section class="band">
       <div class="wrap hour-grid">
-        <div class="phone"><img src="/images/kit-phones/kit-phone-firsthour.jpg" alt="Your first useful hour" /></div>
+        <div class="paper big"><img src="/images/kit-lp/sheet-readiness.jpg" alt="The Readiness Map" /></div>
         <div>
-          <p class="label">How it works</p>
+          <p class="label">Start tonight</p>
           <h2>Your first useful hour.</h2>
+          <p>You don't have to read all 31 pages. Page 3 is a one-hour plan:</p>
           <ol>
             <li><b>10 min</b> Find your gaps with the Readiness Map.</li>
             <li><b>20 min</b> Sit down together and hear what feels heaviest for her.</li>
@@ -112,6 +120,52 @@ const quotes = [
           </ol>
           <p class="strong">One hour in, you'll know who to call, how you're getting to the hospital, what she wants you to handle, and who can help once you're home.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- EVERYTHING YOU GET -->
+    <section class="band alt">
+      <div class="wrap">
+        <p class="label center">Everything inside</p>
+        <h2 class="center">What you get for $37</h2>
+        <div class="stack">
+          <div class="stack-col">
+            <h3>The plan</h3>
+            <ul class="checks">
+              <li><b>Your first useful hour</b>, a step-by-step start you can do tonight</li>
+              <li><b>6 pillars:</b> Get Your Head Right · Get Your Money Ready · Be The Partner She Needs · Know What You're Walking Into · Decide What Kind of Dad You Want to Be · First Days Home Playbook</li>
+              <li><b>A 7-day plan</b> to make it stick, with a short version if the birth is close</li>
+            </ul>
+          </div>
+          <div class="stack-col">
+            <h3>9 printable tools</h3>
+            <ul class="checks two">
+              <li>Readiness Map</li><li>Calm and Support Card</li><li>Leave and Money Plan</li>
+              <li>Ownership Plan</li><li>Partner Conversation</li><li>Birth Support Brief</li>
+              <li>Hospital Logistics</li><li>Dad Commitments</li><li>First 72 Hours Plan</li>
+            </ul>
+          </div>
+          <div class="stack-col">
+            <h3>Real people, real help</h3>
+            <ul class="checks">
+              <li><b>3 Abigail's Corner pages</b> from a Board Certified Behavior Analyst</li>
+              <li><b>Viv's perspective</b> on what actually matters in the first days home</li>
+              <li><b>Real stories</b> from both families: the NICU, the 90-second C-section, the parking garage</li>
+              <li><b>Trusted resources</b>: CDC urgent warning signs and AAP safe-sleep guidance</li>
+            </ul>
+          </div>
+        </div>
+        <div class="center"><a href={BUY} class="cta" onclick={track}>Get the Prep Kit · $37</a><p class="fine">Instant download · 30-day money-back guarantee</p></div>
+      </div>
+    </section>
+
+    <!-- FOR HER -->
+    <section class="band">
+      <div class="wrap narrow">
+        <p class="label">Buying this for him?</p>
+        <h2>Good call. It's built for both of you.</h2>
+        <p>A lot of these get bought by moms-to-be. Print the Readiness Map, hand it to him, and do the first hour together. Most of the tools have questions for you to answer in your own words, so the plan ends up being yours too, not just his to-do list.</p>
+        <blockquote class="pull">"I didn't have to ask him to do every little thing. We actually talked about what I needed, and he started handling stuff."<cite>Jessica, new mom in Nebraska</cite></blockquote>
       </div>
     </section>
 
@@ -127,58 +181,88 @@ const quotes = [
       </div>
     </section>
 
+    <!-- GUARANTEE -->
+    <section class="band">
+      <div class="wrap narrow">
+        <div class="guarantee">
+          <p class="label">Our promise</p>
+          <h2>If it doesn't help, you get your money back.</h2>
+          <p>Use the kit for 30 days. If it doesn't help your family get ready, email us and we'll refund your $37. No forms, no questions, no hard feelings.</p>
+          <p>This kit helped our families through the hardest, best stretch of our lives. The goal is to help yours. If it doesn't, you shouldn't pay for it.</p>
+          <p class="sig">John &amp; Mike</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="band alt">
+      <div class="wrap narrow">
+        <h2 class="center">Questions</h2>
+        <div class="faq">
+          {faqs.map(([q, a]) => (<details><summary>{q}</summary><p>{a}</p></details>))}
+        </div>
+      </div>
+    </section>
+
     <!-- CLOSE -->
     <section class="band close">
       <div class="wrap narrow center">
-        <img src="/images/kit-phones/kit-phone-cover.jpg" alt="" class="close-phone" />
+        <div class="laptop small" aria-hidden="true"><div class="screen"><img src="/images/kit-lp/laptop-spread.jpg" alt="" /></div><div class="base"></div></div>
         <h2>The Dudela Prep Kit</h2>
         <p class="sub">31 pages · 6 pillars · 9 printable tools · Abigail's Corner · Instant PDF</p>
         <p class="price">$37</p>
         <a href={BUY} class="cta big" onclick={track}>Get the Prep Kit</a>
-        <p class="fine">Not medical advice. We point you to your care team for that, every time.</p>
-        <p class="sig">"You don't have to walk into this certain. You can walk in willing to learn." John &amp; Mike</p>
+        <p class="fine">30-day money-back guarantee · Not medical advice. We point you to your care team for that, every time.</p>
+        <p class="closer">"You don't have to walk into this certain. You can walk in willing to learn." John &amp; Mike</p>
       </div>
     </section>
 
-    <footer class="mini">© The Dudela Co. · <a href="/terms">Terms</a></footer>
+    <footer class="mini">© The Dudela Co. · <a href="/terms">Terms</a> · Questions? <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a></footer>
   </div>
 </BaseLayout>
 
 <style>
   .lp { --ink: #1c2319; --muted: #5a6150; --paper: #fffdf9; --alt: #f5f0e6; --line: #e6dccb; --rust: #a3492b; --amber: #e27d25;
-        background: var(--paper); color: var(--ink); font-size: 17px; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-  .narrow { max-width: 680px; }
+        background: var(--paper); color: var(--ink); font-size: 17px; overflow-x: hidden; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  .narrow { max-width: 700px; }
+  .narrow-c { max-width: 620px; margin-left: auto; margin-right: auto; }
   .center { text-align: center; }
-  .brand { text-align: center; padding: 18px 0 6px; font-family: var(--font-label); font-weight: 700; letter-spacing: 0.32em; font-size: 0.8rem; color: var(--ink); }
+  .brand { text-align: center; padding: 18px 0 6px; font-family: var(--font-label); font-weight: 700; letter-spacing: 0.32em; font-size: 0.8rem; }
   .label { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.75rem; color: var(--rust); font-weight: 600; margin: 0 0 0.6rem; }
-  h1, h2 { font-family: var(--font-display); font-weight: 400; color: var(--ink); line-height: 1.1; }
-  h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin: 0 0 1rem; }
+  h1, h2 { font-family: var(--font-display); font-weight: 400; color: var(--ink); line-height: 1.08; }
+  h1 { font-size: clamp(2.2rem, 5.2vw, 3.6rem); margin: 0 0 1rem; }
   h2 { font-size: clamp(1.7rem, 3.6vw, 2.5rem); margin: 0 0 1rem; }
-  h3 { font-family: var(--font-label); font-size: 1.05rem; margin: 1rem 0 0.35rem; }
+  h3 { font-family: var(--font-label); font-size: 1.05rem; margin: 0 0 0.6rem; }
   p { color: var(--muted); line-height: 1.6; margin: 0 0 1rem; }
   .strong { color: var(--ink); font-weight: 600; }
   .sub { color: var(--muted); }
-  .band { padding: 72px 0; }
+  .band { padding: 76px 0; }
   .band.alt { background: var(--alt); }
 
-  .cta { display: inline-block; background: var(--amber); color: #1a1208; font-weight: 700; padding: 16px 28px; border-radius: 8px; text-decoration: none; font-size: 1.05rem; box-shadow: 0 6px 18px -8px rgba(226,125,37,.8); }
+  .cta { display: inline-block; background: var(--amber); color: #1a1208; font-weight: 700; padding: 16px 30px; border-radius: 8px; text-decoration: none; font-size: 1.05rem; box-shadow: 0 6px 18px -8px rgba(226,125,37,.8); }
   .cta:hover { background: #c66815; }
-  .cta.big { padding: 18px 40px; font-size: 1.15rem; }
+  .cta.big { padding: 18px 44px; font-size: 1.15rem; }
   .fine { font-size: 0.85rem; margin-top: 0.8rem; color: var(--muted); }
+  .trust { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .trust li { font-size: 0.88rem; color: var(--ink); font-weight: 500; padding-left: 22px; position: relative; }
+  .trust li::before { content: "✓"; position: absolute; left: 0; color: var(--rust); font-weight: 700; }
 
-  .hero { padding: 28px 0 64px; }
-  .hero-grid { display: grid; gap: 40px; align-items: center; }
+  .hero { padding: 26px 0 70px; }
+  .hero-grid { display: grid; gap: 44px; align-items: center; }
   .lede { font-size: 1.1rem; }
 
-  .phone { border: 9px solid #15190f; border-radius: 34px; overflow: hidden; background: #15190f; box-shadow: 0 30px 60px -25px rgba(28,35,25,.55); aspect-ratio: 9 / 19.5; position: relative; }
-  .phone::before { content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 34%; height: 16px; background: #15190f; border-radius: 10px; z-index: 2; }
-  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-  .phones { position: relative; height: 520px; max-width: 420px; margin: 0 auto; width: 100%; }
-  .phones .phone { position: absolute; width: 230px; }
-  .phones .back { right: 0; top: 30px; transform: rotate(5deg); opacity: .96; }
-  .phones .front { left: 10px; top: 0; transform: rotate(-3deg); }
+  /* devices */
+  .devices { position: relative; width: 100%; max-width: 560px; margin: 0 auto; padding-bottom: 40px; }
+  .laptop .screen { background: #15190f; border: 10px solid #15190f; border-bottom-width: 14px; border-radius: 14px 14px 0 0; aspect-ratio: 16 / 10; overflow: hidden; box-shadow: 0 30px 60px -25px rgba(28,35,25,.55); }
+  .laptop .screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .laptop .base { height: 14px; margin: 0 -6%; background: linear-gradient(#d9d6cf, #b7b3aa); border-radius: 0 0 14px 14px; position: relative; }
+  .laptop .base::after { content: ""; position: absolute; top: 0; left: 42%; width: 16%; height: 5px; background: #a7a399; border-radius: 0 0 6px 6px; }
+  .devices .phone { position: absolute; right: -4%; bottom: 0; width: 30%; border: 7px solid #15190f; border-radius: 26px; overflow: hidden; background: #15190f; aspect-ratio: 9 / 19.5; box-shadow: 0 24px 50px -20px rgba(28,35,25,.6); }
+  .devices .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .laptop.small { max-width: 360px; margin: 0 auto 26px; }
 
+  /* stories */
   .stories { display: grid; gap: 28px; margin: 36px 0 28px; }
   .story { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   .story img { width: 100%; height: 440px; object-fit: cover; object-position: center 30%; display: block; }
@@ -186,41 +270,68 @@ const quotes = [
   .story strong { font-family: var(--font-label); }
   .story p { margin: 6px 0 12px; }
 
-  .trio { display: grid; gap: 40px; margin: 36px 0; }
-  .trio > div { text-align: center; }
-  .phone.sm { width: 200px; margin: 0 auto; }
-  .checks { list-style: none; padding: 0; margin: 0 auto 36px; display: grid; gap: 10px 24px; max-width: 760px; }
-  .checks li { padding-left: 28px; position: relative; color: var(--ink); font-weight: 500; }
-  .checks li::before { content: "✓"; position: absolute; left: 0; color: var(--rust); font-weight: 700; }
+  /* printed sheets */
+  .paper { background: #fff; padding: 0; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 18px 34px -16px rgba(28,35,25,.45); border-radius: 2px; overflow: hidden; }
+  .paper img { width: 100%; display: block; aspect-ratio: 8.5 / 11; object-fit: cover; }
+  .sheets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 34px 22px; margin: 40px 0 36px; }
+  .sheet { margin: 0; }
+  .sheet .paper { transition: transform .2s; }
+  .sheet.s0 .paper { transform: rotate(-2deg); } .sheet.s1 .paper { transform: rotate(1.5deg); }
+  .sheet.s2 .paper { transform: rotate(-1deg); } .sheet.s3 .paper { transform: rotate(2deg); }
+  .sheet figcaption { margin-top: 16px; text-align: center; }
+  .sheet figcaption strong { display: block; font-family: var(--font-label); font-size: 0.98rem; }
+  .sheet figcaption span { font-size: 0.88rem; color: var(--muted); }
+  .paper.big { max-width: 340px; margin: 0 auto; transform: rotate(-2deg); }
 
-  .hour-grid { display: grid; gap: 40px; align-items: center; }
-  .hour-grid > .phone { width: 240px; margin: 0 auto; }
+  .hour-grid { display: grid; gap: 44px; align-items: center; }
   ol { padding: 0; list-style: none; margin: 0 0 1.2rem; }
   ol li { padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
   ol li b { display: inline-block; min-width: 64px; color: var(--rust); font-family: var(--font-label); }
+
+  /* value stack */
+  .stack { display: grid; gap: 22px; margin: 36px 0 36px; }
+  .stack-col { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+  .checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .checks.two { grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .checks li { padding-left: 24px; position: relative; color: var(--muted); line-height: 1.5; font-size: 0.95rem; }
+  .checks li b { color: var(--ink); }
+  .checks li::before { content: "✓"; position: absolute; left: 0; color: var(--rust); font-weight: 700; }
+
+  .pull { margin: 24px 0 0; padding: 18px 22px; border-left: 3px solid var(--rust); background: var(--alt); font-family: var(--font-display); font-size: 1.3rem; line-height: 1.35; color: var(--ink); }
+  .pull cite { display: block; margin-top: 10px; font-family: var(--font-label); font-style: normal; font-size: 0.85rem; color: var(--rust); }
 
   .quotes { display: grid; gap: 20px; margin-top: 32px; }
   .quotes figure { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
   .quotes blockquote { margin: 0 0 14px; line-height: 1.6; color: var(--ink); }
   .quotes figcaption { font-family: var(--font-label); font-size: 0.85rem; color: var(--rust); }
 
-  .close-phone { width: 150px; border: 7px solid #15190f; border-radius: 26px; aspect-ratio: 9/19.5; object-fit: cover; object-position: top; box-shadow: 0 24px 50px -22px rgba(28,35,25,.55); margin-bottom: 18px; }
+  .guarantee { border: 2px solid var(--ink); border-radius: 14px; padding: 34px 32px; background: #fff; }
+  .guarantee p { color: var(--ink); }
+  .guarantee .sig { font-family: var(--font-display); font-style: italic; font-size: 1.4rem; margin: 0; }
+
+  .faq details { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .faq summary { cursor: pointer; font-weight: 600; color: var(--ink); list-style: none; position: relative; padding-right: 28px; }
+  .faq summary::after { content: "+"; position: absolute; right: 0; top: -2px; font-size: 1.3rem; color: var(--rust); }
+  .faq details[open] summary::after { content: "–"; }
+  .faq p { margin: 10px 0 0; }
+
   .price { font-family: var(--font-display); font-size: 3rem; color: var(--ink); margin: 0.2rem 0 1rem; }
-  .sig { font-family: var(--font-display); font-style: italic; font-size: 1.15rem; color: var(--ink); margin-top: 2rem; }
-  .mini { text-align: center; padding: 24px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--line); }
+  .closer { font-family: var(--font-display); font-style: italic; font-size: 1.15rem; color: var(--ink); margin-top: 2rem; }
+  .mini { text-align: center; padding: 24px 20px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--line); }
   .mini a { color: var(--muted); }
 
   @media (min-width: 860px) {
-    .hero-grid { grid-template-columns: 1.1fr 0.9fr; }
+    .hero-grid { grid-template-columns: 1fr 1fr; }
     .stories { grid-template-columns: 1fr 1fr; }
-    .trio { grid-template-columns: repeat(3, 1fr); }
-    .checks { grid-template-columns: repeat(3, 1fr); }
-    .hour-grid { grid-template-columns: 0.7fr 1.3fr; }
+    .sheets { grid-template-columns: repeat(4, 1fr); }
+    .hour-grid { grid-template-columns: 0.8fr 1.2fr; }
+    .stack { grid-template-columns: 1.1fr 1fr 1.1fr; }
     .quotes { grid-template-columns: repeat(3, 1fr); }
   }
   @media (max-width: 520px) {
-    .band { padding: 52px 0; }
-    .phones { height: 430px; }
-    .phones .phone { width: 190px; }
+    .band { padding: 54px 0; }
+    .story img { height: 380px; }
+    .checks.two { grid-template-columns: 1fr; }
+    .guarantee { padding: 26px 20px; }
   }
 </style>
