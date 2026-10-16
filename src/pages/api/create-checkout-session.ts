@@ -222,12 +222,14 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // Workshop seats are per date — reject a missing, unknown, or past date
   // rather than charging for a session that isn't on the calendar.
   let workshopDate: string | undefined;
+  let submitMessage: string | undefined;
   if (product === "workshop") {
     const d = findWorkshopDate(url.searchParams.get("date"));
     if (!d || !isBookable(d.iso)) {
       return Response.redirect(`${origin}/workshop#dates`, 303);
     }
     workshopDate = d.iso;
+    submitMessage = `Your seat: ${d.label}, 7:00–8:30pm MT on Zoom. Your Zoom link arrives by email before the session.`;
   }
 
   // No scarcity/sold-out gate here — every hat and shirt is print-to-order
@@ -258,6 +260,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
       priceData,
       mode: productConfig.mode,
       successUrl: `${origin}${productConfig.thankYouPath}?session_id={CHECKOUT_SESSION_ID}`,
+      submitMessage,
       cancelUrl: `${origin}${productConfig.returnPath}?purchase=canceled`,
       customerId: existingCustomerId,
       customerEmail: existingCustomerId ? undefined : email,

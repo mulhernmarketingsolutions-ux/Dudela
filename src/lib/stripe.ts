@@ -87,6 +87,9 @@ export async function createCheckoutSession(
     // rather than "one main item + flat-qty-1 extras." Every other caller
     // is unaffected — this is purely an alternate path.
     items?: { name: string; unitAmountCents: number; images?: string[]; quantity: number }[];
+    // Short note shown above the Pay button on Stripe Checkout (e.g. which
+    // Workshop date the buyer picked), so they know exactly what they're paying for.
+    submitMessage?: string;
   }
 ) {
   const mode = opts.mode || "payment";
@@ -95,6 +98,9 @@ export async function createCheckoutSession(
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
   };
+  if (opts.submitMessage) {
+    params["custom_text[submit][message]"] = opts.submitMessage;
+  }
   if (opts.promotionCodeId) {
     params["discounts[0][promotion_code]"] = opts.promotionCodeId;
   } else if (opts.allowPromotionCodes) {
