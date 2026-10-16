@@ -95,6 +95,9 @@ type ProductInfo = {
   // The Dudela Workshop: receipt confirms the seat + date instead of a download.
   isWorkshop?: boolean;
   sessionLabel?: string;
+  // Prep Kit receipt: add the "first useful hour" plan under the download
+  // button so the buyer knows exactly where to start the moment it arrives.
+  firstHour?: boolean;
   // Relative /images/... path — resolved to an absolute thedudelaco.com
   // URL in receiptEmailHtml/notifyEmailHtml, same reasoning as
   // create-checkout-session.ts's priceData.image (email clients need a
@@ -111,6 +114,7 @@ export const PRODUCTS: Record<string, ProductInfo> = {
     price: "$37",
     fileName: "dudela-prep-kit.pdf",
     url: "https://thedudelaco.com/downloads/dudela-prep-kit.pdf",
+    firstHour: true,
   },
   "spit-up-society": {
     name: "The Spit-Up Society",
@@ -337,9 +341,23 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
       Thanks for grabbing <strong>${product.name}</strong> (${product.price}) — this receipt confirms your purchase.
     </p>
     ${deliveryBlock}
+    ${product.firstHour ? firstHourBlock : ""}
     <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
   `);
 }
+
+// Added 2026-10-16. Lives in the instant receipt (not a later Loops email) so
+// the buyer gets the kit AND a clear first step in the same minute. The Loops
+// sequence starts the next day as a follow-up nudge.
+const firstHourBlock = `
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:8px 0 10px;"><strong>Where to start:</strong> you don't need to read all 31 pages tonight. Page 3 is a one-hour plan:</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 18px;font-size:15px;color:#1c2319;">
+      <tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid #ece3d1;color:#a3492b;font-weight:700;white-space:nowrap;">10 min</td><td style="padding:8px 0;border-bottom:1px solid #ece3d1;">Fill out the Readiness Map and find your gaps.</td></tr>
+      <tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid #ece3d1;color:#a3492b;font-weight:700;white-space:nowrap;">20 min</td><td style="padding:8px 0;border-bottom:1px solid #ece3d1;">Sit down with your partner and hear what feels heaviest for her.</td></tr>
+      <tr><td style="padding:8px 12px 8px 0;border-bottom:1px solid #ece3d1;color:#a3492b;font-weight:700;white-space:nowrap;">20 min</td><td style="padding:8px 0;border-bottom:1px solid #ece3d1;">Build the plan for the birth and the first days home.</td></tr>
+      <tr><td style="padding:8px 12px 8px 0;color:#a3492b;font-weight:700;white-space:nowrap;">10 min</td><td style="padding:8px 0;">Name who owns the next three things, and by when.</td></tr>
+    </table>
+    <p style="color:#1c2319;font-size:15px;line-height:1.6;margin:0 0 18px;">Questions, or the link won't open? Just reply to this email. Mike and I read every one.</p>`;
 
 // Short, warm subject line per product type. Deliberately does NOT include
 // the full product name/variant string — for a bundle that string is "Bundle
