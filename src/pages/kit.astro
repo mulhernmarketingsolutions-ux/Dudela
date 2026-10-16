@@ -2,77 +2,203 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { pillars } from "../data/pillars.js";
+// Long-form sales page for cold ad traffic (rebuilt 2026-10-16 from
+// claude/dudela-message-guide.md in the Dudela project). Same URL as before
+// so every existing link, blog offer, and the Meta pixel keep working.
+const BUY = "/api/create-checkout-session?product=prep-kit";
+const track = "window.fbq && fbq('track', 'InitiateCheckout', { value: 37, currency: 'USD', content_name: 'Prep Kit' })";
+
+const tools = [
+  ["The Readiness Map", "Find your gaps in 10 minutes. Pick one thing to fix today."],
+  ["Calm and Support Card", "Your plan for the moment you feel yourself getting overloaded."],
+  ["Leave and Money Plan", "Real numbers for leave, bills, and baby costs, so the worry has something to work with."],
+  ["The Ownership Plan", "Who owns meals, laundry, visitors, appointments. Owns, not \"helps with.\""],
+  ["The Partner Conversation", "Twenty minutes, five questions, one decision. Built so it doesn't turn into a fight."],
+  ["Birth Support Brief", "What matters to her, what she wants from you when it's hard, and your job if the plan changes."],
+  ["Hospital Logistics", "Numbers, entrance, route, backup driver, the bag. Decided before 2am."],
+  ["Your Dad Commitments", "One promise that survives a hard day, and how you'll repair when you miss it."],
+  ["First 72 Hours Plan", "Feeding support, safe sleep, rest, meals, visitors. The first days home, mapped."],
+];
+const quotes = [
+  { who: "Jessica", where: "New mom in Nebraska", text: "The biggest thing? I didn't have to ask him to do every little thing. We actually talked about what I needed, and he started handling stuff. That took a lot off me." },
+  { who: "Sam", where: "Expecting dad in Colorado", text: "Honestly, I needed someone to spell it out. 'Be supportive' could mean anything. Now I have a much better idea of what to actually do." },
+  { who: "Craig", where: "Expecting dad in California", text: "We did the exercises together, which I thought might be awkward. Ended up having a really good conversation about what we were both worried about. Abigail's Corner was probably my favorite part. Having that perspective from a BCBA helped the advice click for me. I came away with a few things I could take responsibility for right away." },
+];
 ---
-<BaseLayout title="The Dudela Prep Kit — $37" description="Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, real founder stories.">
+<BaseLayout title="The Dudela Prep Kit — $37" description="Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, and real stories from two dads who've been there. $37, instant download.">
   <Nav />
 
+  <!-- 1. HOOK -->
   <section class="hero section-dark">
     <div class="container hero-grid">
       <div>
-        <p class="eyebrow">Dudela Presents</p>
-        <h1>The Dudela Prep Kit</h1>
-        <p class="hero-sub">Your no-nonsense guide to showing up strong.</p>
+        <p class="eyebrow">The Dudela Prep Kit</p>
+        <h1>You don't have to know everything. You do need somewhere honest to start.</h1>
+        <p class="hero-sub">Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, and real stories from two dads who've been there.</p>
         <div class="price-row">
           <span class="price">$37</span>
-          <span class="price-label">Instant download</span>
+          <span class="price-label">Instant download &middot; Yours to keep</span>
         </div>
-        <a href="#buy" class="btn btn-primary">Get the Prep Kit</a>
+        <a href={BUY} class="btn btn-primary" onclick={track}>Get the Prep Kit</a>
+        <p class="tagline">Prepare together. Real dads. Useful plans.</p>
       </div>
-      <img src="/images/prep-kit-cover.jpeg" alt="The Dudela Prep Kit — cover" class="kit-cover-img" />
+      <img src="/images/prep-kit-cover-v2.jpg" alt="The Dudela Prep Kit cover: John holding his twin daughters in a golden field" class="kit-cover-img" />
     </div>
   </section>
 
-  <section class="welcome section-light">
-    <div class="container welcome-inner">
-      <p class="eyebrow">Meet John and Mike</p>
-      <p class="lead">
-        Hey. We're genuinely glad you're here. Not in a cheesy, corporate-guide kind of way.
-        We mean it.
-      </p>
-      <p class="body-text">
-        Most dads-to-be find themselves somewhere between low-key terrified and completely
-        overwhelmed right around now — and the internet isn't helping. Between the 47-item
-        hospital bag checklists and the unsolicited advice from everyone at work, it's hard
-        to know what actually matters. That's exactly why we built this.
-      </p>
-      <p class="body-text">
-        Straight. No fluff. No clinical detachment. We're two dads who've been in those
-        delivery rooms, had those 2am conversations with our partners, and made a lot of
-        mistakes we can help you skip. This is the thing we wish someone had handed us when
-        we were where you are right now.
-      </p>
+  <!-- 2. PAIN -->
+  <section class="block section-light">
+    <div class="container narrow">
+      <p class="eyebrow">Sound familiar?</p>
+      <h2>Someone asks if you're excited. You say "Yeah, absolutely."</h2>
+      <p>Because explaining the other six feelings would take a while.</p>
+      <p>You want this baby more than anything. You're also quietly wondering what you signed up for. Maybe you've spent an hour comparing strollers because it's easier than admitting you're worried about the birth. Maybe she's doing all the reading and all the planning, and you're starting to feel like a passenger in your own family.</p>
+      <p>Everyone tells you to "be supportive." Nobody tells you what that actually means on a Tuesday night.</p>
+      <p class="strong">That's not a character flaw. Nobody handed you a plan. This is the plan.</p>
     </div>
   </section>
 
-  <section class="pillars-list section-dark">
+  <!-- 3. STORY -->
+  <section class="block section-dark">
+    <div class="container narrow">
+      <p class="eyebrow">Why we built it</p>
+      <h2>Neither of us got the birth we planned for.</h2>
+      <div class="story">
+        <img src="/images/founder-john.jpg" alt="John" />
+        <div>
+          <h3>John</h3>
+          <p>Viv and I had a complicated twin pregnancy. Our girls came at 34 weeks and went straight to the NICU for a month. I'd hold it together upstairs, get to the parking garage, and break for a few minutes. Then I'd go back up. "Showing up strong" didn't mean never needing anything. It meant having a plan and having people.</p>
+        </div>
+      </div>
+      <div class="story">
+        <img src="/images/founder-mike.jpg" alt="Mike" />
+        <div>
+          <h3>Mike</h3>
+          <p>Abigail had the whole birth planned: the music, the lighting, how she wanted to move through labor. Then the OB called for an emergency C-section. In about ninety seconds we went from one picture of the day to a completely different one. The plan was gone. She still needed me there.</p>
+        </div>
+      </div>
+      <p class="after-story">We built the Prep Kit to be the thing we wish someone had handed us: honest, practical, and made to be done together.</p>
+      <a href={BUY} class="btn btn-primary" onclick={track}>Get the Prep Kit &middot; $37</a>
+    </div>
+  </section>
+
+  <!-- 4. FIRST USEFUL HOUR -->
+  <section class="block section-light">
+    <div class="container narrow">
+      <p class="eyebrow">How it works</p>
+      <h2>Your first useful hour.</h2>
+      <p>You don't have to read 31 pages tonight. The kit opens with a one-hour plan:</p>
+      <ol class="hour">
+        <li><strong>10 minutes:</strong> find your gaps with the Readiness Map.</li>
+        <li><strong>20 minutes:</strong> sit down with your partner and hear what's heavy for her.</li>
+        <li><strong>20 minutes:</strong> build the working plan for the birth and the first days home.</li>
+        <li><strong>10 minutes:</strong> name who owns the next three things, and by when.</li>
+      </ol>
+      <p class="strong">By the end of that hour you know who to call, how you're getting to the hospital, what she wants you to handle, and who can help once you're home.</p>
+    </div>
+  </section>
+
+  <!-- 5. WHAT'S INSIDE -->
+  <section class="block section-dark">
     <div class="container">
       <p class="eyebrow">What's inside</p>
-      <h2>Six pillars. Nine printable tools. Real stories throughout.</h2>
-      <div class="pillars-grid">
-        {pillars.map((p, i) => (
-          <div class="pillar-item" id={p.slug}>
-            <span>{String(i + 1).padStart(2, "0")}</span>
-            <div>
-              <strong>{p.name}</strong>
-              <p class="pillar-item-line">{p.line}</p>
-            </div>
-          </div>
+      <h2>Six pillars. Nine practical tools. Real stories from our families to yours.</h2>
+      <div class="pillars">
+        <div><span>01</span><strong>Get Your Head Right</strong><p>Stay present without pretending you're fine.</p></div>
+        <div><span>02</span><strong>Get Your Money Ready</strong><p>Swap the vague worry for your household's actual numbers.</p></div>
+        <div><span>03</span><strong>Be The Partner She Needs</strong><p>Own the work, including the thinking.</p></div>
+        <div><span>04</span><strong>Know What You're Walking Into</strong><p>Know your role, your care team, and how to get help.</p></div>
+        <div><span>05</span><strong>Decide What Kind of Dad You Want to Be</strong><p>Turn the big intention into something she can see.</p></div>
+        <div><span>06</span><strong>First Days Home Playbook</strong><p>A rhythm that protects care, recovery, and rest.</p></div>
+      </div>
+      <h3 class="tools-h">The nine tools</h3>
+      <div class="tools">
+        {tools.map(([name, line]) => (
+          <div><strong>{name}</strong><p>{line}</p></div>
         ))}
       </div>
-      <p class="pillars-note">
-        Plus Abigail's Corner — expert commentary on emotional regulation from a Board
-        Certified Behavior Analyst (BCBA) — and a pregnancy roadmap organized by trimester.
-      </p>
+      <p class="inside-note">Plus a 7-day plan to make it stick, and a short list of trusted resources (CDC and AAP) for when you need real medical guidance.</p>
+      <a href={BUY} class="btn btn-primary" onclick={track}>Get the Prep Kit &middot; $37</a>
     </div>
   </section>
 
-  <section class="buy section-light" id="buy">
+  <!-- 6. PARTNER VOICES -->
+  <section class="block section-light">
+    <div class="container narrow">
+      <p class="eyebrow">Her side of it, too</p>
+      <h2>Written by dads. Checked by the women who lived it with us.</h2>
+      <div class="voice">
+        <h3>Abigail's Corner</h3>
+        <p class="who">Abigail Colander &middot; Mike's wife &middot; Licensed, Board Certified Behavior Analyst</p>
+        <p>Abigail thinks about behavior for a living. Her pages turn "be more helpful" into routines you can actually keep, and she tells the real story of what Mike did that helped: asking the questions that needed answers during the C-section, holding family back until she was ready, and owning the bottles and cleaning while she recovered.</p>
+      </div>
+      <div class="voice">
+        <h3>Viv's Perspective</h3>
+        <p class="who">Viv &middot; John's wife</p>
+        <p>"Evidence of life." Viv on what actually matters in the first days home, what can wait, and how to tell visitors to bring dinner instead of an opinion.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. PROOF -->
+  <section class="block section-dark">
+    <div class="container">
+      <p class="eyebrow">From families who've used it</p>
+      <h2>"I didn't have to ask him to do every little thing."</h2>
+      <div class="quotes">
+        {quotes.map((q) => (
+          <figure>
+            <blockquote>"{q.text}"</blockquote>
+            <figcaption><strong>{q.who}</strong> &middot; {q.where}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. WHO IT'S FOR -->
+  <section class="block section-light">
+    <div class="container narrow fit">
+      <div>
+        <h3>This is for you if</h3>
+        <ul>
+          <li>You're expecting, especially your first, and want a real plan instead of a vague feeling.</li>
+          <li>Your partner is carrying most of the planning and you want to take real pieces of it.</li>
+          <li>You'd rather do one honest hour of work than read ten articles.</li>
+          <li>You want to do this together, not alone in a group chat.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>This isn't for you if</h3>
+        <ul>
+          <li>You want medical advice. We point you to your care team for that, every time.</li>
+          <li>You want a 300-page manual. This is a working plan, not a textbook.</li>
+          <li>You're looking for someone to tell you you're already crushing it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. PRICE + CLOSE -->
+  <section class="buy section-dark" id="buy">
     <div class="container buy-inner">
-      <h2>$37. Instant download. Yours to keep.</h2>
-      <a href="/api/create-checkout-session?product=prep-kit" class="btn btn-primary" onclick="window.fbq && fbq('track', 'InitiateCheckout', { value: 37, currency: 'USD', content_name: 'Prep Kit' })">Get the Prep Kit</a>
-      <p class="buy-note">Prefer to start free? <a href="/guide">Get the free Dad Prep Guide</a> first.</p>
-      <p class="buy-note">Want more than a PDF? John and Mike also work 1:1 — see <a href="/turn">The Turn</a>.</p>
+      <img src="/images/prep-kit-cover-v2.jpg" alt="" class="buy-cover" />
+      <h2>The Dudela Prep Kit</h2>
+      <p class="buy-list">31 pages &middot; 6 pillars &middot; 9 printable tools &middot; Abigail's Corner &middot; Instant PDF download</p>
+      <div class="price-row center">
+        <span class="price">$37</span>
+        <span class="price-label">One time &middot; Yours to keep</span>
+      </div>
+      <a href={BUY} class="btn btn-primary" onclick={track}>Get the Prep Kit</a>
+      <p class="close-line">You don't have to walk into this certain. You can walk in willing to learn, ready to take responsibility, and willing to ask for help.</p>
+      <p class="sig">John &amp; Mike</p>
+    </div>
+  </section>
+
+  <section class="after section-light">
+    <div class="container narrow center-text">
+      <p>Want to work through it live with other dads? <a href="/workshop">The Dudela Workshop</a> meets the first Thursday of every month on Zoom.</p>
+      <p>Not ready to buy? <a href="/guide">Start with the free Dad Prep Guide.</a></p>
     </div>
   </section>
 
@@ -80,132 +206,77 @@ import { pillars } from "../data/pillars.js";
 </BaseLayout>
 
 <style>
-  .hero {
-    padding: 9rem 0 4rem;
-  }
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-    align-items: center;
-  }
-  .kit-cover-img {
-    width: 100%;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(242, 237, 230, 0.16);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.07) inset,
-      0 30px 70px -20px rgba(0, 0, 0, 0.65),
-      0 0 0 1px rgba(0, 0, 0, 0.35);
-  }
-  .hero h1 {
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 4.5vw, 3rem);
-    margin: 0.5rem 0 0.5rem;
-  }
-  .hero-sub {
-    font-family: var(--font-label);
-    color: var(--text-on-dark-muted);
-    margin-bottom: 1.5rem;
-  }
-  .price-row {
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    margin-bottom: 1.5rem;
-  }
-  .price {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    color: var(--amber-500);
-  }
-  .price-label {
-    font-family: var(--font-label);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.75rem;
-    color: var(--text-on-dark-muted);
-  }
-  .welcome {
-    padding: var(--space-6) 0;
-  }
-  .welcome-inner {
-    max-width: 700px;
-  }
-  .lead {
-    font-family: var(--font-display);
-    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
-    line-height: 1.4;
-    margin: 0.75rem 0 1.5rem;
-  }
-  .body-text {
-    color: var(--text-on-light-muted);
-    margin: 0 0 1rem;
-  }
-  .pillars-list {
-    padding: var(--space-6) 0;
-  }
-  .pillars-list h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3.2vw, 2.3rem);
-    max-width: 22ch;
-    margin: 0.5rem 0 2rem;
-  }
-  .pillars-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1px;
-    background: var(--forest-600);
-    margin-bottom: 1.5rem;
-  }
-  .pillar-item {
-    background: var(--forest-800);
-    padding: 1.25rem 1.5rem;
-    font-family: var(--font-label);
-    font-weight: 600;
-    display: flex;
-    gap: 1rem;
-    scroll-margin-top: 6rem;
-  }
-  .pillar-item span {
-    color: var(--amber-500);
-    font-family: var(--font-display);
-    flex-shrink: 0;
-  }
-  .pillar-item strong {
-    display: block;
-    font-size: 1rem;
-  }
-  .pillar-item-line {
-    font-weight: 400;
-    font-size: 0.85rem;
-    color: var(--text-on-dark-muted);
-    margin: 0.35rem 0 0;
-  }
-  .pillars-note {
-    color: var(--text-on-dark-muted);
-    max-width: 60ch;
-  }
-  .buy {
-    padding: var(--space-6) 0;
-    text-align: center;
-  }
-  .buy h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
-    margin: 0 0 1.5rem;
-  }
-  .buy-note {
-    margin-top: 1.25rem;
-    color: var(--text-on-light-muted);
-    font-size: 0.9rem;
-  }
+  .hero { padding: 8.5rem 0 4rem; }
+  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: center; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.4vw, 3.1rem); line-height: 1.15; margin: 0.5rem 0 1rem; }
+  .hero-sub { color: var(--text-on-dark-muted); margin-bottom: 1.5rem; font-size: 1.05rem; }
+  .tagline { font-family: var(--font-label); color: var(--text-on-dark-muted); font-size: 0.85rem; margin-top: 1.25rem; }
+  .kit-cover-img { width: 100%; max-width: 440px; justify-self: center; border-radius: var(--radius-sm); box-shadow: 0 30px 70px -20px rgba(0,0,0,0.65); }
+  .price-row { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .price-row.center { justify-content: center; }
+  .price { font-family: var(--font-display); font-size: 2.5rem; color: var(--amber-500); }
+  .price-label { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--text-on-dark-muted); }
+
+  .block { padding: var(--space-6) 0; }
+  .narrow { max-width: 720px; }
+  .block h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3.3vw, 2.3rem); line-height: 1.2; margin: 0.5rem 0 1.25rem; }
+  .block p { margin: 0 0 1rem; }
+  .section-light p { color: var(--text-on-light-muted); }
+  .section-dark p { color: var(--text-on-dark-muted); }
+  .block p.strong { font-weight: 700; color: inherit; }
+  .section-light p.strong { color: var(--text-on-light, inherit); }
+
+  .story { display: grid; grid-template-columns: 72px 1fr; gap: 1rem; margin: 1.5rem 0; align-items: start; }
+  .story img { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; }
+  .story h3 { font-family: var(--font-display); margin: 0 0 0.35rem; font-size: 1.15rem; }
+  .after-story { margin-top: 1.5rem; }
+
+  .hour { padding-left: 1.2rem; margin: 0 0 1.25rem; }
+  .hour li { margin-bottom: 0.6rem; color: var(--text-on-light-muted); }
+
+  .pillars { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--forest-600); margin: 1.5rem 0 2rem; }
+  .pillars div { background: var(--forest-800); padding: 1.1rem 1.4rem; }
+  .pillars span { color: var(--amber-500); font-family: var(--font-display); margin-right: 0.6rem; }
+  .pillars strong { font-family: var(--font-label); }
+  .pillars p { margin: 0.35rem 0 0; font-size: 0.9rem; }
+  .tools-h { font-family: var(--font-display); font-size: 1.3rem; margin: 0 0 1rem; }
+  .tools { display: grid; grid-template-columns: 1fr; gap: 1rem 2rem; margin-bottom: 1.5rem; }
+  .tools strong { font-family: var(--font-label); color: var(--amber-500); }
+  .tools p { margin: 0.2rem 0 0; font-size: 0.92rem; }
+  .inside-note { max-width: 60ch; }
+
+  .voice { margin: 1.5rem 0; padding-left: 1.25rem; border-left: 3px solid var(--rust-600); }
+  .voice h3 { font-family: var(--font-display); margin: 0; font-size: 1.2rem; }
+  .voice .who { font-family: var(--font-label); font-size: 0.82rem; margin: 0.25rem 0 0.6rem; }
+
+  .quotes { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-top: 1.5rem; }
+  .quotes figure { margin: 0; padding: 1.4rem 1.5rem; background: var(--forest-800); border-radius: var(--radius-sm); }
+  .quotes blockquote { margin: 0 0 0.9rem; font-size: 1.02rem; line-height: 1.6; }
+  .quotes figcaption { font-family: var(--font-label); font-size: 0.85rem; color: var(--amber-500); }
+
+  .fit { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+  .fit h3 { font-family: var(--font-display); margin: 0 0 0.75rem; }
+  .fit ul { padding-left: 1.1rem; margin: 0; }
+  .fit li { margin-bottom: 0.55rem; color: var(--text-on-light-muted); }
+
+  .buy { padding: var(--space-6) 0; text-align: center; }
+  .buy-inner { max-width: 620px; margin: 0 auto; }
+  .buy-cover { display: block; margin-left: auto; margin-right: auto; width: 180px; border-radius: var(--radius-sm); box-shadow: 0 20px 50px -18px rgba(0,0,0,0.6); margin-bottom: 1.25rem; }
+  .buy h2 { font-family: var(--font-display); font-size: clamp(1.7rem, 3.4vw, 2.4rem); margin: 0 0 0.5rem; }
+  .buy-list { font-family: var(--font-label); font-size: 0.85rem; color: var(--text-on-dark-muted); margin-bottom: 1.25rem; }
+  .close-line { margin-top: 1.75rem; color: var(--text-on-dark-muted); font-style: italic; }
+  .sig { font-family: var(--font-display); color: var(--amber-500); margin: 0.5rem 0 0; }
+
+  .after { padding: 2.5rem 0; }
+  .center-text { text-align: center; margin: 0 auto; }
+  .after p { color: var(--text-on-light-muted); margin: 0.4rem 0; font-size: 0.95rem; }
+  .after a { color: var(--rust-600); font-weight: 700; }
+
   @media (min-width: 900px) {
-    .hero-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-    .pillars-grid {
-      grid-template-columns: 1fr 1fr;
-    }
+    .hero-grid { grid-template-columns: 1.15fr 0.85fr; }
+    .pillars { grid-template-columns: 1fr 1fr; }
+    .tools { grid-template-columns: 1fr 1fr 1fr; }
+    .quotes { grid-template-columns: 1fr 1fr 1fr; }
+    .fit { grid-template-columns: 1fr 1fr; }
   }
 </style>
