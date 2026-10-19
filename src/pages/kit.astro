@@ -190,6 +190,7 @@ const quotes = [
         <span class="price-label">One time &middot; 30-day money-back guarantee</span>
       </div>
       <a href={BUY} class="btn btn-primary" onclick={track}>Get the Prep Kit</a>
+      <p class="addon-tease">At checkout you can add <a href="/kit/extras">Her Copy</a>, her side of the plan, plus the Delivery Room Pack for $17.</p>
       <p class="close-line">You don't have to walk into this certain. You can walk in willing to learn, ready to take responsibility, and willing to ask for help.</p>
       <p class="sig">John &amp; Mike</p>
     </div>
@@ -207,6 +208,8 @@ const quotes = [
 </BaseLayout>
 
 <style>
+  .addon-tease { color: var(--text-on-dark-muted); font-size: 0.9rem; margin: 1rem auto 0; max-width: 44ch; }
+  .addon-tease a { color: var(--amber-500); }
   .hero { padding: 8.5rem 0 4rem; }
   .hero-grid { display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: center; }
   .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.4vw, 3.1rem); line-height: 1.15; margin: 0.5rem 0 1rem; }
