@@ -24,6 +24,7 @@ const quotes = [
   { who: "Sam", where: "Expecting dad in Colorado", text: "Honestly, I needed someone to spell it out. 'Be supportive' could mean anything. Now I have a much better idea of what to actually do." },
   { who: "Craig", where: "Expecting dad in California", text: "We did the exercises together, which I thought might be awkward. Ended up having a really good conversation about what we were both worried about. Abigail's Corner was probably my favorite part. Having that perspective from a BCBA helped the advice click for me. I came away with a few things I could take responsibility for right away." },
 ];
+import KitAddon from "../components/KitAddon.astro";
 ---
 <BaseLayout title="The Dudela Prep Kit — $37" description="Your no-nonsense guide to showing up strong. Six pillars, nine printable tools, and real stories from two dads who've been there. $37, instant download.">
   <Nav />
@@ -197,11 +198,13 @@ const quotes = [
 
   <section class="after section-light">
     <div class="container narrow center-text">
-      <p>Want to work through it live with other dads? <a href="/workshop">The Dudela Workshop</a> meets the first Thursday of every month on Zoom.</p>
+      <p>Want help making it fit your family? Book a <a href="/call">Game Plan Call</a> with John or Mike. Kit owners get it for $97.</p>
+      <p>Just want her side of the plan? <a href="/kit/extras">Get Her Copy or the Delivery Room Pack on their own.</a></p>
       <p>Not ready to buy? <a href="/guide">Start with the free Dad Prep Guide.</a></p>
     </div>
   </section>
 
+  <KitAddon />
   <Footer />
 </BaseLayout>
 

@@ -51,6 +51,38 @@ const PRODUCTS: Record<
     thankYouPath: "/kit/thank-you",
     mode: "payment",
   },
+  // Prep Kit add-ons, sold on their own too (added 2026-10-19). The usual
+  // way in is the $17 checkbox at kit checkout (?product=prep-kit&addon=1,
+  // see ADDON below); these standalone entries are for people who only want
+  // one piece, e.g. a partner buying Her Copy. Priced inline, no env vars.
+  "her-copy": {
+    priceData: { name: "Her Copy: The Prep Kit, Partner Edition", unitAmountCents: 1900, image: "/images/addons/her-copy.jpg" },
+    returnPath: "/kit/extras",
+    thankYouPath: "/kit/thank-you",
+    mode: "payment",
+  },
+  "delivery-pack": {
+    priceData: { name: "The Delivery Room Pack", unitAmountCents: 1200, image: "/images/addons/delivery-pack.jpg" },
+    returnPath: "/kit/extras",
+    thankYouPath: "/kit/thank-you",
+    mode: "payment",
+  },
+  // Game Plan Call: 45 min on Google Meet with John or Mike. $200 list.
+  // Kit buyers normally get it as the one-click $97 offer on the thank-you
+  // page (api/upsell-call.ts); "game-plan-call-kit" is the same $97 price
+  // for owners who come back later via the link on page 31 of the kit.
+  "game-plan-call": {
+    priceData: { name: "Game Plan Call with John or Mike (includes the Prep Kit, Her Copy and Delivery Room Pack)", unitAmountCents: 20000 },
+    returnPath: "/call",
+    thankYouPath: "/call/thank-you",
+    mode: "payment",
+  },
+  "game-plan-call-kit": {
+    priceData: { name: "Game Plan Call with John or Mike (Prep Kit owner price)", unitAmountCents: 9700 },
+    returnPath: "/call/kit",
+    thankYouPath: "/call/thank-you",
+    mode: "payment",
+  },
   // The Dudela Workshop (live small group, first Thursdays). Needs a
   // ?date=YYYY-MM-DD that matches src/data/workshop.ts — checked in GET below.
   "workshop": {
@@ -177,6 +209,12 @@ const BUNDLE_DISCOUNT_PERCENT = 15;
 // Fallback Stripe Price ids for products whose env var hasn't been added in
 // the Cloudflare dashboard yet. Price ids aren't secret (they're visible in
 // every Checkout URL), so a code fallback is safe; the env var still wins.
+// The $17 checkout add-on for the Prep Kit: Her Copy ($19) + Delivery Room
+// Pack ($12) together. Rides along as a second line item when the buyer
+// ticks the box on /kit or /get-the-kit (?addon=1). metadata.addon = "1"
+// tells the webhook to include both downloads in the receipt.
+const ADDON = { name: "Her Copy + Delivery Room Pack", unitAmountCents: 1700, image: "/images/addons/addon-bundle.jpg" };
+
 const PRICE_ID_FALLBACKS: Record<string, string> = {
   STRIPE_PRICE_WORKSHOP: "price_1URFfyI01jg8VCLkxBFm2nAW", // The Dudela Workshop, $147 (created 2026-10-16)
 };
@@ -241,7 +279,12 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // added here, not baked into priceId, so the base hat price stays a single
   // shared Stripe Price across all 28 variants.
   const hatVariant = productConfig.merchColor ? getHatVariant(productConfig.merchColor) : undefined;
-  const extraLineItems = hatVariant?.addon ? [{ name: 'Dude to Dad Stitch', unitAmountCents: 100 }] : undefined;
+  const kitAddon = product === "prep-kit" && url.searchParams.get("addon") === "1";
+  const extraLineItems = hatVariant?.addon
+    ? [{ name: 'Dude to Dad Stitch', unitAmountCents: 100 }]
+    : kitAddon
+      ? [{ name: ADDON.name, unitAmountCents: ADDON.unitAmountCents, images: [`${origin}${ADDON.image}`] }]
+      : undefined;
 
   // Stripe fetches the image itself, so it needs a real absolute https URL —
   // resolve the catalog's relative /images/... path against this request's
@@ -270,6 +313,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
           : workshopDate
             ? { product, sessionDate: workshopDate }
             : { product }),
+        ...(kitAddon ? { addon: "1" } : {}),
         ...metaMatchData(request, cookies),
       },
       collectShipping: productConfig.shipping,
@@ -280,6 +324,9 @@ export async function GET({ request, locals, cookies }: APIContext) {
       invoiceCreation: productConfig.mode === "payment",
       extraLineItems,
       allowPromotionCodes: productConfig.allowPromotionCodes,
+      // Prep Kit saves the card so the thank-you page can offer the Game
+      // Plan Call as a one-click add (see api/upsell-call.ts).
+      saveCardForLater: product === "prep-kit",
     });
 
     return new Response(null, {

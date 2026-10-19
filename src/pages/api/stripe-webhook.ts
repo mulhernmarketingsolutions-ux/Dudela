@@ -24,6 +24,7 @@ import {
   POSTCARD_SYNC_VARIANT_ID,
 } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
+import { CALENDLY_URL, DOWNLOADS, ADDON_DOWNLOADS } from "../../lib/offers";
 
 // Welcome sticker + postcard — added as extra line items (see lib/printful.ts's
 // createPrintfulOrder comment) to every hat/shirt/bundle order so a first-time
@@ -107,6 +108,12 @@ type ProductInfo = {
   // Bundle orders only: both items broken out separately so the receipt/
   // notify emails can show each product's own photo, not just one.
   items?: { name: string; image?: string }[];
+  // Extra download buttons under the main one: the $17 checkout add-on
+  // (Her Copy + Delivery Room Pack), or everything bundled with a $200 call.
+  extraDownloads?: { label: string; url: string }[];
+  // Game Plan Call: the receipt is a "pick your time" email with the
+  // Calendly link instead of a download.
+  isCall?: boolean;
 };
 
 export const PRODUCTS: Record<string, ProductInfo> = {
@@ -116,6 +123,29 @@ export const PRODUCTS: Record<string, ProductInfo> = {
     fileName: "dudela-prep-kit.pdf",
     url: "https://thedudelaco.com/downloads/dudela-prep-kit.pdf",
     firstHour: true,
+  },
+  "her-copy": {
+    name: "Her Copy",
+    price: "$19",
+    url: DOWNLOADS.herCopy.url,
+  },
+  "delivery-pack": {
+    name: "The Delivery Room Pack",
+    price: "$12",
+    url: DOWNLOADS.deliveryPack.url,
+  },
+  // $200 on its own, and it includes the kit and both add-ons.
+  "game-plan-call": {
+    name: "Game Plan Call",
+    price: "$200",
+    isCall: true,
+    extraDownloads: [DOWNLOADS.kit, ...ADDON_DOWNLOADS],
+  },
+  // $97: kit owners (the one-click offer, or the link on page 31 of the kit).
+  "game-plan-call-kit": {
+    name: "Game Plan Call",
+    price: "$97",
+    isCall: true,
   },
   "spit-up-society": {
     name: "The Spit-Up Society",
@@ -308,6 +338,28 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
     `);
   }
 
+  if (product.isCall) {
+    const extras = product.extraDownloads?.length
+      ? `<p style="color:#1c2319;font-size:15px;line-height:1.6;margin:0 0 8px;"><strong>Your downloads</strong> (included with the call). Do the first hour of the kit before we talk and we'll get further:</p>
+         <p style="color:#1c2319;font-size:15px;line-height:1.8;margin:0 0 18px;">${product.extraDownloads.map((d) => `<a href="${d.url}" style="color:#c66815;">${d.label}</a>`).join("<br/>")}</p>`
+      : "";
+    return emailShell(`
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
+    <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
+      Your <strong>Game Plan Call</strong> (${product.price}) is paid for. It's an hour on Google Meet with John or Mike, and your partner is welcome to join.
+    </p>
+    <div style="text-align:center;margin:26px 0 26px;">
+      <a href="${CALENDLY_URL}" style="display:inline-block;background:#e27d25;color:#12180f;padding:15px 30px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Pick your time</a>
+    </div>
+    ${extras}
+    <p style="color:#1c2319;font-size:15px;line-height:1.6;margin:0 0 18px;">
+      Before the call, write down the one thing you're most worried about. That's where we'll start. If the call isn't worth it, tell us and we'll refund it. And if you decide to join The Turn within 14 days, what you paid for this call comes off the price.
+    </p>
+    <p style="color:#1c2319;font-size:15px;line-height:1.6;margin:0 0 18px;">Can't find a time that works? Just reply to this email.</p>
+    <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
+  `);
+  }
+
   if (product.isWorkshop) {
     return emailShell(`
     <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
@@ -342,6 +394,12 @@ export function receiptEmailHtml(name: string, product: ProductInfo) {
       Thanks for grabbing <strong>${product.name}</strong> (${product.price}) — this receipt confirms your purchase.
     </p>
     ${deliveryBlock}
+    ${
+      product.extraDownloads?.length
+        ? `<p style="color:#1c2319;font-size:15px;line-height:1.6;margin:0 0 6px;"><strong>Plus your add-ons:</strong></p>
+           <p style="color:#1c2319;font-size:15px;line-height:1.8;margin:0 0 18px;">${product.extraDownloads.map((d) => `<a href="${d.url}" style="color:#c66815;">Download ${d.label}</a>`).join("<br/>")}</p>`
+        : ""
+    }
     ${product.firstHour ? firstHourBlock : ""}
     <p style="color:#1c2319;font-size:15px;margin:26px 0 0;">— John &amp; Mike, Dudela</p>
   `);
@@ -367,7 +425,8 @@ const firstHourBlock = `
 // L", which reads like a database dump in an inbox and gets truncated by
 // most mail clients anyway. The full details still show inside the email
 // body, where there's room to do it justice.
-function receiptSubject(product: { name: string; isSubscription?: boolean; isBundle?: boolean; isMerch?: boolean; isWorkshop?: boolean }): string {
+function receiptSubject(product: { name: string; isSubscription?: boolean; isBundle?: boolean; isMerch?: boolean; isWorkshop?: boolean; isCall?: boolean }): string {
+  if (product.isCall) return "Your Game Plan Call: pick your time";
   if (product.isWorkshop) return "Your Dudela Workshop seat is saved!";
   if (product.isSubscription) return "Welcome to the Spit-Up Society!";
   if (product.isBundle) return "Your Dudela bundle is confirmed!";
@@ -380,7 +439,7 @@ function receiptSubject(product: { name: string; isSubscription?: boolean; isBun
 // personal thank-you straight to them with zero extra steps. productLabel/
 // image/shipping are only relevant for merch orders (undefined for the Prep
 // Kit / Spit-Up Society, which fall back to the plain product key).
-function notifyEmailHtml(opts: {
+export function notifyEmailHtml(opts: {
   email: string;
   name: string;
   product: string;
@@ -594,7 +653,9 @@ export async function POST({ request, locals }: APIContext) {
                 sessionLabel: findWorkshopDate(session.metadata?.sessionDate)?.label,
                 name: `The Dudela Workshop${findWorkshopDate(session.metadata?.sessionDate) ? ` (${findWorkshopDate(session.metadata?.sessionDate)!.label})` : ""}`,
               }
-            : PRODUCTS[product] || { name: product, price: amountTotal };
+            : product === "prep-kit" && session.metadata?.addon === "1"
+              ? { ...PRODUCTS["prep-kit"], price: amountTotal, extraDownloads: ADDON_DOWNLOADS }
+              : PRODUCTS[product] || { name: product, price: amountTotal };
       // Hoisted out of the isMerch/isBundle blocks below so the internal notify
       // email (sent further down, after those branches) can include shipping
       // details for merch orders without re-parsing the session.

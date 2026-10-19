@@ -1,0 +1,62 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+// The Prep Kit add-ons sold on their own (added 2026-10-19), e.g. for a
+// partner who only wants Her Copy. Most people get them as the $17 checkbox
+// at kit checkout instead.
+const items = [
+  {
+    key: "her-copy", name: "Her Copy", price: 19, img: "/images/addons/her-copy.jpg",
+    blurb: "The Prep Kit, partner edition. Seven short worksheets that ask her the same questions his kit asks him, from her side: what feels heavy, what she wants off her plate, what matters to her during the birth, and what she's hoping the first days home look like. Fill them out separately, then compare notes.",
+    meta: "10-page PDF · instant download",
+  },
+  {
+    key: "delivery-pack", name: "The Delivery Room Pack", price: 12, img: "/images/addons/delivery-pack.jpg",
+    blurb: "The plan, shrunk down to what fits in your wallet and on your lock screen. Two printable wallet cards (your job in the room, and what to do if the plan changes) plus three phone wallpapers.",
+    meta: "3-page PDF + 3 wallpapers · instant download",
+  },
+];
+---
+<BaseLayout title="Her Copy and the Delivery Room Pack | Dudela" description="The Prep Kit add-ons on their own: Her Copy ($19), the partner edition, and the Delivery Room Pack ($12).">
+  <Nav />
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Prep Kit add-ons</p>
+      <h1>Just want one piece?</h1>
+      <p class="hero-sub">Both add-ons work on their own. Getting the kit too? Add both at checkout for $17 instead. <a href="/kit">See the Prep Kit</a>.</p>
+    </div>
+  </section>
+  <section class="items section-light">
+    <div class="container items-grid">
+      {items.map((it) => (
+        <div class="item">
+          <img src={it.img} alt="" width="600" height="776" loading="lazy" />
+          <div>
+            <h2>{it.name} <span>${it.price}</span></h2>
+            <p>{it.blurb}</p>
+            <p class="meta">{it.meta}</p>
+            <a class="btn btn-primary" href={`/api/create-checkout-session?product=${it.key}`} onclick={`window.fbq && fbq('track','InitiateCheckout',{value:${it.price},currency:'USD',content_name:'${it.name}'})`}>Get {it.name} · ${it.price}</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+  <Footer />
+</BaseLayout>
+<style>
+  .hero { padding: 8.5rem 0 3.5rem; }
+  .hero-inner { max-width: 640px; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.1rem, 5vw, 3rem); margin: 0.5rem 0 1rem; }
+  .hero-sub { color: var(--text-on-dark-muted); }
+  .hero-sub a { color: var(--amber-500); }
+  .items { padding: var(--space-6) 0; }
+  .items-grid { display: grid; gap: 2.5rem; max-width: 860px; }
+  .item { display: grid; grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
+  .item img { width: 100%; max-width: 300px; height: auto; border-radius: 8px; box-shadow: 0 20px 50px -25px rgba(0,0,0,0.45); }
+  .item h2 { font-family: var(--font-display); font-size: 1.7rem; margin: 0 0 0.6rem; }
+  .item h2 span { color: var(--amber-600, #c66815); margin-left: 0.4rem; }
+  .item p { color: var(--text-on-light-muted); margin: 0 0 0.8rem; }
+  .meta { font-family: var(--font-label); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  @media (min-width: 720px) { .item { grid-template-columns: 260px 1fr; } }
+</style>

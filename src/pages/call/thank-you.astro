@@ -1,0 +1,71 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { retrieveCheckoutSession } from "../../lib/stripe";
+import { CALENDLY_URL, DOWNLOADS } from "../../lib/offers";
+
+// After paying for a Game Plan Call: pick a time right here (Calendly), plus
+// the kit downloads when the $200 call (which includes them) was bought.
+export const prerender = false;
+const env = (Astro.locals as any).runtime?.env;
+const sessionId = Astro.url.searchParams.get("session_id") || "";
+let session: any = null;
+if (env && /^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
+  try { session = await retrieveCheckoutSession(env, sessionId); } catch (err) { console.error("call thank-you lookup failed", err); }
+}
+const product = session?.metadata?.product || "";
+const value = typeof session?.amount_total === "number" ? session.amount_total / 100 : 0;
+const name = session?.customer_details?.name || "";
+const email = session?.customer_details?.email || "";
+const downloads = product === "game-plan-call" ? [DOWNLOADS.kit, DOWNLOADS.herCopy, DOWNLOADS.deliveryPack] : [];
+const cal = new URL(CALENDLY_URL);
+cal.searchParams.set("hide_gdpr_banner", "1");
+if (name) cal.searchParams.set("name", name);
+if (email) cal.searchParams.set("email", email);
+---
+<BaseLayout title="Pick your time | Game Plan Call" description="Your Game Plan Call is paid for. Pick your time." noindex>
+  <Nav />
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Call paid for</p>
+      <h1>Now pick your hour.</h1>
+      <p class="hero-sub">Choose a time below. You'll get a Google Meet invite right away. The link is in your receipt email too, if you'd rather pick later.</p>
+    </div>
+  </section>
+  <section class="cal section-light">
+    <div class="container cal-inner">
+      <div class="calendly-inline-widget" data-url={cal.toString()} style="min-width:280px;height:720px;"></div>
+      <script is:inline src="https://assets.calendly.com/assets/external/widget.js" async></script>
+      {downloads.length > 0 && (
+        <div class="dl">
+          <h2>Your downloads</h2>
+          <p>Included with your call. Do the first hour of the kit (page 3) before we talk and we'll get further.</p>
+          <ul>{downloads.map((d) => <li><a href={d.url} download>Download {d.label}</a></li>)}</ul>
+        </div>
+      )}
+    </div>
+  </section>
+  <Footer />
+</BaseLayout>
+<script is:inline define:vars={{ value, sid: sessionId }}>
+  (function () {
+    if (!sid || !value || !window.fbq) return;
+    var key = "dudela_px_purchase_" + sid;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) {}
+    fbq("track", "Purchase", { value: value, currency: "USD", content_name: "Game Plan Call" }, { eventID: sid });
+  })();
+</script>
+<style>
+  .hero { padding: 8.5rem 0 3rem; text-align: center; }
+  .hero-inner { max-width: 600px; margin: 0 auto; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 5.5vw, 3.2rem); margin: 0.5rem 0 1rem; }
+  .hero-sub { color: var(--text-on-dark-muted); }
+  .cal { padding: 2rem 0 var(--space-6); }
+  .cal-inner { max-width: 760px; margin: 0 auto; }
+  .dl { margin-top: 2rem; background: var(--cream-100, #f5efe3); border-radius: 10px; padding: 1.4rem 1.5rem; }
+  .dl h2 { font-family: var(--font-display); font-size: 1.4rem; margin: 0 0 0.4rem; }
+  .dl p { color: var(--text-on-light-muted); margin: 0 0 0.8rem; }
+  .dl ul { margin: 0; padding-left: 1.2rem; }
+  .dl a { color: var(--amber-600, #c66815); font-weight: 600; }
+</style>

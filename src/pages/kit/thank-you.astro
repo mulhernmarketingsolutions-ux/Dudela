@@ -2,33 +2,96 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
+import { retrieveCheckoutSession } from "../../lib/stripe";
+import { DOWNLOADS, CALENDLY_URL } from "../../lib/offers";
+
+// Server-rendered (2026-10-19) so the page can read the real Stripe session:
+// which downloads to show (kit, the $17 add-ons, or a standalone add-on), and
+// whether to offer the one-click $97 Game Plan Call (kit orders only, within
+// a few hours of buying; the card was saved at checkout).
+export const prerender = false;
+
+const env = (Astro.locals as any).runtime?.env;
+const sessionId = Astro.url.searchParams.get("session_id") || "";
+let session: any = null;
+if (env && /^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
+  try {
+    session = await retrieveCheckoutSession(env, sessionId);
+  } catch (err) {
+    console.error("kit thank-you: session lookup failed", err);
+  }
+}
+const paid = session?.payment_status === "paid";
+const product: string = session?.metadata?.product || "prep-kit";
+const hasAddon = session?.metadata?.addon === "1";
+const value = typeof session?.amount_total === "number" ? session.amount_total / 100 : 37;
+
+let downloads: { label: string; url: string }[] = [DOWNLOADS.kit];
+if (product === "her-copy") downloads = [DOWNLOADS.herCopy];
+else if (product === "delivery-pack") downloads = [DOWNLOADS.deliveryPack];
+else if (hasAddon) downloads = [DOWNLOADS.kit, DOWNLOADS.herCopy, DOWNLOADS.deliveryPack];
+
+const isKit = product === "prep-kit";
+const showUpsell = paid && isKit && Date.now() / 1000 - (session?.created || 0) < 6 * 3600;
+const headline = isKit ? "You're in." : "It's yours.";
+const firstName = (session?.customer_details?.name || "").split(" ")[0];
+const cal = new URL(CALENDLY_URL);
+cal.searchParams.set("hide_gdpr_banner", "1");
+if (session?.customer_details?.name) cal.searchParams.set("name", session.customer_details.name);
+if (session?.customer_details?.email) cal.searchParams.set("email", session.customer_details.email);
 ---
-<BaseLayout title="You're in — The Dudela Prep Kit" description="Your Prep Kit purchase is confirmed. Here's your download and what's next.">
+<BaseLayout title="You're in | The Dudela Prep Kit" description="Your purchase is confirmed. Here's your download and what's next." noindex>
   <Nav />
 
   <section class="hero section-dark">
     <div class="container hero-inner">
       <p class="eyebrow">Purchase confirmed</p>
-      <h1>You're in.</h1>
+      <h1>{headline}</h1>
       <p class="hero-sub">
-        Thanks for grabbing the Prep Kit. A receipt with your download link is on its way to
-        your inbox right now — but no need to wait on it.
+        {firstName ? `Thanks, ${firstName}. ` : "Thanks. "}A receipt with your download {downloads.length > 1 ? "links" : "link"} is on its way to your inbox, but no need to wait on it.
       </p>
-      <a href="/downloads/dudela-prep-kit.pdf" class="btn btn-primary" download>Download the Prep Kit Now</a>
-      <p class="hero-note">6 pillars. 9 printable tools. Yours to keep.</p>
+      <div class="dl-list">
+        {downloads.map((d, i) => (
+          <a href={d.url} class={i === 0 ? "btn btn-primary" : "btn btn-secondary"} download>Download {d.label}</a>
+        ))}
+      </div>
+      {isKit && <p class="hero-note">Start with page 3: a one-hour plan.</p>}
     </div>
   </section>
 
-  <section class="next section-light">
+  {showUpsell && (
+    <section class="upsell section-light" id="upsell">
+      <div class="container upsell-inner">
+        <div class="upsell-card" id="upsell-offer">
+          <p class="eyebrow dark">One more thing before you go</p>
+          <h2>Want us to walk through it with you?</h2>
+          <p class="lead">Book a <strong>Game Plan Call</strong>: an hour on Google Meet with John or Mike. Bring your plan, your questions, and your partner if she wants to join. You leave with your next three moves.</p>
+          <ul>
+            <li>Your situation, not a generic checklist</li>
+            <li>Help with the gaps the worksheets turned up</li>
+            <li>If it isn't worth it, we'll refund it</li>
+          </ul>
+          <p class="price"><s>$200</s> <span>$97</span> for Prep Kit owners, today only</p>
+          <button type="button" class="btn btn-primary big" id="upsell-yes" data-session={sessionId}>Yes, add my call for $97</button>
+          <p class="fine">Charged to the card you just used. No need to re-enter it.</p>
+          <p id="upsell-status" class="status" role="status" aria-live="polite"></p>
+          <a href="#next" class="no-thanks" id="upsell-no">No thanks, I'll use the kit on my own</a>
+        </div>
+        <div class="upsell-card booked" id="upsell-booked" hidden>
+          <p class="eyebrow dark">Call added</p>
+          <h2>Pick a time that works.</h2>
+          <p class="lead">You're all set. A receipt is on its way. Choose your hour below, or use the link in your email later.</p>
+          <div class="calendly-inline-widget" data-url={cal.toString()} style="min-width:280px;height:720px;"></div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="next section-light" id="next">
     <div class="container next-inner">
       <p class="eyebrow">While you're here</p>
       <h2>A couple things worth knowing about.</h2>
       <div class="next-grid">
-        <div class="next-card">
-          <h3>The Dudela Workshop</h3>
-          <p>Work through your plan live on Zoom with John, Mike, and a few other expecting dads. First Thursday of every month, 7:00–8:30pm MT. $147.</p>
-          <a href="/workshop" class="link-arrow">Pick your date →</a>
-        </div>
         <div class="next-card">
           <h3>The Spit-Up Society</h3>
           <p>Twice-monthly live Q&amp;As, a private community of dads, and early access to everything we build next. $5/month.</p>
@@ -46,93 +109,94 @@ import Footer from "../../components/Footer.astro";
   <Footer />
 </BaseLayout>
 
-<!-- Meta Pixel Purchase event. Deduped per Stripe session (session_id is
-     appended to the success URL in create-checkout-session.ts) so a refresh
-     or revisit of this page doesn't count as a second sale. -->
-<script is:inline>
+<!-- Meta Pixel Purchase, deduped per Stripe session with the server-side
+     Conversions API event (same eventID). -->
+<script is:inline define:vars={{ value, sid: sessionId, label: isKit ? "Prep Kit" : product }}>
   (function () {
-    var sid = new URLSearchParams(location.search).get("session_id");
     if (!sid || !window.fbq) return;
     var key = "dudela_px_purchase_" + sid;
     try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) {}
-    fbq("track", "Purchase", { value: 37, currency: "USD", content_name: "Prep Kit" }, { eventID: sid });
+    fbq("track", "Purchase", { value: value, currency: "USD", content_name: label }, { eventID: sid });
+  })();
+</script>
+
+<script is:inline>
+  (function () {
+    var yes = document.getElementById("upsell-yes");
+    if (!yes) return;
+    var status = document.getElementById("upsell-status");
+    var loadCalendly = function () {
+      if (document.getElementById("calendly-js")) return;
+      var s = document.createElement("script");
+      s.id = "calendly-js";
+      s.src = "https://assets.calendly.com/assets/external/widget.js";
+      s.async = true;
+      document.body.appendChild(s);
+    };
+    yes.addEventListener("click", async function () {
+      yes.disabled = true;
+      yes.textContent = "Adding your call…";
+      status.textContent = "";
+      try {
+        var res = await fetch("/api/upsell-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: yes.dataset.session }),
+        });
+        var data = await res.json();
+        if (data.ok) {
+          if (window.fbq) fbq("track", "Purchase", { value: 97, currency: "USD", content_name: "Game Plan Call" }, { eventID: data.paymentIntent });
+          document.getElementById("upsell-offer").hidden = true;
+          document.getElementById("upsell-booked").hidden = false;
+          loadCalendly();
+          return;
+        }
+        if (data.redirect) { window.location.href = data.redirect; return; }
+        status.textContent = data.error || "Something went wrong. Your card was not charged.";
+      } catch (e) {
+        status.textContent = "Something went wrong. Your card was not charged.";
+      }
+      yes.disabled = false;
+      yes.textContent = "Yes, add my call for $97";
+    });
   })();
 </script>
 
 <style>
-  .hero {
-    padding: 9rem 0 5rem;
-    text-align: center;
-  }
-  .hero-inner {
-    max-width: 560px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .hero h1 {
-    font-family: var(--font-display);
-    font-size: clamp(2.4rem, 6vw, 3.5rem);
-    margin: 0.5rem 0 1.25rem;
-  }
-  .hero-sub {
-    color: var(--text-on-dark-muted);
-    max-width: 42ch;
-    margin-bottom: 2rem;
-  }
-  .hero-note {
-    font-family: var(--font-label);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-size: 0.75rem;
-    color: var(--text-on-dark-muted);
-    margin-top: 1.25rem;
-  }
-  .next {
-    padding: var(--space-6) 0;
-  }
-  .next-inner {
-    max-width: 760px;
-    margin: 0 auto;
-    text-align: center;
-  }
-  .next h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
-    margin: 0.5rem 0 2rem;
-  }
-  .next-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    text-align: left;
-  }
-  .next-card {
-    background: var(--cream-100, #f5efe3);
-    border-radius: var(--radius-sm);
-    padding: 1.75rem;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-  }
-  .next-card h3 {
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    margin: 0 0 0.5rem;
-  }
-  .next-card p {
-    color: var(--text-on-light-muted);
-    margin: 0 0 1rem;
-    font-size: 0.95rem;
-  }
-  .link-arrow {
-    font-family: var(--font-label);
-    font-weight: 600;
-    color: var(--amber-600, #c66815);
-    text-decoration: none;
-  }
-  @media (min-width: 700px) {
-    .next-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
+  .hero { padding: 9rem 0 4.5rem; text-align: center; }
+  .hero-inner { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, 3.5rem); margin: 0.5rem 0 1.25rem; }
+  .hero-sub { color: var(--text-on-dark-muted); max-width: 44ch; margin-bottom: 2rem; }
+  .dl-list { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 380px; }
+  .dl-list .btn { width: 100%; text-align: center; }
+  .btn-secondary { background: transparent; border: 1px solid rgba(242, 237, 230, 0.4); color: var(--cream-100, #f5efe3); }
+  .hero-note { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.75rem; color: var(--text-on-dark-muted); margin-top: 1.25rem; }
+
+  .upsell { padding: var(--space-6) 0 0; }
+  .upsell-inner { max-width: 640px; margin: 0 auto; }
+  .upsell-card { background: #fff; border: 2px solid var(--amber-500, #e27d25); border-radius: var(--radius-md, 14px); padding: 2rem 1.5rem; text-align: center; box-shadow: 0 20px 50px -25px rgba(0, 0, 0, 0.35); }
+  .upsell-card h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0.4rem 0 0.9rem; }
+  .eyebrow.dark { color: var(--rust-600, #a3492b); }
+  .lead { color: var(--text-on-light-muted); max-width: 46ch; margin: 0 auto 1rem; }
+  .upsell-card ul { list-style: none; padding: 0; margin: 0 auto 1.25rem; max-width: 34ch; text-align: left; }
+  .upsell-card li { padding: 0.35rem 0 0.35rem 1.6rem; position: relative; }
+  .upsell-card li::before { content: "✓"; position: absolute; left: 0; color: var(--amber-600, #c66815); font-weight: 700; }
+  .price { font-size: 1.05rem; margin: 0 0 1rem; }
+  .price s { color: var(--text-on-light-muted); margin-right: 0.3rem; }
+  .price span { font-family: var(--font-display); font-size: 2rem; color: var(--forest-900, #12180f); }
+  .btn.big { font-size: 1.05rem; padding: 1rem 1.6rem; width: 100%; max-width: 360px; }
+  .fine { font-size: 0.82rem; color: var(--text-on-light-muted); margin: 0.6rem 0 0; }
+  .status { min-height: 1.2em; color: #a3492b; font-size: 0.9rem; margin: 0.5rem 0 0; }
+  .no-thanks { display: inline-block; margin-top: 0.75rem; font-size: 0.88rem; color: var(--text-on-light-muted); }
+  .booked { padding-bottom: 0.5rem; }
+
+  .next { padding: var(--space-6) 0; }
+  .next-inner { max-width: 760px; margin: 0 auto; text-align: center; }
+  .next h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3.2vw, 2.2rem); margin: 0.5rem 0 2rem; }
+  .next-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; text-align: left; }
+  .next-card { background: var(--cream-100, #f5efe3); border-radius: var(--radius-sm); padding: 1.75rem; border: 1px solid rgba(0, 0, 0, 0.06); }
+  .next-card h3 { font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 0.5rem; }
+  .next-card p { color: var(--text-on-light-muted); margin: 0 0 1rem; font-size: 0.95rem; }
+  .link-arrow { font-family: var(--font-label); font-weight: 600; color: var(--amber-600, #c66815); text-decoration: none; }
+  @media (min-width: 700px) { .next-grid { grid-template-columns: 1fr 1fr; } }
 </style>

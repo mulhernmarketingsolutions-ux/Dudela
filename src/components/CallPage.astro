@@ -1,0 +1,98 @@
+---
+// Shared sales page for the Game Plan Call (added 2026-10-19).
+// /call = $200, includes the Prep Kit + Her Copy + Delivery Room Pack.
+// /call/kit = $97 for people who already own the kit (linked from page 31).
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "./Nav.astro";
+import Footer from "./Footer.astro";
+interface Props { kitOwner?: boolean }
+const { kitOwner = false } = Astro.props;
+const product = kitOwner ? "game-plan-call-kit" : "game-plan-call";
+const price = kitOwner ? 97 : 200;
+const BUY = `/api/create-checkout-session?product=${product}`;
+const track = `window.fbq && fbq('track', 'InitiateCheckout', { value: ${price}, currency: 'USD', content_name: 'Game Plan Call' })`;
+---
+<BaseLayout
+  title={kitOwner ? "Game Plan Call for Prep Kit owners | Dudela" : "Game Plan Call | Dudela"}
+  description="An hour on Google Meet with John or Mike. Bring your plan and your questions, leave with your next three moves."
+  noindex={kitOwner}
+>
+  <Nav />
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">{kitOwner ? "For Prep Kit owners" : "The Game Plan Call"}</p>
+      <h1>An hour with a dad who's been there.</h1>
+      <p class="hero-sub">One hour on Google Meet with John or Mike. Bring your plan, your questions, and your partner if she wants to join. You leave with a game plan for your family and your next three moves.</p>
+      <div class="price-row">
+        {kitOwner ? <><s class="was">$200</s><span class="price">$97</span></> : <span class="price">$200</span>}
+        <span class="price-label">{kitOwner ? "Prep Kit owner price" : "Includes the Prep Kit, Her Copy and Delivery Room Pack"}</span>
+      </div>
+      <a href={BUY} class="btn btn-primary" onclick={track}>Book my Game Plan Call</a>
+      <p class="fine">Pay, then pick your time right away. If the call isn't worth it, we'll refund it.</p>
+    </div>
+  </section>
+
+  <section class="block section-light">
+    <div class="container narrow">
+      <p class="eyebrow">What we'll cover</p>
+      <h2>Your situation, not a generic checklist.</h2>
+      <ul class="ticks">
+        <li><strong>The thing keeping you up at night.</strong> We start with your biggest worry, whatever it is.</li>
+        <li><strong>The birth.</strong> What she wants, what your job is, and what to do if the plan changes.</li>
+        <li><strong>The first days home.</strong> Sleep, visitors, meals, who owns what.</li>
+        <li><strong>Money and leave.</strong> The real numbers and the questions to ask your employer.</li>
+        <li><strong>Your next three moves.</strong> With an owner and a date on each.</li>
+      </ul>
+      {!kitOwner && (
+        <div class="included">
+          <h3>Included with your call</h3>
+          <p><strong>The Dudela Prep Kit</strong> ($37), <strong>Her Copy</strong> ($19) and <strong>the Delivery Room Pack</strong> ($12). You get them right after you book, so you can do the first hour before we talk. Already own the kit? <a href="/call/kit">Your call is $97.</a></p>
+        </div>
+      )}
+      <div class="who">
+        <img src="/images/founder-john.jpg" alt="John" width="72" height="72" />
+        <img src="/images/founder-mike.jpg" alt="Mike" width="72" height="72" />
+        <p>John and Mike host The Dudela Podcast. John's twins spent a month in the NICU. Mike's birth plan changed in about ninety seconds. Both of us learned the hard way what actually matters.</p>
+      </div>
+      <h3 class="small-h">The fine print, in plain words</h3>
+      <ul class="plain">
+        <li>It's one hour on Google Meet. You'll pick a time on our calendar right after paying.</li>
+        <li>If the call isn't worth it, tell us and we'll refund it.</li>
+        <li>Thinking about 1:1 coaching? If you join <a href="/turn">The Turn</a> within 14 days, what you paid for the call comes off the price.</li>
+        <li>We're dads, not doctors. Medical questions go to your care team.</li>
+      </ul>
+      <div class="center"><a href={BUY} class="btn btn-primary" onclick={track}>Book my Game Plan Call · ${price}</a></div>
+    </div>
+  </section>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero { padding: 8.5rem 0 4rem; }
+  .hero-inner { max-width: 680px; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.6vw, 3.1rem); line-height: 1.15; margin: 0.5rem 0 1rem; }
+  .hero-sub { color: var(--text-on-dark-muted); margin-bottom: 1.5rem; font-size: 1.05rem; }
+  .price-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .price { font-family: var(--font-display); font-size: 2.5rem; color: var(--amber-500); }
+  .was { color: var(--text-on-dark-muted); font-size: 1.3rem; }
+  .price-label { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--text-on-dark-muted); }
+  .fine { color: var(--text-on-dark-muted); font-size: 0.85rem; margin-top: 1rem; }
+  .block { padding: var(--space-6) 0; }
+  .narrow { max-width: 720px; }
+  .block h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3.3vw, 2.3rem); line-height: 1.2; margin: 0.5rem 0 1.25rem; }
+  .section-light p, .section-light li { color: var(--text-on-light-muted); }
+  .ticks { list-style: none; padding: 0; margin: 0 0 2rem; }
+  .ticks li { padding: 0.55rem 0 0.55rem 1.8rem; position: relative; border-bottom: 1px solid rgba(0,0,0,0.07); }
+  .ticks li::before { content: "✓"; position: absolute; left: 0; top: 0.55rem; color: var(--amber-600, #c66815); font-weight: 700; }
+  .ticks strong { color: var(--forest-900, #12180f); }
+  .included { background: var(--cream-100, #f5efe3); border-left: 3px solid var(--rust-600, #a3492b); padding: 1.1rem 1.3rem; border-radius: 4px; margin: 0 0 2rem; }
+  .included h3, .small-h { font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 0.4rem; color: var(--forest-900, #12180f); }
+  .included p { margin: 0; }
+  .who { display: grid; grid-template-columns: 72px 72px 1fr; gap: 0.8rem; align-items: center; margin: 0 0 2rem; }
+  .who img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+  .who p { margin: 0; font-size: 0.95rem; }
+  @media (max-width: 520px) { .who { grid-template-columns: 56px 56px; } .who img { width: 56px; height: 56px; } .who p { grid-column: 1 / -1; } }
+  .plain { padding-left: 1.2rem; margin: 0 0 2rem; }
+  .plain li { margin-bottom: 0.5rem; }
+  .center { text-align: center; }
+</style>

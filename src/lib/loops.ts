@@ -67,6 +67,14 @@ export const LOOPS_EVENTS: Record<string, { eventName: string; userGroup: string
 // doc — it's what future Ongoing Newsletter sends filter on to suppress repeat pitches.
 export const PURCHASE_EVENTS: Record<string, { eventName: string; userGroup: string }> = {
   "prep-kit": { eventName: "purchase-prep-kit", userGroup: "Customer – Prep Kit" },
+  // Added 2026-10-19 with the add-ons and the Game Plan Call. The $17 checkbox
+  // rides on the prep-kit event (same checkout), so it has no event of its own.
+  // NOTE: Loops sets userGroup on each event, so a kit buyer who takes the
+  // one-click call moves from "Customer – Prep Kit" to "Customer – Game Plan Call".
+  "her-copy": { eventName: "purchase-her-copy", userGroup: "Customer – Her Copy" },
+  "delivery-pack": { eventName: "purchase-delivery-pack", userGroup: "Customer – Delivery Room Pack" },
+  "game-plan-call": { eventName: "purchase-game-plan-call", userGroup: "Customer – Game Plan Call" },
+  "game-plan-call-kit": { eventName: "purchase-game-plan-call", userGroup: "Customer – Game Plan Call" },
   "spit-up-society": { eventName: "member-spit-up-society", userGroup: "Member – Spit-Up Society" },
   // The Dudela Workshop ($147, first Thursdays) — added 2026-10-16.
   "workshop": { eventName: "purchase-workshop", userGroup: "Customer – Workshop" },

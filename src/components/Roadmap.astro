@@ -60,7 +60,7 @@ const stages = [
       { title: "Birth Plan Template", type: "Template", href: "/birth-plan-template" },
       { title: "What Moms Actually Need From Dads", type: "Episode" },
     ],
-    paid: [{ title: "Steady Dad: Before Birth Workshop", price: "$100" }],
+    paid: [{ title: "Game Plan Call", price: "$200" }],
   },
   {
     id: "first-night",
@@ -139,7 +139,7 @@ function freeHref(f) {
 }
 function paidHref(title) {
   if (title.includes("Prep Kit")) return "/kit";
-  if (title.includes("Workshop")) return "/workshop";
+  if (title.includes("Game Plan Call")) return "/call";
   if (title.includes("Spit-Up Society")) return "/join/spit-up-society";
   // Checked before the generic "Cohort" match below so "Sleep Coaching
   // Cohort" doesn't get swept into the old #cohort anchor either — it's

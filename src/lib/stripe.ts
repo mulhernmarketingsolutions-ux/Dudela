@@ -90,6 +90,10 @@ export async function createCheckoutSession(
     // Short note shown above the Pay button on Stripe Checkout (e.g. which
     // Workshop date the buyer picked), so they know exactly what they're paying for.
     submitMessage?: string;
+    // Prep Kit only (added 2026-10-19): saves the card on a Stripe customer
+    // so the thank-you page can offer the $97 Game Plan Call as a true
+    // one-click add (see api/upsell-call.ts), with no second card entry.
+    saveCardForLater?: boolean;
   }
 ) {
   const mode = opts.mode || "payment";
@@ -152,6 +156,10 @@ export async function createCheckoutSession(
     params.customer = opts.customerId;
   } else if (opts.customerEmail) {
     params.customer_email = opts.customerEmail;
+  }
+  if (opts.saveCardForLater && mode === "payment") {
+    params["payment_intent_data[setup_future_usage]"] = "off_session";
+    if (!opts.customerId) params["customer_creation"] = "always";
   }
   if (opts.invoiceCreation && mode === "payment") {
     params["invoice_creation[enabled]"] = "true";
@@ -332,4 +340,64 @@ export async function verifyStripeSignature(
     mismatch |= expectedHex.charCodeAt(i) ^ signature.charCodeAt(i);
   }
   return mismatch === 0;
+}
+
+
+// Reads a Checkout Session back from Stripe (with its PaymentIntent expanded)
+// so a server route can trust what was actually paid instead of anything
+// the browser claims. Used by the kit thank-you page and api/upsell-call.ts.
+export async function retrieveCheckoutSession(env: StripeEnv, sessionId: string): Promise<any> {
+  const res = await fetch(
+    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=payment_intent`,
+    { headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` } }
+  );
+  if (!res.ok) throw new Error(`Stripe session lookup failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+// Charges a card the buyer saved moments earlier at checkout, without them
+// re-entering it (the one-click upsell). idempotencyKey makes a double click
+// or a retry return the SAME PaymentIntent instead of charging twice.
+// Returns the PaymentIntent on success; throws an Error with .code set to
+// Stripe's error code (e.g. "authentication_required", "card_declined") so
+// the caller can fall back to a normal Checkout page.
+export async function chargeSavedCard(
+  env: StripeEnv,
+  opts: {
+    customerId: string;
+    paymentMethodId: string;
+    amountCents: number;
+    description: string;
+    metadata?: Record<string, string>;
+    receiptEmail?: string;
+    idempotencyKey: string;
+  }
+): Promise<any> {
+  const params: Record<string, string> = {
+    amount: String(opts.amountCents),
+    currency: "usd",
+    customer: opts.customerId,
+    payment_method: opts.paymentMethodId,
+    off_session: "true",
+    confirm: "true",
+    description: opts.description,
+  };
+  if (opts.receiptEmail) params.receipt_email = opts.receiptEmail;
+  for (const [k, v] of Object.entries(opts.metadata || {})) params[`metadata[${k}]`] = v;
+  const res = await fetch("https://api.stripe.com/v1/payment_intents", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Idempotency-Key": opts.idempotencyKey,
+    },
+    body: toFormBody(params),
+  });
+  const data: any = await res.json();
+  if (!res.ok || data.status !== "succeeded") {
+    const err: any = new Error(data?.error?.message || `PaymentIntent status ${data?.status}`);
+    err.code = data?.error?.code || data?.status || "unknown";
+    throw err;
+  }
+  return data;
 }
