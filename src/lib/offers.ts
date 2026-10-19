@@ -20,3 +20,16 @@ export const CALL = {
   kitPriceCents: 9700,
   length: "1 hour",
 };
+
+// Checkout add-on prices (on top of the $37 kit). Either one on its own, or
+// both together for $17. ?addon= on the kit checkout URL picks one;
+// "1" is the old value and means both.
+export const KIT_ADDONS: Record<string, { name: string; cents: number; downloads: { label: string; url: string }[] }> = {
+  both: { name: "Her Copy + Delivery Room Pack", cents: 1700, downloads: [DOWNLOADS.herCopy, DOWNLOADS.deliveryPack] },
+  her: { name: "Her Copy (add-on price)", cents: 1200, downloads: [DOWNLOADS.herCopy] },
+  pack: { name: "The Delivery Room Pack (add-on price)", cents: 800, downloads: [DOWNLOADS.deliveryPack] },
+};
+export function kitAddon(value?: string | null) {
+  if (!value) return undefined;
+  return KIT_ADDONS[value === "1" ? "both" : value];
+}

@@ -3,7 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import { retrieveCheckoutSession } from "../../lib/stripe";
-import { DOWNLOADS, CALENDLY_URL } from "../../lib/offers";
+import { DOWNLOADS, CALENDLY_URL, kitAddon } from "../../lib/offers";
 
 // Server-rendered (2026-10-19) so the page can read the real Stripe session:
 // which downloads to show (kit, the $17 add-ons, or a standalone add-on), and
@@ -23,13 +23,13 @@ if (env && /^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
 }
 const paid = session?.payment_status === "paid";
 const product: string = session?.metadata?.product || "prep-kit";
-const hasAddon = session?.metadata?.addon === "1";
+const addon = kitAddon(session?.metadata?.addon);
 const value = typeof session?.amount_total === "number" ? session.amount_total / 100 : 37;
 
 let downloads: { label: string; url: string }[] = [DOWNLOADS.kit];
 if (product === "her-copy") downloads = [DOWNLOADS.herCopy];
 else if (product === "delivery-pack") downloads = [DOWNLOADS.deliveryPack];
-else if (hasAddon) downloads = [DOWNLOADS.kit, DOWNLOADS.herCopy, DOWNLOADS.deliveryPack];
+else if (addon) downloads = [DOWNLOADS.kit, ...addon.downloads];
 
 const isKit = product === "prep-kit";
 const showUpsell = paid && isKit && Date.now() / 1000 - (session?.created || 0) < 6 * 3600;

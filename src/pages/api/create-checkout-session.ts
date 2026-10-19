@@ -1,6 +1,7 @@
 import { findWorkshopDate, isBookable } from "../../data/workshop";
 import type { APIContext } from "astro";
 import { createCheckoutSession } from "../../lib/stripe";
+import { kitAddon as findKitAddon } from "../../lib/offers";
 import { getAuthedMember } from "../../lib/auth";
 import { HAT_CATALOG, getHatVariant, hatLabel, SHIRT_CATALOG, getShirtVariant, shirtLabel } from "../../lib/printful";
 
@@ -53,7 +54,7 @@ const PRODUCTS: Record<
   },
   // Prep Kit add-ons, sold on their own too (added 2026-10-19). The usual
   // way in is the $17 checkbox at kit checkout (?product=prep-kit&addon=1,
-  // see ADDON below); these standalone entries are for people who only want
+  // see ADDON_IMAGES below); these standalone entries are for people who only want
   // one piece, e.g. a partner buying Her Copy. Priced inline, no env vars.
   "her-copy": {
     priceData: { name: "Her Copy: The Prep Kit, Partner Edition", unitAmountCents: 1900, image: "/images/addons/her-copy.jpg" },
@@ -209,11 +210,15 @@ const BUNDLE_DISCOUNT_PERCENT = 15;
 // Fallback Stripe Price ids for products whose env var hasn't been added in
 // the Cloudflare dashboard yet. Price ids aren't secret (they're visible in
 // every Checkout URL), so a code fallback is safe; the env var still wins.
-// The $17 checkout add-on for the Prep Kit: Her Copy ($19) + Delivery Room
-// Pack ($12) together. Rides along as a second line item when the buyer
-// ticks the box on /kit or /get-the-kit (?addon=1). metadata.addon = "1"
-// tells the webhook to include both downloads in the receipt.
-const ADDON = { name: "Her Copy + Delivery Room Pack", unitAmountCents: 1700, image: "/images/addons/addon-bundle.jpg" };
+// Prep Kit checkout add-ons (Her Copy, Delivery Room Pack, or both for $17)
+// ride along as a second line item when the buyer ticks them on /kit or
+// /get-the-kit (?addon=her|pack|both). Prices live in lib/offers.ts.
+// metadata.addon tells the webhook which downloads to include.
+const ADDON_IMAGES: Record<string, string> = {
+  both: "/images/addons/addon-bundle.jpg",
+  her: "/images/addons/her-copy.jpg",
+  pack: "/images/addons/delivery-pack.jpg",
+};
 
 const PRICE_ID_FALLBACKS: Record<string, string> = {
   STRIPE_PRICE_WORKSHOP: "price_1URFfyI01jg8VCLkxBFm2nAW", // The Dudela Workshop, $147 (created 2026-10-16)
@@ -279,11 +284,13 @@ export async function GET({ request, locals, cookies }: APIContext) {
   // added here, not baked into priceId, so the base hat price stays a single
   // shared Stripe Price across all 28 variants.
   const hatVariant = productConfig.merchColor ? getHatVariant(productConfig.merchColor) : undefined;
-  const kitAddon = product === "prep-kit" && url.searchParams.get("addon") === "1";
+  const addonParam = url.searchParams.get("addon");
+  const addonKey = addonParam === "1" ? "both" : addonParam || "";
+  const kitAddon = product === "prep-kit" ? findKitAddon(addonKey) : undefined;
   const extraLineItems = hatVariant?.addon
     ? [{ name: 'Dude to Dad Stitch', unitAmountCents: 100 }]
     : kitAddon
-      ? [{ name: ADDON.name, unitAmountCents: ADDON.unitAmountCents, images: [`${origin}${ADDON.image}`] }]
+      ? [{ name: kitAddon.name, unitAmountCents: kitAddon.cents, images: [`${origin}${ADDON_IMAGES[addonKey]}`] }]
       : undefined;
 
   // Stripe fetches the image itself, so it needs a real absolute https URL —
@@ -313,7 +320,7 @@ export async function GET({ request, locals, cookies }: APIContext) {
           : workshopDate
             ? { product, sessionDate: workshopDate }
             : { product }),
-        ...(kitAddon ? { addon: "1" } : {}),
+        ...(kitAddon ? { addon: addonKey } : {}),
         ...metaMatchData(request, cookies),
       },
       collectShipping: productConfig.shipping,

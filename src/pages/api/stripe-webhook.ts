@@ -24,7 +24,7 @@ import {
   POSTCARD_SYNC_VARIANT_ID,
 } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
-import { CALENDLY_URL, DOWNLOADS, ADDON_DOWNLOADS } from "../../lib/offers";
+import { CALENDLY_URL, DOWNLOADS, ADDON_DOWNLOADS, kitAddon } from "../../lib/offers";
 
 // Welcome sticker + postcard — added as extra line items (see lib/printful.ts's
 // createPrintfulOrder comment) to every hat/shirt/bundle order so a first-time
@@ -653,8 +653,8 @@ export async function POST({ request, locals }: APIContext) {
                 sessionLabel: findWorkshopDate(session.metadata?.sessionDate)?.label,
                 name: `The Dudela Workshop${findWorkshopDate(session.metadata?.sessionDate) ? ` (${findWorkshopDate(session.metadata?.sessionDate)!.label})` : ""}`,
               }
-            : product === "prep-kit" && session.metadata?.addon === "1"
-              ? { ...PRODUCTS["prep-kit"], price: amountTotal, extraDownloads: ADDON_DOWNLOADS }
+            : product === "prep-kit" && kitAddon(session.metadata?.addon)
+              ? { ...PRODUCTS["prep-kit"], price: amountTotal, extraDownloads: kitAddon(session.metadata?.addon)!.downloads }
               : PRODUCTS[product] || { name: product, price: amountTotal };
       // Hoisted out of the isMerch/isBundle blocks below so the internal notify
       // email (sent further down, after those branches) can include shipping

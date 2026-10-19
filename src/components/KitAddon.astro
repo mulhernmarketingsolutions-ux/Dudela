@@ -2,50 +2,66 @@
 // The $17 add-on step for the Prep Kit (added 2026-10-19). Drop this on any
 // page with a "Get the Prep Kit" link. It catches clicks on links to
 // /api/create-checkout-session?product=prep-kit and asks once:
-// add Her Copy + Delivery Room Pack for $17? "Yes" goes to Stripe with
-// &addon=1 (a second line item), "No" goes to the plain $37 checkout.
+// tick Her Copy ($12), the Delivery Room Pack ($8), or both ($17). Checkout
+// gets &addon=her|pack|both (a second line item); nothing ticked = plain $37.
 // Without JavaScript the link still works and goes straight to checkout.
 ---
 <dialog id="kit-addon" class="kit-addon" aria-labelledby="kit-addon-title">
   <form method="dialog" class="ka-close-form"><button class="ka-x" aria-label="Close">&times;</button></form>
   <p class="ka-eyebrow">Before checkout</p>
-  <h2 id="kit-addon-title">Add the two things dads ask for next?</h2>
+  <h2 id="kit-addon-title">Add either of these to your kit?</h2>
   <div class="ka-items">
-    <div class="ka-item">
-      <img src="/images/addons/her-copy.jpg" alt="Her Copy cover" width="120" height="155" loading="lazy" />
+    <label class="ka-item">
+      <input type="checkbox" id="ka-her" />
+      <img src="/images/addons/her-copy.jpg" alt="" width="84" height="109" loading="lazy" />
       <div>
-        <h3>Her Copy <span>$19</span></h3>
+        <h3>Her Copy <span class="ka-price"><s>$19</s> $12</span></h3>
         <p>Her side of the plan. The same worksheets, written for her, so you're not guessing what she needs. Fill them out separately, then compare.</p>
       </div>
-    </div>
-    <div class="ka-item">
-      <img src="/images/addons/delivery-pack.jpg" alt="Delivery Room Pack wallet card and phone wallpaper" width="120" height="155" loading="lazy" />
+    </label>
+    <label class="ka-item">
+      <input type="checkbox" id="ka-pack" />
+      <img src="/images/addons/delivery-pack.jpg" alt="" width="84" height="109" loading="lazy" />
       <div>
-        <h3>The Delivery Room Pack <span>$12</span></h3>
+        <h3>The Delivery Room Pack <span class="ka-price"><s>$12</s> $8</span></h3>
         <p>Two wallet cards and three lock-screen wallpapers: your job in the room, what to ask before big decisions, and what to do if the plan changes.</p>
       </div>
-    </div>
+    </label>
   </div>
-  <a class="btn btn-primary ka-yes" id="ka-yes" href="#">Yes, add both for $17 <small>(save $14)</small></a>
-  <a class="ka-no" id="ka-no" href="#">No thanks, just the kit ($37)</a>
+  <p class="ka-both" id="ka-both">Pick both and they're <strong>$17 together</strong>.</p>
+  <a class="btn btn-primary ka-go" id="ka-go" href="#">Continue to checkout · $37</a>
 </dialog>
 
 <script is:inline>
   (function () {
     var dlg = document.getElementById("kit-addon");
     if (!dlg || typeof dlg.showModal !== "function") return;
+    var her = document.getElementById("ka-her");
+    var pack = document.getElementById("ka-pack");
+    var go = document.getElementById("ka-go");
     var base = "";
+    function update() {
+      var key = her.checked && pack.checked ? "both" : her.checked ? "her" : pack.checked ? "pack" : "";
+      var extra = { both: 17, her: 12, pack: 8 }[key] || 0;
+      go.href = key ? base + "&addon=" + key : base;
+      go.dataset.extra = String(extra);
+      go.textContent = key ? "Continue to checkout · $" + (37 + extra) : "No thanks, just the kit · $37";
+    }
+    her.addEventListener("change", update);
+    pack.addEventListener("change", update);
     document.addEventListener("click", function (e) {
       var a = e.target.closest && e.target.closest('a[href*="create-checkout-session?product=prep-kit"]');
-      if (!a || a.id === "ka-yes" || a.id === "ka-no") return;
+      if (!a || a.id === "ka-go") return;
       e.preventDefault();
-      base = a.getAttribute("href").replace(/&addon=1/, "");
-      document.getElementById("ka-yes").href = base + "&addon=1";
-      document.getElementById("ka-no").href = base;
+      base = a.getAttribute("href").replace(/&addon=[a-z0-9]+/, "");
+      her.checked = false;
+      pack.checked = false;
+      update();
       dlg.showModal();
     });
-    document.getElementById("ka-yes").addEventListener("click", function () {
-      if (window.fbq) fbq("track", "AddToCart", { value: 17, currency: "USD", content_name: "Her Copy + Delivery Room Pack" });
+    go.addEventListener("click", function () {
+      var extra = Number(go.dataset.extra || 0);
+      if (extra && window.fbq) fbq("track", "AddToCart", { value: extra, currency: "USD", content_name: "Prep Kit add-on" });
     });
     dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
   })();
@@ -58,13 +74,15 @@
   .kit-addon .ka-x { background: none; border: 0; font-size: 1.8rem; line-height: 1; color: #5d6655; cursor: pointer; padding: 0.25rem 0.5rem; }
   .kit-addon .ka-eyebrow { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72rem; color: #a3492b; margin: 0 0 0.4rem; }
   .kit-addon h2 { font-family: var(--font-display); font-size: clamp(1.4rem, 4.5vw, 1.8rem); line-height: 1.15; margin: 0 0 1.1rem; color: #12180f; }
-  .kit-addon .ka-items { display: grid; gap: 0.9rem; margin-bottom: 1.25rem; }
-  .kit-addon .ka-item { display: grid; grid-template-columns: 84px 1fr; gap: 0.9rem; align-items: start; background: #fff; border: 1px solid #ece3d1; border-radius: 10px; padding: 0.8rem; }
-  .kit-addon .ka-item img { width: 84px; height: auto; border-radius: 4px; display: block; }
-  .kit-addon h3 { font-family: var(--font-display); font-size: 1.12rem; margin: 0 0 0.25rem; color: #12180f; }
-  .kit-addon h3 span { font-family: var(--font-label); font-size: 0.8rem; color: #5d6655; text-decoration: line-through; margin-left: 0.35rem; }
-  .kit-addon .ka-item p { font-size: 0.88rem; line-height: 1.45; margin: 0; color: #4a5243; }
-  .kit-addon .ka-yes { display: block; width: 100%; text-align: center; }
-  .kit-addon .ka-yes small { font-weight: 400; opacity: 0.8; }
-  .kit-addon .ka-no { display: block; text-align: center; margin-top: 0.85rem; font-size: 0.9rem; color: #5d6655; }
+  .kit-addon .ka-items { display: grid; gap: 0.75rem; margin-bottom: 0.9rem; }
+  .kit-addon .ka-item { display: grid; grid-template-columns: 22px 72px 1fr; gap: 0.75rem; align-items: start; background: #fff; border: 2px solid #ece3d1; border-radius: 10px; padding: 0.8rem; cursor: pointer; }
+  .kit-addon .ka-item:has(input:checked) { border-color: #e27d25; background: #fffaf3; }
+  .kit-addon .ka-item input { width: 20px; height: 20px; margin: 0.15rem 0 0; accent-color: #e27d25; cursor: pointer; }
+  .kit-addon .ka-item img { width: 72px; height: auto; border-radius: 4px; display: block; }
+  .kit-addon h3 { font-family: var(--font-display); font-size: 1.08rem; margin: 0 0 0.25rem; color: #12180f; }
+  .kit-addon .ka-price { font-family: var(--font-label); font-size: 0.85rem; color: #c66815; margin-left: 0.35rem; white-space: nowrap; }
+  .kit-addon .ka-price s { color: #8a9280; margin-right: 0.15rem; }
+  .kit-addon .ka-item p { font-size: 0.86rem; line-height: 1.45; margin: 0; color: #4a5243; }
+  .kit-addon .ka-both { font-size: 0.9rem; color: #4a5243; margin: 0 0 1rem; text-align: center; }
+  .kit-addon .ka-go { display: block; width: 100%; text-align: center; }
 </style>
