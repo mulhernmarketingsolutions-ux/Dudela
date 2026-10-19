@@ -44,7 +44,7 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
 <BaseLayout title="You're in | The Dudela Prep Kit" description="Your purchase is confirmed. Here's your download and what's next." noindex>
   <Nav />
 
-  <section class="hero section-dark">
+  <section class={showUpsell ? "hero section-dark compact" : "hero section-dark"}>
     <div class="container hero-inner">
       <p class="eyebrow">Purchase confirmed</p>
       <h1>{headline}</h1>
@@ -56,7 +56,8 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
           <a href={d.url} class={i === 0 ? "btn btn-primary" : "btn btn-secondary"} download>Download {d.label}</a>
         ))}
       </div>
-      {isKit && <p class="hero-note">Start with page 3: a one-hour plan.</p>}
+      {isKit && !showUpsell && <p class="hero-note">Start with page 3: a one-hour plan.</p>}
+      {showUpsell && <a href="#upsell" class="next-cue">One more thing before you go <span aria-hidden="true">↓</span></a>}
     </div>
   </section>
 
@@ -165,6 +166,13 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
 
 <style>
   .hero { padding: 9rem 0 4.5rem; text-align: center; }
+  .hero.compact { padding: 6.5rem 0 1.75rem; }
+  .hero.compact h1 { margin-bottom: 0.6rem; }
+  .hero.compact .hero-sub { margin-bottom: 1.1rem; }
+  .next-cue { display: inline-block; margin-top: 1.1rem; color: var(--amber-500, #e27d25); font-family: var(--font-label); font-weight: 600; text-decoration: none; }
+  .next-cue span { display: inline-block; animation: nudge 1.4s ease-in-out infinite; }
+  @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+  @media (prefers-reduced-motion: reduce) { .next-cue span { animation: none; } }
   .hero-inner { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
   .hero h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, 3.5rem); margin: 0.5rem 0 1.25rem; }
   .hero-sub { color: var(--text-on-dark-muted); max-width: 44ch; margin-bottom: 2rem; }
@@ -173,7 +181,7 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
   .btn-secondary { background: transparent; border: 1px solid rgba(242, 237, 230, 0.4); color: var(--cream-100, #f5efe3); }
   .hero-note { font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.75rem; color: var(--text-on-dark-muted); margin-top: 1.25rem; }
 
-  .upsell { padding: var(--space-6) 0 0; }
+  .upsell { padding: 1.5rem 0 0; }
   .upsell-inner { max-width: 640px; margin: 0 auto; }
   .upsell-card { background: #fff; border: 2px solid var(--amber-500, #e27d25); border-radius: var(--radius-md, 14px); padding: 2rem 1.5rem; text-align: center; box-shadow: 0 20px 50px -25px rgba(0, 0, 0, 0.35); }
   .upsell-card h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0.4rem 0 0.9rem; }
