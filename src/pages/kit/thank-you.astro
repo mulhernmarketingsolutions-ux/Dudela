@@ -74,8 +74,8 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
             <li>If it isn't worth it, we'll refund it</li>
           </ul>
           <p class="price"><s>$200</s> <span>$97</span> for Prep Kit owners, today only</p>
-          <button type="button" class="btn btn-primary big" id="upsell-yes" data-session={sessionId}>Yes, add my call for $97</button>
-          <p class="fine">Charged to the card you just used. No need to re-enter it.</p>
+          <p class="charge-note">Tapping the button below <strong>charges $97</strong> to the card you just paid with. No new checkout.</p>
+          <button type="button" class="btn btn-primary big" id="upsell-yes" data-session={sessionId}>Charge my card $97 and book my call</button>
           <p id="upsell-status" class="status" role="status" aria-live="polite"></p>
           <a href="#next" class="no-thanks" id="upsell-no">No thanks, I'll use the kit on my own</a>
         </div>
@@ -137,7 +137,7 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
     };
     yes.addEventListener("click", async function () {
       yes.disabled = true;
-      yes.textContent = "Adding your call…";
+      yes.textContent = "Charging $97…";
       status.textContent = "";
       try {
         var res = await fetch("/api/upsell-call", {
@@ -159,7 +159,7 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
         status.textContent = "Something went wrong. Your card was not charged.";
       }
       yes.disabled = false;
-      yes.textContent = "Yes, add my call for $97";
+      yes.textContent = "Charge my card $97 and book my call";
     });
   })();
 </script>
@@ -194,6 +194,7 @@ if (session?.customer_details?.email) cal.searchParams.set("email", session.cust
   .price s { color: var(--text-on-light-muted); margin-right: 0.3rem; }
   .price span { font-family: var(--font-display); font-size: 2rem; color: var(--forest-900, #12180f); }
   .btn.big { font-size: 1.05rem; padding: 1rem 1.6rem; width: 100%; max-width: 360px; }
+  .charge-note { font-size: 0.92rem; color: var(--forest-900, #12180f); background: #fff6ea; border: 1px solid #f1d3ae; border-radius: 8px; padding: 0.6rem 0.8rem; max-width: 360px; margin: 0 auto 0.9rem; }
   .fine { font-size: 0.82rem; color: var(--text-on-light-muted); margin: 0.6rem 0 0; }
   .status { min-height: 1.2em; color: #a3492b; font-size: 0.9rem; margin: 0.5rem 0 0; }
   .no-thanks { display: inline-block; margin-top: 0.75rem; font-size: 0.88rem; color: var(--text-on-light-muted); }
