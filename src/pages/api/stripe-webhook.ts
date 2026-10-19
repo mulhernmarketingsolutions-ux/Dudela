@@ -1,6 +1,6 @@
 import { findWorkshopDate } from "../../data/workshop";
 import type { APIContext } from "astro";
-import { verifyStripeSignature, getCustomer } from "../../lib/stripe";
+import { verifyStripeSignature, getCustomer, kitAddonKeyForSession } from "../../lib/stripe";
 import { sendLoopsPurchaseEvent, sendLoopsCancellationEvent } from "../../lib/loops";
 import { sendMetaPurchase } from "../../lib/meta-capi";
 import { sendEmail } from "../../lib/email";
@@ -24,7 +24,7 @@ import {
   POSTCARD_SYNC_VARIANT_ID,
 } from "../../lib/printful";
 import { NEXT_CALL } from "../../lib/next-call";
-import { CALENDLY_URL, DOWNLOADS, ADDON_DOWNLOADS, kitAddon } from "../../lib/offers";
+import { CALENDLY_URL, DOWNLOADS, ADDON_DOWNLOADS, KIT_ADDONS } from "../../lib/offers";
 
 // Welcome sticker + postcard — added as extra line items (see lib/printful.ts's
 // createPrintfulOrder comment) to every hat/shirt/bundle order so a first-time
@@ -573,6 +573,8 @@ export async function POST({ request, locals }: APIContext) {
       // fixed product — metadata carries hatColor/shirtColor instead of a single color.
       // Built into a PRODUCTS-shaped object here so the exact same receiptEmailHtml/
       // notifyEmailHtml code paths below work unchanged for bundle orders too.
+      // Prep Kit add-on: bought via Stripe's "Add to order" button or ?addon=.
+      const kitAddonKey = product === "prep-kit" ? await kitAddonKeyForSession(env, session) : undefined;
       const isBundle = product === "bundle";
       const bundleHatVariant = isBundle ? getHatVariant(session.metadata?.hatColor || "") : undefined;
       const bundleShirtVariant = isBundle ? getShirtVariant(session.metadata?.shirtColor || "") : undefined;
@@ -653,8 +655,8 @@ export async function POST({ request, locals }: APIContext) {
                 sessionLabel: findWorkshopDate(session.metadata?.sessionDate)?.label,
                 name: `The Dudela Workshop${findWorkshopDate(session.metadata?.sessionDate) ? ` (${findWorkshopDate(session.metadata?.sessionDate)!.label})` : ""}`,
               }
-            : product === "prep-kit" && kitAddon(session.metadata?.addon)
-              ? { ...PRODUCTS["prep-kit"], price: amountTotal, extraDownloads: kitAddon(session.metadata?.addon)!.downloads }
+            : product === "prep-kit" && kitAddonKey && KIT_ADDONS[kitAddonKey]
+              ? { ...PRODUCTS["prep-kit"], price: amountTotal, extraDownloads: KIT_ADDONS[kitAddonKey].downloads }
               : PRODUCTS[product] || { name: product, price: amountTotal };
       // Hoisted out of the isMerch/isBundle blocks below so the internal notify
       // email (sent further down, after those branches) can include shipping

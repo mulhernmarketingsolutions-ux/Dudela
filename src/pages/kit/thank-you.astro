@@ -2,8 +2,8 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
-import { retrieveCheckoutSession } from "../../lib/stripe";
-import { DOWNLOADS, CALENDLY_URL, kitAddon } from "../../lib/offers";
+import { retrieveCheckoutSession, kitAddonKeyForSession } from "../../lib/stripe";
+import { DOWNLOADS, CALENDLY_URL, KIT_ADDONS } from "../../lib/offers";
 
 // Server-rendered (2026-10-19) so the page can read the real Stripe session:
 // which downloads to show (kit, the $17 add-ons, or a standalone add-on), and
@@ -23,7 +23,8 @@ if (env && /^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
 }
 const paid = session?.payment_status === "paid";
 const product: string = session?.metadata?.product || "prep-kit";
-const addon = kitAddon(session?.metadata?.addon);
+const addonKey = session && product === "prep-kit" ? await kitAddonKeyForSession(env, session) : undefined;
+const addon = addonKey ? KIT_ADDONS[addonKey] : undefined;
 const value = typeof session?.amount_total === "number" ? session.amount_total / 100 : 37;
 
 let downloads: { label: string; url: string }[] = [DOWNLOADS.kit];

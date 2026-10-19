@@ -94,6 +94,10 @@ export async function createCheckoutSession(
     // so the thank-you page can offer the $97 Game Plan Call as a true
     // one-click add (see api/upsell-call.ts), with no second card entry.
     saveCardForLater?: boolean;
+    // Stripe-hosted "Add to order" items shown under the main item on the
+    // checkout page (Stripe's optional_items). Each needs a real Price id.
+    // Used for the $17 Prep Kit add-on (see getOrCreateKitAddonPrice).
+    optionalPriceIds?: string[];
   }
 ) {
   const mode = opts.mode || "payment";
@@ -157,6 +161,10 @@ export async function createCheckoutSession(
   } else if (opts.customerEmail) {
     params.customer_email = opts.customerEmail;
   }
+  opts.optionalPriceIds?.forEach((pid, i) => {
+    params[`optional_items[${i}][price]`] = pid;
+    params[`optional_items[${i}][quantity]`] = "1";
+  });
   if (opts.saveCardForLater && mode === "payment") {
     params["payment_intent_data[setup_future_usage]"] = "off_session";
     if (!opts.customerId) params["customer_creation"] = "always";
@@ -400,4 +408,56 @@ export async function chargeSavedCard(
     throw err;
   }
   return data;
+}
+
+
+// The $17 Prep Kit add-on (Her Copy + Delivery Room Pack) as a real Stripe
+// Price, so it can be offered with Stripe's own "Add to order" button on the
+// checkout page. Found by lookup_key; created on first use, so there's no
+// dashboard setup or env var. Cached per Worker instance.
+export const KIT_ADDON_LOOKUP_KEY = "dudela_kit_addon_bundle_17";
+let kitAddonPriceId: string | null = null;
+export async function getOrCreateKitAddonPrice(env: StripeEnv, imageUrl: string): Promise<string> {
+  if (kitAddonPriceId) return kitAddonPriceId;
+  const auth = { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` };
+  const found = await fetch(`https://api.stripe.com/v1/prices?active=true&lookup_keys[]=${KIT_ADDON_LOOKUP_KEY}&limit=1`, { headers: auth });
+  const fj: any = await found.json();
+  if (found.ok && fj.data?.[0]?.id) return (kitAddonPriceId = fj.data[0].id);
+  const prod = await fetch("https://api.stripe.com/v1/products", {
+    method: "POST",
+    headers: { ...auth, "Content-Type": "application/x-www-form-urlencoded" },
+    body: toFormBody({
+      name: "Her Copy + Delivery Room Pack",
+      description: "Her side of the plan, plus wallet cards and lock-screen wallpapers for the delivery room. Normally $31.",
+      "images[0]": imageUrl,
+    }),
+  });
+  const pj: any = await prod.json();
+  if (!prod.ok) throw new Error(`Stripe product create failed: ${JSON.stringify(pj)}`);
+  const price = await fetch("https://api.stripe.com/v1/prices", {
+    method: "POST",
+    headers: { ...auth, "Content-Type": "application/x-www-form-urlencoded" },
+    body: toFormBody({ product: pj.id, unit_amount: "1700", currency: "usd", lookup_key: KIT_ADDON_LOOKUP_KEY }),
+  });
+  const prj: any = await price.json();
+  if (!price.ok) throw new Error(`Stripe price create failed: ${JSON.stringify(prj)}`);
+  return (kitAddonPriceId = prj.id);
+}
+
+// True if a completed Prep Kit checkout included the $17 add-on, either via
+// Stripe's "Add to order" button (optional item, matched by lookup_key) or
+// the older ?addon= line item (metadata.addon). Used by the webhook (which
+// downloads go in the receipt) and the thank-you page.
+export async function kitAddonKeyForSession(env: StripeEnv, session: any): Promise<string | undefined> {
+  if (session?.metadata?.addon) return session.metadata.addon === "1" ? "both" : session.metadata.addon;
+  try {
+    const res = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(session.id)}/line_items?limit=10`, {
+      headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+    });
+    const j: any = await res.json();
+    if (res.ok && j.data?.some((li: any) => li.price?.lookup_key === KIT_ADDON_LOOKUP_KEY)) return "both";
+  } catch (err) {
+    console.error("kitAddonKeyForSession failed", err);
+  }
+  return undefined;
 }

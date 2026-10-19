@@ -14,7 +14,6 @@ const points = guide
   : free
   ? ["What to pack for her, baby, and you", "The documents and logistics to sort out now", "Your actual job once you get in the room"]
   : ["Six pillars to help you show up prepared", "Nine printable tools you can actually use", "Real stories from John and Mike", "A pregnancy roadmap organized by trimester"];
-import KitAddon from "../../components/KitAddon.astro";
 ---
 <BaseLayout title={`${name} | Dudela`} description={title}>
   <header><a href="/" aria-label="Dudela home"><img src="/logo/dudela-logo-white-full.png" alt="Dudela" width="128" /></a><span>Turning dudes into dads</span></header>
@@ -32,7 +31,6 @@ import KitAddon from "../../components/KitAddon.astro";
     <aside><p class="eyebrow">From John &amp; Mike</p><p>“This is the thing we wish someone had handed us when we were where you are right now.”</p><span>Two dads. Real experience. Practical help.</span></aside>
   </main>
   <footer><span>© {new Date().getFullYear()} The Dudela Co.</span><a href="/terms">Terms</a><a href="mailto:dude@thedudelaco.com">Need a hand?</a></footer>
-<KitAddon />
 </BaseLayout>
 <script>
   const form = document.querySelector<HTMLFormElement>("#offer-form");

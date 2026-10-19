@@ -1,6 +1,6 @@
 import { findWorkshopDate, isBookable } from "../../data/workshop";
 import type { APIContext } from "astro";
-import { createCheckoutSession } from "../../lib/stripe";
+import { createCheckoutSession, getOrCreateKitAddonPrice } from "../../lib/stripe";
 import { kitAddon as findKitAddon } from "../../lib/offers";
 import { getAuthedMember } from "../../lib/auth";
 import { HAT_CATALOG, getHatVariant, hatLabel, SHIRT_CATALOG, getShirtVariant, shirtLabel } from "../../lib/printful";
@@ -304,10 +304,23 @@ export async function GET({ request, locals, cookies }: APIContext) {
       }
     : undefined;
 
+  // Prep Kit (without a ?addon= already chosen): offer the $17 add-on with
+  // Stripe's own "Add to order" button on the checkout page. If creating the
+  // Price fails for any reason, checkout still works without the offer.
+  let optionalPriceIds: string[] | undefined;
+  if (product === "prep-kit" && !kitAddon) {
+    try {
+      optionalPriceIds = [await getOrCreateKitAddonPrice(env, `${origin}${ADDON_IMAGES.both}`)];
+    } catch (err) {
+      console.error("Kit add-on price unavailable, continuing without it:", err);
+    }
+  }
+
   try {
     const session = await createCheckoutSession(env, {
       priceId,
       priceData,
+      optionalPriceIds,
       mode: productConfig.mode,
       successUrl: `${origin}${productConfig.thankYouPath}?session_id={CHECKOUT_SESSION_ID}`,
       submitMessage,
