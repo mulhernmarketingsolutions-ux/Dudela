@@ -33,13 +33,27 @@ const faqs = [
     <section class="hero">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="label">For expecting dads, and the partners who love them</p>
-          <h1>A one-hour plan for the birth and the first days home.</h1>
-          <p class="lede">You don't have to know everything. You do need somewhere honest to start. The Dudela Prep Kit is a 31-page plan you and your partner work through together, written by two dads who didn't get the birth they planned for.</p>
+          <div class="founders">
+            <img src="/images/founder-john.jpg" alt="John" width="52" height="52" />
+            <img src="/images/founder-mike.jpg" alt="Mike" width="52" height="52" />
+            <p><b>From John &amp; Mike.</b> Two dads. One NICU, one emergency C-section.</p>
+          </div>
+          <h1>She's read the baby books. Here's your one-hour plan.</h1>
+          <p class="lede">The Dudela Prep Kit is a plan you and your partner do together in one evening. When you're done, you'll know who to call, how you're getting to the hospital, and what she needs you to handle.</p>
           <a href={BUY} class="cta" onclick={track}>Get the Prep Kit · $37</a>
           <ul class="trust">
-            <li>Instant download</li><li>Print it or use it on your phone</li><li>30-day money-back guarantee</li>
+            <li>Instant download</li><li>30-day money-back guarantee</li><li>Due soon? It still works</li>
           </ul>
+          <div class="soft">
+            <p class="soft-q">Not ready to buy? Start with our free guide, <b>15 Things Every Dad Should Do Before the Baby Arrives</b>.</p>
+            <form class="lead-form">
+              <input type="hidden" name="magnet" value="free-guide" />
+              <input type="hidden" name="source" value="/get-the-kit (hero)" />
+              <input type="email" name="email" placeholder="you@email.com" required aria-label="Email" />
+              <button type="submit">Send it</button>
+            </form>
+            <p class="lead-status" aria-live="polite"></p>
+          </div>
         </div>
         <div class="devices" aria-hidden="true">
           <div class="laptop">
@@ -165,7 +179,6 @@ const faqs = [
         <p class="label">Buying this for him?</p>
         <h2>Good call. It's built for both of you.</h2>
         <p>A lot of these get bought by moms-to-be. Print the Readiness Map, hand it to him, and do the first hour together. Most of the tools have questions for you to answer in your own words, so the plan ends up being yours too, not just his to-do list.</p>
-        <blockquote class="pull">"I didn't have to ask him to do every little thing. We actually talked about what I needed, and he started handling stuff."<cite>Jessica, new mom in Nebraska</cite></blockquote>
       </div>
     </section>
 
@@ -214,6 +227,16 @@ const faqs = [
         <a href={BUY} class="cta big" onclick={track}>Get the Prep Kit</a>
         <p class="fine addon-tease">At checkout you can add Her Copy, her side of the plan, plus the Delivery Room Pack for $17.</p>
         <p class="fine">30-day money-back guarantee · Not medical advice. We point you to your care team for that, every time.</p>
+        <div class="soft center-soft">
+          <p class="soft-q">Not today? Get the free guide and we'll stay in touch.</p>
+          <form class="lead-form">
+            <input type="hidden" name="magnet" value="free-guide" />
+            <input type="hidden" name="source" value="/get-the-kit (bottom)" />
+            <input type="email" name="email" placeholder="you@email.com" required aria-label="Email" />
+            <button type="submit">Send it</button>
+          </form>
+          <p class="lead-status" aria-live="polite"></p>
+        </div>
         <p class="closer">"You don't have to walk into this certain. You can walk in willing to learn." John &amp; Mike</p>
       </div>
     </section>
@@ -221,6 +244,34 @@ const faqs = [
     <footer class="mini">© The Dudela Co. · <a href="/terms">Terms</a> · Questions? <a href="mailto:dude@thedudelaco.com">dude@thedudelaco.com</a></footer>
   </div>
 </BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>(".lead-form").forEach((form) => {
+    const status = form.nextElementSibling as HTMLParagraphElement | null;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button") as HTMLButtonElement;
+      btn.disabled = true;
+      if (status) status.textContent = "Sending…";
+      try {
+        const res = await fetch("/api/lead-magnet", { method: "POST", body: new FormData(form) });
+        const data = await res.json();
+        if (data.ok) {
+          if (status) status.textContent = "Done. Check your email, the guide is on its way.";
+          form.reset();
+          const w = window as any;
+          if (w.fbq) w.fbq("track", "Lead", { content_name: "Free guide (Prep Kit LP)" });
+        } else {
+          if (status) status.textContent = data.error || "Something went wrong. Please try again.";
+          btn.disabled = false;
+        }
+      } catch {
+        if (status) status.textContent = "Something went wrong. Please try again.";
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
 
 <style>
   .lp { --ink: #1c2319; --muted: #5a6150; --paper: #fffdf9; --alt: #f5f0e6; --line: #e6dccb; --rust: #a3492b; --amber: #e27d25;
@@ -249,7 +300,7 @@ const faqs = [
   .trust li { font-size: 0.88rem; color: var(--ink); font-weight: 500; padding-left: 22px; position: relative; }
   .trust li::before { content: "✓"; position: absolute; left: 0; color: var(--rust); font-weight: 700; }
 
-  .hero { padding: 26px 0 70px; }
+  .hero { padding: 18px 0 70px; }
   .hero-grid { display: grid; gap: 44px; align-items: center; }
   .lede { font-size: 1.1rem; }
 
@@ -321,6 +372,23 @@ const faqs = [
   .mini { text-align: center; padding: 24px 20px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--line); }
   .mini a { color: var(--muted); }
 
+  /* founders strip + soft (free guide) option */
+  .founders { display: flex; align-items: center; gap: 0; margin: 0 0 18px; }
+  .founders img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 3px solid var(--paper); box-shadow: 0 2px 8px rgba(28,35,25,.18); }
+  .founders img + img { margin-left: -14px; }
+  .founders p { margin: 0 0 0 12px; font-size: 0.92rem; line-height: 1.35; color: var(--muted); }
+  .founders b { color: var(--ink); }
+  .soft { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); max-width: 460px; }
+  .center-soft { margin: 34px auto 0; }
+  .soft-q { font-size: 0.92rem; margin: 0 0 10px; }
+  .soft-q b { color: var(--ink); font-weight: 600; }
+  .lead-form { display: flex; gap: 8px; }
+  .lead-form input[type=email] { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; background: #fff; color: var(--ink); }
+  .lead-form button { padding: 12px 18px; border: 2px solid var(--ink); background: transparent; color: var(--ink); font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.95rem; white-space: nowrap; }
+  .lead-form button:hover { background: var(--ink); color: var(--paper); }
+  .lead-form button:disabled { opacity: .6; cursor: default; }
+  .lead-status { font-size: 0.85rem; margin: 8px 0 0; min-height: 1em; }
+
   @media (min-width: 860px) {
     .hero-grid { grid-template-columns: 1fr 1fr; }
     .stories { grid-template-columns: 1fr 1fr; }
@@ -328,6 +396,9 @@ const faqs = [
     .hour-grid { grid-template-columns: 0.8fr 1.2fr; }
     .stack { grid-template-columns: 1.1fr 1fr 1.1fr; }
     .quotes { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 859px) {
+    .hero .devices { display: none; }
   }
   @media (max-width: 520px) {
     .band { padding: 54px 0; }
