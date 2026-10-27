@@ -37,6 +37,18 @@ export function slugify(title) {
 }
 
 const episodeEntries = [
+  // Published 2026-10-27 (Podbean, just after midnight ahead of the 10am
+  // newsletter). Art served from Podbean's CDN. Apple link left unset until
+  // Apple's catalog picks it up; falls back to the show-level APPLE_URL.
+  {
+    title: "You Are Becoming Your Dad, and That is Okay",
+    date: "2026-10-27",
+    downloads: 0,
+    link: "https://thedudelapodcast.podbean.com/e/you-are-becoming-your-dad-and-that-is-okay/",
+    apple: null,
+    img: "https://pbcdn1.podbean.com/imglogo/ep-logo/pbblog21310544/becoming_your_dad_Tech_Fatherhood_with_Babysense_CEO_Elad_Erdanac8h1.jpg",
+    description: "One day it just slips out: \"Do I have to follow you around and turn off the lights?\" Congrats. You're becoming your dad. John and Michael dig into the dad traits worth keeping and the ones to leave behind, why your fuse gets short when life gets heavy, when a sharp voice is the right call, why saying sorry to your kid matters, and why the best thing you can give your family is being the same steady dad every time you walk through the door.",
+  },
   // Published 2026-10-13 (Podbean, just after midnight ahead of the 10am
   // newsletter). Art served from Podbean's CDN. Apple link left unset until
   // Apple's catalog picks it up; falls back to the show-level APPLE_URL.
