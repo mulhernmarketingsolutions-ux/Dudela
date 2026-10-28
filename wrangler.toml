@@ -1,5 +1,5 @@
 name = "dudela"
-main = "./dist/_worker.js/index.js"
+main = "./worker-entry.mjs"
 compatibility_date = "2024-09-19"
 compatibility_flags = ["nodejs_compat"]
 
@@ -33,3 +33,7 @@ invocation_logs = true
 [[r2_buckets]]
 binding = "WOMB_WATCH_MEDIA"
 bucket_name = "dudela-womb-watch"
+
+# Daily at 15:00 UTC (9 AM MDT / 8 AM MST): weekly due-date emails.
+[triggers]
+crons = ["0 15 * * *"]
