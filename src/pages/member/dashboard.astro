@@ -117,7 +117,7 @@ const ICONS = {
       <h1>Hey {firstName}.</h1>
       {member.status === "canceled" ? (
         <p class="hero-sub status-canceled">
-          Your membership lapsed, so some of this is on pause. Rejoin any time — <a href="/join/spit-up-society">$5/mo →</a>
+          Your membership lapsed, so some of this is on pause. Rejoin any time, it's free — <a href="/join/spit-up-society">Join →</a>
         </p>
       ) : (
         <p class="hero-sub">You're an active member. Mike and John are both actually reading this stuff — here's everything in one place.</p>
@@ -169,25 +169,13 @@ const ICONS = {
     <div class="container featured-row">
       <div class="card card-featured">
         <div class="featured-inner">
-          <!-- A real calendar badge instead of the generic video icon — gives
-               the card an actual visual anchor so the join button doesn't
-               read as the only thing in a very wide, mostly-empty box. -->
-          <div class="date-badge" aria-hidden="true">
-            <span class="date-month">{nextCall.dateLabel.split(", ")[1]?.split(" ")[0] || "TBD"}</span>
-            <span class="date-day">{nextCall.dateLabel.match(/\d+/)?.[0] || "?"}</span>
-            <span class="date-weekday">{nextCall.dateLabel.split(",")[0]}</span>
-          </div>
           <div class="featured-content">
             <p class="featured-eyebrow">
-              <span set:html={ICONS.video} /> Next Live Q&amp;A
-              <span class="countdown-inline">{countdownLabel}</span>
+              <span set:html={ICONS.mic} /> Ask John &amp; Mike
             </p>
-            <h3>{nextCall.dateLabel}</h3>
-            <p class="call-when">{nextCall.timeLabel}</p>
-            <a href={nextCall.meetUrl} target="_blank" rel="noopener" class="btn btn-primary join-btn">Join with Google Meet →</a>
-            <p class="call-dial">
-              <span set:html={ICONS.phone} /> Or dial in: {nextCall.phone} <span class="pin">PIN {nextCall.pin}</span>
-            </p>
+            <h3>Got a real question? Send it our way.</h3>
+            <p class="call-when">Pregnancy, birth, the newborn blur, marriage after baby. We read and answer every one.</p>
+            <a href="/member/ask" class="btn btn-primary join-btn">Ask a question →</a>
           </div>
         </div>
       </div>

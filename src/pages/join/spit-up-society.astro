@@ -4,7 +4,7 @@ import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import Testimonials from "../../components/Testimonials.astro";
 ---
-<BaseLayout title="The Spit-Up Society — Dudela" description="$5/month. Two live Q&As a month, Womb Watch, and a community of dads who get it.">
+<BaseLayout title="The Spit-Up Society — Dudela" description="Free. Womb Watch, the members-only podcast, and a direct line to John and Mike.">
   <Nav />
 
   <section class="hero section-dark">
@@ -13,18 +13,13 @@ import Testimonials from "../../components/Testimonials.astro";
         <p class="eyebrow">Join the Huddle</p>
         <h1>Fatherhood was never supposed to be a solo sport.</h1>
         <p class="hero-sub">
-          The Spit-Up Society is the $5/month home for dads who want more than content —
-          they want people. One membership, no separate platforms to juggle.
+          The Spit-Up Society is the free home for dads who want more than content.
+          They want people. Drop your email and you're in.
         </p>
         <p class="hero-callout">
-          Live Q&amp;As happen <strong>twice a month</strong>. Join the Society and you're in —
-          we'll email you the exact date and link right away.
+          <strong>Free.</strong> No card, no catch. We'll email you a one-click link into the member area.
         </p>
-        <div class="price-row">
-          <span class="price">$5</span>
-          <span class="price-label">per month</span>
-        </div>
-        <a href="/api/create-checkout-session?product=spit-up-society" class="btn btn-primary">Join for $5/mo</a>
+        <a href="#join-form" class="btn btn-primary">Join free</a>
       </div>
       <img src="/images/IMG_0839_VSCO.JPG" alt="Mike and John with the kids" class="hero-photo" />
     </div>
@@ -34,10 +29,10 @@ import Testimonials from "../../components/Testimonials.astro";
     <div class="container">
       <p class="eyebrow">What's included</p>
       <div class="perks-grid">
-        <div class="perk"><h3>Live Q&amp;A, Twice a Month</h3><p>Direct access to John and Mike. Bring your real questions.</p></div>
+        <div class="perk"><h3>Ask John &amp; Mike</h3><p>Send us your real question from the member area. We answer every one.</p></div>
         <div class="perk"><h3>Private Community</h3><p>Not a comment section. A place to actually ask another dad.</p></div>
         <div class="perk"><h3>Womb Watch</h3><p>Follow our co-founder Mike through his wife's pregnancy — new episodes drop week by week, right in the member home.</p></div>
-        <div class="perk"><h3>Early Access</h3><p>First access to live sessions, new podcast episodes, and new guides before anyone else.</p></div>
+        <div class="perk"><h3>Members-Only Podcast</h3><p>Full Womb Watch episodes to listen to on the go, plus early access to new guides.</p></div>
         <div class="perk"><h3>Merch Perks</h3><p>20% off everything in the shop, anytime, with your member code.</p></div>
       </div>
     </div>
@@ -47,10 +42,14 @@ import Testimonials from "../../components/Testimonials.astro";
 
   <section class="join-cta section-light" id="join-form">
     <div class="container join-cta-inner">
-      <h2>Five bucks. No pressure. Just people who get it.</h2>
-      <div class="join-cta-actions">
-        <a href="/api/create-checkout-session?product=spit-up-society" class="btn btn-primary">Join for $5/mo</a>
-      </div>
+      <h2>Free. No pressure. Just people who get it.</h2>
+      {Astro.url.searchParams.get("error") && <p class="join-error">Something went wrong. Check your email and try again.</p>}
+      <form method="POST" action="/api/join-free" class="join-form">
+        <input type="text" name="name" placeholder="First name" autocomplete="given-name" />
+        <input type="email" name="email" placeholder="Email" required autocomplete="email" />
+        <input type="text" name="company" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+        <button type="submit" class="btn btn-primary">Join free</button>
+      </form>
     </div>
   </section>
 
@@ -152,6 +151,29 @@ import Testimonials from "../../components/Testimonials.astro";
   }
   .join-cta-actions .btn-ghost {
     color: var(--text-on-light);
+  }
+  .join-form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .join-form input {
+    flex: 1 1 180px;
+    padding: 0.85rem 1rem;
+    border: 1px solid #c9c2b2;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+  }
+  .join-form .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  .join-error {
+    color: #b3261e;
+    margin-bottom: 1rem;
   }
   @media (min-width: 900px) {
     .hero-grid {

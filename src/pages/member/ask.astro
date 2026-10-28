@@ -14,7 +14,7 @@ if (!viewing) {
 }
 const { member, isPreview } = viewing;
 ---
-<BaseLayout title="Ask Us Anything — Dudela" description="Send Mike & John a question for the next live Q&A.">
+<BaseLayout title="Ask Us Anything — Dudela" description="Send Mike & John your real question.">
   <Nav isAuthed />
   {isPreview && <PreviewBanner member={member} />}
 
@@ -24,7 +24,7 @@ const { member, isPreview } = viewing;
       <h1>Ask Us Anything</h1>
       <p class="hero-sub">
         This goes straight to Mike and John — not a support inbox, not a bot. Pregnancy, birth, the newborn blur,
-        marriage after baby, whatever's actually keeping you up. We read every one before the live Q&amp;A, and
+        marriage after baby, whatever's actually keeping you up. We read every one, and
         real questions get answered first.
       </p>
       <a href="/member/dashboard" class="back-link">← Back to dashboard</a>
