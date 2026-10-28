@@ -1,5 +1,5 @@
 import type { APIContext } from "astro";
-import { upsertMemberFromStripe, createMagicLink } from "../../lib/db";
+import { upsertMemberFromStripe, createMagicLink, setMemberDueDate } from "../../lib/db";
 import { sendEmail } from "../../lib/email";
 import { sendLoopsPurchaseEvent } from "../../lib/loops";
 import { redirectTo } from "../../lib/http";
@@ -23,7 +23,7 @@ function welcomeEmailHtml(opts: { name: string; url: string }) {
           <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">Hey ${firstName},</p>
           <p style="color:#1c2319;font-size:17px;line-height:1.6;margin:0 0 18px;">
             You're in the Spit-Up Society. It's free. Here's your one-click link into the member area,
-            where Womb Watch, the members-only podcast, and Ask John &amp; Mike live.
+            where Womb Watch, every free tool, member perks, and Ask John &amp; Mike live.
           </p>
           <div style="text-align:center;margin:30px 0 26px;">
             <a href="${opts.url}" style="display:inline-block;background:#e27d25;color:#12180f;padding:15px 30px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">
@@ -46,6 +46,8 @@ export async function POST({ request, locals }: APIContext) {
   const form = await request.formData();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const name = String(form.get("name") || "").trim();
+  const rawDue = String(form.get("due_date") || "").trim();
+  const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDue) ? rawDue : "";
   // Honeypot: real people never fill this hidden field.
   if (form.get("company")) return redirectTo(origin, "/join/spit-up-society/thank-you");
 
@@ -59,6 +61,7 @@ export async function POST({ request, locals }: APIContext) {
     console.error("Free member upsert failed:", err);
     return redirectTo(origin, "/join/spit-up-society?error=server#join-form");
   }
+  if (dueDate) await setMemberDueDate(env, email, dueDate);
 
   try {
     const token = await createMagicLink(env, email);
@@ -81,7 +84,7 @@ export async function POST({ request, locals }: APIContext) {
     await sendEmail(env, {
       to: env.NOTIFY_EMAIL || "dude@thedudelaco.com",
       subject: `New member (free) — ${email}`,
-      html: `<p>New free Spit-Up Society member: <strong>${name || "(no name)"}</strong> &lt;${email}&gt;</p>`,
+      html: `<p>New free Spit-Up Society member: <strong>${name || "(no name)"}</strong> &lt;${email}&gt;${dueDate ? ` · due ${dueDate}` : ""}</p>`,
       replyTo: email,
     });
   } catch (err) {

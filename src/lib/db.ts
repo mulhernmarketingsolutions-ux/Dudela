@@ -128,6 +128,18 @@ export async function upsertMemberFromStripe(
   return (await getMemberById(env, id))!;
 }
 
+// Saves a member's due date (YYYY-MM-DD) from the free signup form. Wrapped
+// so a missing column (migration 0009 not applied yet) never breaks signup.
+export async function setMemberDueDate(env: DbEnv, email: string, dueDate: string): Promise<void> {
+  try {
+    await env.DB.prepare("UPDATE members SET due_date = ?, updated_at = ? WHERE email = ?")
+      .bind(dueDate, new Date().toISOString(), email.trim().toLowerCase())
+      .run();
+  } catch (err) {
+    console.error("setMemberDueDate failed (is migration 0009 applied?):", err);
+  }
+}
+
 // Called from the Stripe webhook on customer.subscription.deleted. Marks the
 // member as canceled rather than deleting them — they keep their login and
 // post history, but gated pages can show a "your membership lapsed" state

@@ -4,20 +4,20 @@ import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import Testimonials from "../../components/Testimonials.astro";
 ---
-<BaseLayout title="The Spit-Up Society — Dudela" description="Free. Womb Watch, the members-only podcast, and a direct line to John and Mike.">
+<BaseLayout title="The Spit-Up Society — Dudela" description="The free club for dads-to-be. Follow along, ask us anything, and get every tool in one place.">
   <Nav />
 
   <section class="hero section-dark">
     <div class="container hero-grid">
       <div>
-        <p class="eyebrow">Join the Huddle</p>
-        <h1>Fatherhood was never supposed to be a solo sport.</h1>
+        <p class="eyebrow">The Spit-Up Society &middot; Free</p>
+        <h1>The free club for dads-to-be.</h1>
         <p class="hero-sub">
-          The Spit-Up Society is the free home for dads who want more than content.
-          They want people. Drop your email and you're in.
+          Follow along, ask us anything, and get every tool in one place. Built by two dads
+          who've been through the NICU, the emergency C-section, and the 3 AM panic.
         </p>
         <p class="hero-callout">
-          <strong>Free.</strong> No card, no catch. We'll email you a one-click link into the member area.
+          <strong>Free.</strong> No card, no catch. Drop your email and we'll send a one-click link into the member area.
         </p>
         <a href="#join-form" class="btn btn-primary">Join free</a>
       </div>
@@ -29,11 +29,11 @@ import Testimonials from "../../components/Testimonials.astro";
     <div class="container">
       <p class="eyebrow">What's included</p>
       <div class="perks-grid">
-        <div class="perk"><h3>Ask John &amp; Mike</h3><p>Send us your real question from the member area. We answer every one.</p></div>
-        <div class="perk"><h3>Private Community</h3><p>Not a comment section. A place to actually ask another dad.</p></div>
-        <div class="perk"><h3>Womb Watch</h3><p>Follow our co-founder Mike through his wife's pregnancy — new episodes drop week by week, right in the member home.</p></div>
-        <div class="perk"><h3>Members-Only Podcast</h3><p>Full Womb Watch episodes to listen to on the go, plus early access to new guides.</p></div>
-        <div class="perk"><h3>Merch Perks</h3><p>20% off everything in the shop, anytime, with your member code.</p></div>
+        <div class="perk"><h3>Womb Watch</h3><p>Follow Mike and Abigail's second pregnancy week by week, on video or audio. The real version, not the highlight reel.</p></div>
+        <div class="perk"><h3>Ask John &amp; Mike</h3><p>Send us your real question anytime. Once a month we answer the best ones in a short video for members.</p></div>
+        <div class="perk"><h3>Every Free Tool, One Place</h3><p>The Dad Prep Guide, plus the hospital bag, birth plan, baby shower, and sleep checklists. No hunting, no extra signups.</p></div>
+        <div class="perk"><h3>Member Perks</h3><p>Discounts from brands we actually use: Babysense monitors, Taking Cara Babies sleep classes, and 20% off Dudela merch.</p></div>
+        <div class="perk"><h3>Your Week, In Your Inbox</h3><p>Tell us your due date and we'll start sending a short weekly note: what's happening and what she needs from you. Rolling out this fall.</p></div>
       </div>
     </div>
   </section>
@@ -47,6 +47,9 @@ import Testimonials from "../../components/Testimonials.astro";
       <form method="POST" action="/api/join-free" class="join-form">
         <input type="text" name="name" placeholder="First name" autocomplete="given-name" />
         <input type="email" name="email" placeholder="Email" required autocomplete="email" />
+        <label class="due-label">Due date (optional)
+          <input type="date" name="due_date" />
+        </label>
         <input type="text" name="company" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
         <button type="submit" class="btn btn-primary">Join free</button>
       </form>
@@ -166,6 +169,18 @@ import Testimonials from "../../components/Testimonials.astro";
     border: 1px solid #c9c2b2;
     border-radius: var(--radius-sm);
     font-size: 1rem;
+  }
+  .due-label {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-on-light-muted);
+  }
+  .due-label input {
+    flex: 0 1 220px;
   }
   .join-form .hp {
     position: absolute;

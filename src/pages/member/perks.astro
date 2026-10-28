@@ -1,0 +1,68 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import PreviewBanner from "../../components/PreviewBanner.astro";
+import { getViewingMember } from "../../lib/auth";
+
+const env = (Astro.locals as any).runtime.env;
+const viewing = await getViewingMember(Astro.cookies, env);
+if (!viewing) {
+  return Astro.redirect("/member/login");
+}
+const { member, isPreview } = viewing;
+const perks = [
+  { title: "Babysense", desc: "The monitor we've used since the twins came home. 10% off any Babysense monitor.", code: "DudeLA10", url: "https://babymonitordirectllc.pxf.io/rEq1o3", cta: "Shop Babysense" },
+  { title: "Taking Cara Babies", desc: "The newborn sleep class we'd take again. Do it before baby comes so you have a plan before you're too tired to make one.", code: null, url: "https://takingcarababies.com/john30", cta: "See the classes" },
+  { title: "Dudela Merch", desc: "Hats, shirts, and stickers. 20% off anything in the shop.", code: "HUDDLE20", url: "/merch", cta: "Shop merch" },
+];
+---
+<BaseLayout title="Member Perks — Spit-Up Society" description="Discounts from brands we actually use.">
+  <Nav isAuthed />
+  {isPreview && <PreviewBanner member={member} />}
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Spit-Up Society</p>
+      <h1>Member perks</h1>
+      <p class="hero-sub">Brands we actually use with our own kids. If it's on this page, we'd buy it again.</p>
+      <a href="/member/dashboard" class="back-link">&larr; Back to dashboard</a>
+    </div>
+  </section>
+
+  <section class="list section-light">
+    <div class="container">
+      <div class="grid">
+        {perks.map((p) => (
+          <div class="item">
+            <h3>{p.title}</h3>
+            <p>{p.desc}</p>
+            {p.code && <span class="code">Code: {p.code}</span>}
+            <a href={p.url} class="btn btn-primary" target={p.url.startsWith("http") ? "_blank" : undefined} rel="noopener">{p.cta}</a>
+          </div>
+        ))}
+      </div>
+      <p class="note">Some of these are partner links. If you buy through them we may earn a small commission at no extra cost to you. We'd recommend them either way.</p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero { padding: 8rem 0 3rem; }
+  .hero-inner { max-width: 760px; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.1rem, 4.5vw, 2.9rem); margin: 0.5rem 0 1rem; }
+  .hero-sub { color: var(--text-on-dark-muted); margin-bottom: 1.5rem; }
+  .back-link { display: inline-block; color: var(--amber-500); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+  .list { padding: var(--space-6) 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+  .item { background: #fff; border: 1px solid #e3dccd; border-radius: var(--radius-md); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .item h3 { font-family: var(--font-display); font-size: 1.2rem; margin: 0; }
+  .item p { color: var(--text-on-light-muted); margin: 0; font-size: 0.95rem; flex: 1; }
+  .code { font-family: var(--font-label); letter-spacing: 0.06em; background: var(--cream-100, #f5efe3); border: 1px dashed #c9c2b2; border-radius: 6px; padding: 0.35rem 0.6rem; align-self: flex-start; font-weight: 700; }
+  .item .btn { align-self: flex-start; }
+  .note { color: var(--text-on-light-muted); font-size: 0.85rem; margin-top: 1.5rem; }
+</style>

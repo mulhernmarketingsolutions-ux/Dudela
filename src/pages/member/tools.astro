@@ -1,0 +1,69 @@
+---
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import PreviewBanner from "../../components/PreviewBanner.astro";
+import { getViewingMember } from "../../lib/auth";
+
+const env = (Astro.locals as any).runtime.env;
+const viewing = await getViewingMember(Astro.cookies, env);
+if (!viewing) {
+  return Astro.redirect("/member/login");
+}
+const { member, isPreview } = viewing;
+const tools = [
+  { title: "15 Things Every Dad Should Do Before the Baby Arrives", desc: "The free Dad Prep Guide. Fifteen numbered actions, eight pages, start anywhere.", url: "/downloads/dudela-15-things.pdf" },
+  { title: "Hospital Bag Checklist", desc: "What to pack for her, the baby, and you. Print it, check it off, done.", url: "/downloads/dudela-hospital-bag-checklist.pdf" },
+  { title: "Birth Plan Template", desc: "Fill it out together so you both know what matters before the day comes.", url: "/downloads/dudela-birth-plan-template.pdf" },
+  { title: "Baby Shower Checklist", desc: "The lean registry. What you'll actually use, and what to skip.", url: "/downloads/dudela-baby-shower-checklist.pdf" },
+  { title: "Sleep Survival Guide", desc: "How to get through the first weeks of broken sleep without breaking each other.", url: "/downloads/dudela-sleep-survival-guide.pdf" },
+];
+---
+<BaseLayout title="Free Tools — Spit-Up Society" description="Every free Dudela tool in one place.">
+  <Nav isAuthed />
+  {isPreview && <PreviewBanner member={member} />}
+
+  <section class="hero section-dark">
+    <div class="container hero-inner">
+      <p class="eyebrow">Spit-Up Society</p>
+      <h1>Every free tool, one place</h1>
+      <p class="hero-sub">Everything we've made for dads-to-be. Download, print, and use what you need.</p>
+      <a href="/member/dashboard" class="back-link">&larr; Back to dashboard</a>
+    </div>
+  </section>
+
+  <section class="list section-light">
+    <div class="container">
+      <div class="grid">
+        {tools.map((t) => (
+          <div class="item">
+            <h3>{t.title}</h3>
+            <p>{t.desc}</p>
+            <a href={t.url} class="btn btn-primary" target="_blank" rel="noopener">Download PDF</a>
+          </div>
+        ))}
+      </div>
+      <p class="note">Want the full plan? <a href="/kit">The Dudela Prep Kit</a> takes it further: six pillars, nine printable tools, and real stories from our families.</p>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .hero { padding: 8rem 0 3rem; }
+  .hero-inner { max-width: 760px; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.1rem, 4.5vw, 2.9rem); margin: 0.5rem 0 1rem; }
+  .hero-sub { color: var(--text-on-dark-muted); margin-bottom: 1.5rem; }
+  .back-link { display: inline-block; color: var(--amber-500); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+  .list { padding: var(--space-6) 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+  .item { background: #fff; border: 1px solid #e3dccd; border-radius: var(--radius-md); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .item h3 { font-family: var(--font-display); font-size: 1.2rem; margin: 0; }
+  .item p { color: var(--text-on-light-muted); margin: 0; font-size: 0.95rem; flex: 1; }
+  .code { font-family: var(--font-label); letter-spacing: 0.06em; background: var(--cream-100, #f5efe3); border: 1px dashed #c9c2b2; border-radius: 6px; padding: 0.35rem 0.6rem; align-self: flex-start; font-weight: 700; }
+  .item .btn { align-self: flex-start; }
+  .note { color: var(--text-on-light-muted); font-size: 0.85rem; margin-top: 1.5rem; }
+</style>

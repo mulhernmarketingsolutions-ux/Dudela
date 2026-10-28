@@ -130,7 +130,7 @@ export const CANCELLATION_EVENTS: Record<string, { eventName: string; userGroup:
 
 async function sendEvent(
   env: LoopsEnv,
-  opts: { email: string; firstName?: string; eventName: string; userGroup: string; source?: string }
+  opts: { email: string; firstName?: string; eventName: string; userGroup: string; source?: string; dueDate?: string }
 ) {
   const res = await fetch("https://app.loops.so/api/v1/events/send", {
     method: "POST",
@@ -144,6 +144,7 @@ async function sendEvent(
       eventName: opts.eventName,
       userGroup: opts.userGroup,
       source: opts.source || "website",
+      ...(opts.dueDate ? { dueDate: opts.dueDate } : {}),
     }),
   });
 
@@ -176,7 +177,7 @@ export async function sendLoopsEvent(
 // they're permanently excluded from top-of-funnel pitches for the same product.
 export async function sendLoopsPurchaseEvent(
   env: LoopsEnv,
-  opts: { email: string; name?: string; product: string; source?: string }
+  opts: { email: string; name?: string; product: string; source?: string; dueDate?: string }
 ) {
   const mapping = PURCHASE_EVENTS[opts.product];
   if (!mapping) {
@@ -190,6 +191,7 @@ export async function sendLoopsPurchaseEvent(
     eventName: mapping.eventName,
     userGroup: mapping.userGroup,
     source: opts.source || "stripe",
+    dueDate: opts.dueDate,
   });
 }
 
