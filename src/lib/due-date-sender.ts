@@ -34,7 +34,8 @@ function emailHtml(name: string | null, body: string[], stopUrl: string) {
         <div style="padding:0 32px 28px;color:#6b7563;font-size:12px;line-height:1.6;">
           You're getting this because you added a due date to your Spit-Up Society membership.
           This is general information, not medical advice. Ask her provider about anything specific.
-          <a href="${stopUrl}" style="color:#6b7563;">Stop these weekly emails</a>.
+          <a href="${stopUrl}" style="color:#6b7563;">Stop these weekly emails</a>.<br />
+          The Dudela Co. · 9737 Villosa St., Littleton, CO 80125
         </div>
       </div>
     </div>`;
