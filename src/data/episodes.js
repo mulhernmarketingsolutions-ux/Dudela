@@ -37,6 +37,18 @@ export function slugify(title) {
 }
 
 const episodeEntries = [
+  // Published 2026-11-10 (Podbean). Guest: Major Williams, host of The
+  // Majorvation Podcast. Art saved locally. Apple link unset until Apple's
+  // catalog picks it up; falls back to the show-level APPLE_URL.
+  {
+    title: "Can You Be a Great Dad and Still Chase Big Goals? | Major Williams",
+    date: "2026-11-10",
+    downloads: 0,
+    link: "https://thedudelapodcast.podbean.com/e/can-you-be-a-great-dad-and-still-chase-big-goals-major-williams/",
+    apple: null,
+    img: "/images/podcast/ep-major-williams.jpg",
+    description: "What happens when the businesses you built start failing and your family is looking to you for answers? John and Michael sit down with Major Williams, entrepreneur, author of Use Everybody Again, host of The Majorvation Podcast, and dad of four. Major opens up about the season he didn't know where the next dollar was coming from, the wife who kept believing in him, 26 years together, becoming a girl dad after three boys, and what it really means to be present for your family. Find Major on Instagram @majorwilliams and @themajorvationpodcast.",
+  },
   // Published 2026-10-27 (Podbean, just after midnight ahead of the 10am
   // newsletter). Art served from Podbean's CDN. Apple link left unset until
   // Apple's catalog picks it up; falls back to the show-level APPLE_URL.
